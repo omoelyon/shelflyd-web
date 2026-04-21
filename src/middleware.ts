@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PROTECTED_PATHS = ['/dashboard', '/admin', '/cart', '/checkout', '/account', '/invites'];
+const PROTECTED_PATHS = ['/dashboard', '/cart', '/checkout', '/account', '/invites'];
+const ADMIN_PATHS = ['/admin'];
 const RESERVED_SUBDOMAINS = ['www', 'app', 'api', 'admin'];
 
 export function middleware(request: NextRequest) {
@@ -18,8 +19,6 @@ export function middleware(request: NextRequest) {
 
   if (hostParts.length >= 3 && !RESERVED_SUBDOMAINS.includes(hostParts[0])) {
     const slug = hostParts[0];
-
-    // Don't rewrite auth or API paths — let them fall through to the main app
     if (!pathname.startsWith('/auth') && !pathname.startsWith('/api')) {
       const url = request.nextUrl.clone();
       url.pathname = `/storefront/${slug}${pathname === '/' ? '' : pathname}`;
@@ -27,15 +26,22 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Auth protection for main app routes
-  const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
-  if (isProtected) {
-    const token = request.cookies.get('mm_token')?.value;
+  const token = request.cookies.get('mm_token')?.value;
+
+  // Admin routes → redirect to /admin/login (skip /admin/login itself)
+  const isAdminPath = ADMIN_PATHS.some((p) => pathname.startsWith(p));
+  if (isAdminPath && pathname !== '/admin/login') {
     if (!token) {
-      const loginUrl = new URL('/auth/login', request.url);
-      loginUrl.searchParams.set('from', pathname);
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(new URL('/admin/login', request.url));
     }
+  }
+
+  // Regular protected routes → redirect to /auth/login
+  const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
+  if (isProtected && !token) {
+    const loginUrl = new URL('/auth/login', request.url);
+    loginUrl.searchParams.set('from', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

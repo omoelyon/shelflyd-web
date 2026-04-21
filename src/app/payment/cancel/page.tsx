@@ -4,7 +4,8 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { XCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 
 function CancelContent() {
@@ -32,12 +33,12 @@ function CancelContent() {
             </div>
           )}
           <div className="flex flex-col gap-3 pt-2">
-            <Button asChild className="bg-primary text-primary-foreground hover:opacity-90">
-              <Link href="/cart">Back to Cart</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/products">Browse Products</Link>
-            </Button>
+            <Link href="/cart" className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}>
+              Back to Cart
+            </Link>
+            <Link href="/products" className={cn(buttonVariants({ variant: 'outline' }))}>
+              Browse Products
+            </Link>
           </div>
         </CardContent>
       </Card>

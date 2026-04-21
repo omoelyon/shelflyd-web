@@ -4,7 +4,8 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 
 function SuccessContent() {
@@ -30,12 +31,12 @@ function SuccessContent() {
             Reference: {ref}
           </div>
           <div className="flex flex-col gap-3 pt-2">
-            <Button asChild className="bg-primary text-primary-foreground hover:opacity-90">
-              <Link href="/products">Continue Shopping</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/account">View My Orders</Link>
-            </Button>
+            <Link href="/products" className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}>
+              Continue Shopping
+            </Link>
+            <Link href="/account" className={cn(buttonVariants({ variant: 'outline' }))}>
+              View My Orders
+            </Link>
           </div>
         </CardContent>
       </Card>

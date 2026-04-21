@@ -2,8 +2,10 @@ import apiClient from './client';
 import type { Product, PagedProducts, CreateProductRequest } from '@/types';
 
 export const productsApi = {
-  listAll: async (page = 0, size = 15): Promise<PagedProducts> => {
-    const res = await apiClient.get('/products', { params: { page, size } });
+  listAll: async (page = 0, size = 15, category?: string): Promise<PagedProducts> => {
+    const res = await apiClient.get('/products', {
+      params: { page, size, ...(category && { category }) },
+    });
     return res.data;
   },
 
@@ -12,8 +14,10 @@ export const productsApi = {
     return res.data;
   },
 
-  listByBusiness: async (businessId: number, page = 0, size = 15): Promise<PagedProducts> => {
-    const res = await apiClient.get(`/businesses/${businessId}/products`, { params: { page, size } });
+  listByBusiness: async (businessId: number, page = 0, size = 15, category?: string): Promise<PagedProducts> => {
+    const res = await apiClient.get(`/businesses/${businessId}/products`, {
+      params: { page, size, ...(category && { category }) },
+    });
     return res.data;
   },
 

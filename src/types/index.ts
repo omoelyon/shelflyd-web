@@ -98,6 +98,7 @@ export interface Category extends BaseEntity {
   name: string;
   description?: string;
   icon?: string;
+  productCount: number;
 }
 
 export interface CreateCategoryRequest {
@@ -108,7 +109,7 @@ export interface CreateCategoryRequest {
 
 // ─── Product ─────────────────────────────────────────────────────────────────
 
-export type ProductStatus = 'AVAILABLE' | 'OUT_OF_STOCK' | 'DISCONTINUED';
+export type ProductStatus = 'COMING_SOON' | 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
 export type Currency = 'NGN' | 'USD' | 'EUR' | 'GBP';
 
 export interface Price extends BaseEntity {

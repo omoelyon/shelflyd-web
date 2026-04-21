@@ -10,7 +10,8 @@ import LogoUploader from '@/components/features/settings/logo-uploader';
 import ThemeColorPicker from '@/components/features/settings/theme-color-picker';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Store } from 'lucide-react';
@@ -64,9 +65,9 @@ export default function SettingsPage() {
       <div className="text-center py-24 space-y-4">
         <Store className="h-14 w-14 text-muted-foreground mx-auto" />
         <p className="text-muted-foreground">No business found. Register one first.</p>
-        <Button asChild className="bg-primary text-primary-foreground">
-          <Link href="/dashboard">Go to Dashboard</Link>
-        </Button>
+        <Link href="/dashboard" className={cn(buttonVariants(), 'bg-primary text-primary-foreground')}>
+          Go to Dashboard
+        </Link>
       </div>
     );
   }

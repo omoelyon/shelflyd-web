@@ -7,8 +7,10 @@ export const storefrontApi = {
     return res.data;
   },
 
-  getProducts: async (slug: string, page = 0, size = 20): Promise<PagedProducts> => {
-    const res = await apiClient.get(`/storefront/${slug}/products`, { params: { page, size } });
+  getProducts: async (slug: string, page = 0, size = 20, category?: string): Promise<PagedProducts> => {
+    const res = await apiClient.get(`/storefront/${slug}/products`, {
+      params: { page, size, ...(category && { category }) },
+    });
     return res.data;
   },
 

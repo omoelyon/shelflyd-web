@@ -19,15 +19,16 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createProductSchema, type CreateProductFormValues } from '@/lib/validations';
 import { toast } from 'sonner';
-import { getApiError } from '@/lib/utils';
+import { getApiError, formatStatus } from '@/lib/utils';
 import { Plus, Package, Boxes } from 'lucide-react';
 import Image from 'next/image';
 import type { Product } from '@/types';
 
 const statusColors: Record<string, string> = {
-  AVAILABLE: 'bg-green-100 text-green-700',
+  IN_STOCK: 'bg-green-100 text-green-700',
+  LOW_STOCK: 'bg-orange-100 text-orange-700',
   OUT_OF_STOCK: 'bg-red-100 text-red-700',
-  DISCONTINUED: 'bg-gray-100 text-gray-700',
+  COMING_SOON: 'bg-blue-100 text-blue-700',
 };
 
 export default function DashboardProductsPage() {
@@ -61,7 +62,7 @@ export default function DashboardProductsPage() {
     formState: { errors },
   } = useForm<CreateProductFormValues>({
     resolver: zodResolver(createProductSchema),
-    defaultValues: { status: 'AVAILABLE' },
+    defaultValues: { status: 'IN_STOCK' },
   });
 
   const createMutation = useMutation({
@@ -147,7 +148,7 @@ export default function DashboardProductsPage() {
                       {product.type && <p className="text-xs text-muted-foreground">{product.type}</p>}
                     </div>
                     <Badge variant="secondary" className={statusColors[product.status]}>
-                      {product.status.replace('_', ' ')}
+                      {formatStatus(product.status)}
                     </Badge>
                   </div>
                   {product.prices?.length > 0 && (
@@ -254,9 +255,10 @@ export default function DashboardProductsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="AVAILABLE">Available</SelectItem>
+                      <SelectItem value="IN_STOCK">In Stock</SelectItem>
+                      <SelectItem value="LOW_STOCK">Low Stock</SelectItem>
                       <SelectItem value="OUT_OF_STOCK">Out of Stock</SelectItem>
-                      <SelectItem value="DISCONTINUED">Discontinued</SelectItem>
+                      <SelectItem value="COMING_SOON">Coming Soon</SelectItem>
                     </SelectContent>
                   </Select>
                 )}

@@ -10,6 +10,7 @@ import ProductCard from '@/components/features/products/product-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { MapPin } from 'lucide-react';
+import { formatStatus } from '@/lib/utils';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -71,7 +72,7 @@ export default function BusinessStorefrontPage({ params }: Props) {
               className="text-white"
               style={{ backgroundColor: business.themeColor ?? '#16a34a' }}
             >
-              {business.status}
+              {formatStatus(business.status)}
             </Badge>
           </div>
           {business.description && (

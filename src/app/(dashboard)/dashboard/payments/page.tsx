@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CreditCard } from 'lucide-react';
+import { formatStatus } from '@/lib/utils';
 import { format } from 'date-fns';
 
 const gatewayColors: Record<string, string> = {
@@ -75,7 +76,7 @@ export default function DashboardPaymentsPage() {
                       variant="secondary"
                       className={payment.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}
                     >
-                      {payment.status}
+                      {formatStatus(payment.status)}
                     </Badge>
                   </div>
                 </div>

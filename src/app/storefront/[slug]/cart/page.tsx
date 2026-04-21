@@ -6,7 +6,8 @@ import { storefrontApi } from '@/lib/api/storefront';
 import { cartApi } from '@/lib/api/cart';
 import { useCartStore } from '@/stores/cart.store';
 import { useAuthStore } from '@/stores/auth.store';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -61,9 +62,9 @@ export default function StorefrontCartPage({ params }: Props) {
       <div className="max-w-2xl mx-auto px-4 py-10 text-center space-y-4">
         <ShoppingCart className="h-16 w-16 text-muted-foreground mx-auto" />
         <h2 className="text-xl font-semibold">Sign in to view your cart</h2>
-        <Button asChild className="bg-primary text-primary-foreground hover:opacity-90">
-          <Link href="/auth/login">Sign In</Link>
-        </Button>
+        <Link href="/auth/login" className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}>
+          Sign In
+        </Link>
       </div>
     );
   }
@@ -89,9 +90,9 @@ export default function StorefrontCartPage({ params }: Props) {
         <div className="text-center py-16 space-y-4">
           <ShoppingCart className="h-16 w-16 text-muted-foreground mx-auto" />
           <h2 className="text-xl font-semibold">Your cart is empty</h2>
-          <Button asChild className="bg-primary text-primary-foreground hover:opacity-90">
-            <Link href="/">Browse Products</Link>
-          </Button>
+          <Link href="/" className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}>
+            Browse Products
+          </Link>
         </div>
       </div>
     );
@@ -149,14 +150,12 @@ export default function StorefrontCartPage({ params }: Props) {
             <p className="text-sm text-muted-foreground">Total</p>
             <p className="text-xl font-bold text-primary">₦{businessCart.totalCost.toLocaleString()}</p>
           </div>
-          <Button
-            asChild
-            className="bg-primary text-primary-foreground hover:opacity-90"
+          <Link
+            href={`/checkout/${businessCart.cartId}`}
+            className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}
           >
-            <Link href={`/checkout/${businessCart.cartId}`}>
-              Checkout
-            </Link>
-          </Button>
+            Checkout
+          </Link>
         </CardFooter>
       </Card>
     </div>

@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cartApi } from '@/lib/api/cart';
 import { useCartStore } from '@/stores/cart.store';
 import { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -58,9 +59,9 @@ export default function CartPage() {
           <ShoppingCart className="h-16 w-16 text-muted-foreground mx-auto" />
           <h2 className="text-xl font-semibold">Your cart is empty</h2>
           <p className="text-muted-foreground">Browse products and add items to your cart.</p>
-          <Button asChild className="bg-primary text-primary-foreground hover:opacity-90">
-            <Link href="/products">Browse Products</Link>
-          </Button>
+          <Link href="/products" className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}>
+            Browse Products
+          </Link>
         </div>
       </div>
     );
@@ -113,14 +114,12 @@ export default function CartPage() {
                 <p className="text-sm text-muted-foreground">Total</p>
                 <p className="text-xl font-bold text-primary">₦{cart.totalCost.toLocaleString()}</p>
               </div>
-              <Button
-                asChild
-                className="bg-primary text-primary-foreground hover:opacity-90"
+              <Link
+                href={`/checkout/${cart.cartId}`}
+                className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}
               >
-                <Link href={`/checkout/${cart.cartId}`}>
-                  Checkout
-                </Link>
-              </Button>
+                Checkout
+              </Link>
             </CardFooter>
           </Card>
         );

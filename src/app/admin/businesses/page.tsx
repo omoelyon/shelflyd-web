@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import BusinessAvatar from '@/components/layout/business-avatar';
 import { toast } from 'sonner';
-import { getApiError } from '@/lib/utils';
+import { getApiError, formatStatus } from '@/lib/utils';
 import type { BusinessStatus } from '@/types';
 
 const statusColors: Record<BusinessStatus, string> = {
@@ -66,7 +66,7 @@ export default function AdminBusinessesPage() {
                     </p>
                   </div>
                   <Badge variant="secondary" className={statusColors[business.status]}>
-                    {business.status}
+                    {formatStatus(business.status)}
                   </Badge>
                   <div className="flex items-center gap-2 shrink-0">
                     {business.status !== 'ACTIVE' && (

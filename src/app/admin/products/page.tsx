@@ -9,11 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { Package } from 'lucide-react';
+import { formatStatus } from '@/lib/utils';
 
 const statusColors: Record<string, string> = {
-  AVAILABLE: 'bg-green-100 text-green-700',
+  IN_STOCK: 'bg-green-100 text-green-700',
+  LOW_STOCK: 'bg-orange-100 text-orange-700',
   OUT_OF_STOCK: 'bg-red-100 text-red-700',
-  DISCONTINUED: 'bg-gray-100 text-gray-700',
+  COMING_SOON: 'bg-blue-100 text-blue-700',
 };
 
 export default function AdminProductsPage() {
@@ -63,7 +65,7 @@ export default function AdminProductsPage() {
                     </p>
                   </div>
                   <Badge variant="secondary" className={statusColors[product.status]}>
-                    {product.status.replace('_', ' ')}
+                    {formatStatus(product.status)}
                   </Badge>
                   {product.prices?.length > 0 && (
                     <p className="text-sm font-semibold text-primary shrink-0">

@@ -1,118 +1,278 @@
+'use client';
+
 import Link from 'next/link';
-import { ArrowRight, ShoppingBag, Store, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { ArrowRight, ShoppingBag, Store, Users, Sparkles, CheckCircle, TrendingUp, Shield, Layers } from 'lucide-react';
 import FeaturedBusinesses from '@/components/features/business/featured-businesses';
+import { useQuery } from '@tanstack/react-query';
+import { categoriesApi } from '@/lib/api/categories';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const stats = [
+  { icon: Store, label: 'Active Businesses', value: '500+' },
+  { icon: ShoppingBag, label: 'Products Listed', value: '12,000+' },
+  { icon: Users, label: 'Happy Customers', value: '35,000+' },
+];
+
+const steps = [
+  {
+    step: '01',
+    title: 'Create an Account',
+    desc: 'Sign up in seconds and set up your profile on Shelflyd.',
+  },
+  {
+    step: '02',
+    title: 'Register Your Business',
+    desc: 'Add your business details, logo, and brand colors. Get approved quickly.',
+  },
+  {
+    step: '03',
+    title: 'Start Selling',
+    desc: 'List your products and start receiving orders from customers across Africa.',
+  },
+];
+
+const sellerPerks = [
+  'Your own subdomain storefront (yourbrand.shelflyd.com)',
+  'Manage products, inventory, and orders from one dashboard',
+  'Accept payments via Paystack, Flutterwave, or Stripe',
+  'Invite team members to manage your store',
+];
 
 export default function LandingPage() {
+  const { data: categories, isLoading: catsLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: categoriesApi.list,
+  });
+
   return (
     <div className="flex flex-col">
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-primary/5 via-white to-primary/10 py-24 px-4">
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-          <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight">
-            Shelflyd — Africa&apos;s Multi-Tenant
-            <span className="text-primary"> Marketplace</span>
+      {/* Hero — dark editorial */}
+      <section className="relative overflow-hidden bg-[#091426] py-28 md:py-36 px-4">
+        {/* Subtle grid texture */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage:
+              'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
+            backgroundSize: '60px 60px',
+          }}
+        />
+        {/* Glow blobs */}
+        <div className="pointer-events-none absolute top-0 left-1/4 h-[500px] w-[500px] rounded-full bg-[#0058be]/20 blur-[120px]" />
+        <div className="pointer-events-none absolute bottom-0 right-1/4 h-[400px] w-[400px] rounded-full bg-[#0058be]/10 blur-[100px]" />
+
+        <div className="relative max-w-5xl mx-auto text-center space-y-8">
+          <div className="inline-flex items-center gap-2 bg-white/10 text-white/80 border border-white/15 rounded-full px-4 py-1.5 text-sm font-medium backdrop-blur-sm">
+            <Sparkles className="h-3.5 w-3.5 text-[#60a5fa]" />
+            Africa&apos;s Multi-Tenant Marketplace
+          </div>
+
+          <h1
+            className="text-5xl md:text-[4.5rem] font-bold text-white leading-[1.05] tracking-tight"
+            style={{ fontFamily: 'var(--font-manrope)' }}
+          >
+            Every business deserves
+            <br />
+            <span className="text-[#60a5fa]">its own storefront</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+
+          <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto leading-relaxed">
             Discover thousands of businesses, shop fresh produce, and connect with sellers across Africa.
-            Start your own storefront in minutes.
+            Launch your own branded store in minutes.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" asChild className="bg-primary text-primary-foreground hover:opacity-90">
-              <Link href="/businesses">
-                Browse Businesses <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/auth/register">Start Selling</Link>
-            </Button>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+            <Link
+              href="/businesses"
+              className="inline-flex items-center justify-center gap-2 h-12 px-8 rounded-lg font-semibold text-base bg-[#0058be] text-white hover:bg-[#0058be]/90 shadow-lg shadow-[#0058be]/30 transition-all"
+            >
+              Browse Businesses <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/auth/register"
+              className="inline-flex items-center justify-center h-12 px-8 rounded-lg font-semibold text-base bg-white/10 text-white border border-white/20 hover:bg-white/15 backdrop-blur-sm transition-all"
+            >
+              Start Selling Free
+            </Link>
+          </div>
+
+          {/* Trust indicators */}
+          <div className="flex flex-wrap items-center justify-center gap-6 pt-4 text-sm text-white/50">
+            <span className="flex items-center gap-1.5"><Shield className="h-4 w-4 text-[#60a5fa]" /> Verified Businesses</span>
+            <span className="flex items-center gap-1.5"><TrendingUp className="h-4 w-4 text-[#60a5fa]" /> 35,000+ Happy Customers</span>
+            <span className="flex items-center gap-1.5"><CheckCircle className="h-4 w-4 text-[#60a5fa]" /> Secure Payments</span>
           </div>
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-16 px-4 bg-white border-y border-border">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-          {[
-            { icon: Store, label: 'Active Businesses', value: '500+' },
-            { icon: ShoppingBag, label: 'Products Listed', value: '12,000+' },
-            { icon: Users, label: 'Happy Customers', value: '35,000+' },
-          ].map(({ icon: Icon, label, value }) => (
-            <div key={label} className="space-y-2">
-              <div className="flex justify-center">
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Icon className="h-6 w-6 text-primary" />
+      {/* Stats — tonal layering, no borders */}
+      <section className="bg-[#f8f9ff] py-16 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {stats.map(({ icon: Icon, label, value }) => (
+              <div
+                key={label}
+                className="flex items-center gap-5 p-7 rounded-2xl bg-white shadow-[0_4px_24px_rgba(9,20,38,0.06)]"
+              >
+                <div className="h-12 w-12 rounded-xl bg-[#eff4ff] flex items-center justify-center shrink-0">
+                  <Icon className="h-6 w-6 text-[#0058be]" />
+                </div>
+                <div>
+                  <div
+                    className="text-3xl font-bold text-[#091426]"
+                    style={{ fontFamily: 'var(--font-manrope)' }}
+                  >
+                    {value}
+                  </div>
+                  <div className="text-sm text-[#64748b] mt-0.5">{label}</div>
                 </div>
               </div>
-              <div className="text-3xl font-bold">{value}</div>
-              <div className="text-muted-foreground text-sm">{label}</div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Categories */}
+      <section className="bg-[#eff4ff] py-16 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-10 text-center">
+            <p className="text-xs font-semibold text-[#0058be] uppercase tracking-[0.1em] mb-2">Browse</p>
+            <h2
+              className="text-3xl font-bold text-[#091426]"
+              style={{ fontFamily: 'var(--font-manrope)' }}
+            >
+              Shop by Category
+            </h2>
+          </div>
+          {catsLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-28 rounded-2xl" />
+              ))}
             </div>
-          ))}
+          ) : categories && categories.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {categories.map((cat) => (
+                <Link
+                  key={cat.id}
+                  href={`/products?category=${encodeURIComponent(cat.name)}`}
+                  className="group flex flex-col items-center gap-2.5 p-5 rounded-2xl bg-white hover:shadow-[0_8px_24px_rgba(9,20,38,0.1)] transition-all duration-200 hover:-translate-y-0.5"
+                >
+                  {cat.icon ? (
+                    <span className="text-3xl">{cat.icon}</span>
+                  ) : (
+                    <Layers className="h-7 w-7 text-[#0058be]" />
+                  )}
+                  <span className="text-sm font-semibold text-[#0b1c30] text-center leading-tight">{cat.name}</span>
+                  <span className="text-[11px] text-[#64748b]">{cat.productCount} items</span>
+                </Link>
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
 
       {/* Featured Businesses */}
-      <section className="py-16 px-4">
+      <section className="py-16 px-4 bg-[#f8f9ff]">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold">Featured Businesses</h2>
-            <Button variant="outline" asChild>
-              <Link href="/businesses">View All</Link>
-            </Button>
+          <div className="flex items-end justify-between mb-10">
+            <div>
+              <p className="text-xs font-semibold text-[#0058be] uppercase tracking-[0.1em] mb-2">Explore</p>
+              <h2
+                className="text-3xl font-bold text-[#091426]"
+                style={{ fontFamily: 'var(--font-manrope)' }}
+              >
+                Featured Businesses
+              </h2>
+            </div>
+            <Link
+              href="/businesses"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-[#0058be] hover:text-[#091426] transition-colors shrink-0"
+            >
+              View All <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
           <FeaturedBusinesses limit={6} />
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 px-4 bg-primary">
-        <div className="max-w-3xl mx-auto text-center space-y-6">
-          <h2 className="text-3xl font-bold text-white">Ready to grow your business?</h2>
-          <p className="text-primary-foreground/80 text-lg">
-            Create your storefront, list your products, and start selling to customers across Africa.
-          </p>
-          <Button
-            size="lg"
-            className="bg-white text-primary hover:bg-white/90 font-semibold"
-            asChild
+      {/* Seller CTA — navy → blue gradient */}
+      <section className="py-20 px-4 bg-[#eff4ff]">
+        <div className="max-w-6xl mx-auto">
+          <div
+            className="rounded-3xl p-10 md:p-14 text-white relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #091426 0%, #0058be 100%)' }}
           >
-            <Link href="/auth/register">Get Started Free</Link>
-          </Button>
+            <div className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-white/5" />
+            <div className="absolute -bottom-24 -left-12 h-80 w-80 rounded-full bg-white/5" />
+
+            <div className="relative grid md:grid-cols-2 gap-10 items-center">
+              <div className="space-y-6">
+                <p className="text-xs font-semibold text-white/60 uppercase tracking-[0.1em]">For Sellers</p>
+                <h2
+                  className="text-3xl md:text-4xl font-bold leading-tight"
+                  style={{ fontFamily: 'var(--font-manrope)' }}
+                >
+                  Ready to grow your business on Shelflyd?
+                </h2>
+                <p className="text-white/65 text-base leading-relaxed">
+                  Get your own branded storefront and start selling to customers across Africa today.
+                </p>
+                <Link
+                  href="/auth/register"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg font-semibold bg-white text-[#091426] hover:bg-white/90 h-12 px-7 text-base shadow-lg transition-all"
+                >
+                  Get Started Free <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+
+              <ul className="space-y-3.5">
+                {sellerPerks.map((perk) => (
+                  <li key={perk} className="flex items-start gap-3">
+                    <div className="h-5 w-5 rounded-full bg-white/15 flex items-center justify-center shrink-0 mt-0.5">
+                      <CheckCircle className="h-3 w-3 text-white" />
+                    </div>
+                    <span className="text-sm text-white/80 leading-relaxed">{perk}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* How it works */}
-      <section className="py-16 px-4 bg-muted/30">
+      <section className="py-20 px-4 bg-[#f8f9ff]">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-12">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                step: '1',
-                title: 'Create an Account',
-                desc: 'Sign up in seconds and set up your profile.',
-              },
-              {
-                step: '2',
-                title: 'Register Your Business',
-                desc: 'Add your business details and get approved quickly.',
-              },
-              {
-                step: '3',
-                title: 'Start Selling',
-                desc: 'List products and receive orders from customers.',
-              },
-            ].map(({ step, title, desc }) => (
-              <Card key={step} className="text-center">
-                <CardContent className="pt-6 space-y-3">
-                  <div className="h-12 w-12 rounded-full bg-primary text-primary-foreground text-lg font-bold flex items-center justify-center mx-auto">
-                    {step}
-                  </div>
-                  <h3 className="font-semibold text-lg">{title}</h3>
-                  <p className="text-muted-foreground text-sm">{desc}</p>
-                </CardContent>
-              </Card>
+          <div className="text-center mb-14">
+            <p className="text-xs font-semibold text-[#0058be] uppercase tracking-[0.1em] mb-2">Simple Process</p>
+            <h2
+              className="text-3xl font-bold text-[#091426]"
+              style={{ fontFamily: 'var(--font-manrope)' }}
+            >
+              How It Works
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+            <div className="hidden md:block absolute top-10 left-[calc(33%+1rem)] right-[calc(33%+1rem)] h-px bg-gradient-to-r from-transparent via-[#0058be]/30 to-transparent" />
+
+            {steps.map(({ step, title, desc }) => (
+              <div key={step} className="relative bg-white rounded-2xl p-7 text-center shadow-[0_4px_24px_rgba(9,20,38,0.06)]">
+                <div
+                  className="h-14 w-14 rounded-2xl bg-[#091426] text-white text-lg font-bold flex items-center justify-center mx-auto mb-5 shadow-lg shadow-[#091426]/30"
+                  style={{ fontFamily: 'var(--font-manrope)' }}
+                >
+                  {step}
+                </div>
+                <h3
+                  className="font-bold text-base mb-2 text-[#091426]"
+                  style={{ fontFamily: 'var(--font-manrope)' }}
+                >
+                  {title}
+                </h3>
+                <p className="text-[#64748b] text-sm leading-relaxed">{desc}</p>
+              </div>
             ))}
           </div>
         </div>

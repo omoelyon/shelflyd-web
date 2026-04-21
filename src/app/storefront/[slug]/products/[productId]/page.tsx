@@ -7,7 +7,8 @@ import { storefrontApi } from '@/lib/api/storefront';
 import { cartApi } from '@/lib/api/cart';
 import { useCartStore } from '@/stores/cart.store';
 import { useAuthStore } from '@/stores/auth.store';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn, formatStatus } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -98,12 +99,13 @@ export default function StorefrontProductPage({ params }: Props) {
               <Badge
                 variant="secondary"
                 className={
-                  product.status === 'AVAILABLE'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-red-100 text-red-700'
+                  product.status === 'IN_STOCK' ? 'bg-green-100 text-green-700'
+                  : product.status === 'LOW_STOCK' ? 'bg-orange-100 text-orange-700'
+                  : product.status === 'COMING_SOON' ? 'bg-blue-100 text-blue-700'
+                  : 'bg-red-100 text-red-700'
                 }
               >
-                {product.status.replace('_', ' ')}
+                {formatStatus(product.status)}
               </Badge>
             </div>
             <h1 className="text-3xl font-bold">{product.name}</h1>
@@ -156,16 +158,16 @@ export default function StorefrontProductPage({ params }: Props) {
             <Button
               className="w-full bg-primary text-primary-foreground hover:opacity-90"
               size="lg"
-              disabled={!selectedUnitId || product.status !== 'AVAILABLE' || addToCart.isPending}
+              disabled={!selectedUnitId || (product.status !== 'IN_STOCK' && product.status !== 'LOW_STOCK') || addToCart.isPending}
               onClick={() => addToCart.mutate()}
             >
               <ShoppingCart className="mr-2 h-4 w-4" />
               {addToCart.isPending ? 'Adding...' : 'Add to Cart'}
             </Button>
           ) : (
-            <Button variant="outline" size="lg" className="w-full" asChild>
-              <Link href="/auth/login">Login to Add to Cart</Link>
-            </Button>
+            <Link href="/auth/login" className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'w-full')}>
+              Login to Add to Cart
+            </Link>
           )}
         </div>
       </div>

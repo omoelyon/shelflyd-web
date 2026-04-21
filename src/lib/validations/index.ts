@@ -51,7 +51,7 @@ export const createProductSchema = z.object({
   description: z.string().optional(),
   category: z.number().optional(),
   image: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  status: z.enum(['AVAILABLE', 'OUT_OF_STOCK', 'DISCONTINUED']).optional(),
+  status: z.enum(['COMING_SOON', 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK']).optional(),
 });
 
 export const inviteTeammateSchema = z.object({
