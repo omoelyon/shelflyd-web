@@ -79,8 +79,8 @@ export default function CartPage() {
               <CardTitle className="text-base">Cart #{cart.cartId}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {cart.products.map((product, i) => (
-                <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-muted/40">
+              {cart.products.map((product) => (
+                <div key={product.productId} className="flex items-center gap-4 p-3 rounded-lg bg-muted/40">
                   <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-muted shrink-0">
                     {product.image ? (
                       <Image src={product.image} alt={product.name} fill className="object-cover" unoptimized />
@@ -100,7 +100,7 @@ export default function CartPage() {
                       variant="ghost"
                       size="sm"
                       className="text-destructive hover:text-destructive mt-1"
-                      onClick={() => removeProductMutation.mutate(i)}
+                      onClick={() => removeProductMutation.mutate(product.productId)}
                       disabled={removeProductMutation.isPending}
                     >
                       <Trash2 className="h-3 w-3" />

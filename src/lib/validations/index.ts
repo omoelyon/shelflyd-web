@@ -54,6 +54,12 @@ export const createProductSchema = z.object({
   status: z.enum(['COMING_SOON', 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK']).optional(),
 });
 
+export const addPriceSchema = z.object({
+  unitName: z.string().min(1, 'Unit name is required (e.g. Bag, Carton, Piece)'),
+  price: z.number().positive('Price must be greater than 0'),
+  currency: z.enum(['NGN', 'USD']),
+});
+
 export const inviteTeammateSchema = z.object({
   email: z.string().email('Invalid email address'),
   role: z.enum(['ADMIN', 'MEMBER']),
@@ -83,3 +89,4 @@ export type InviteTeammateFormValues = z.infer<typeof inviteTeammateSchema>;
 export type AcceptInviteFormValues = z.infer<typeof acceptInviteSchema>;
 export type DeliveryLocationFormValues = z.infer<typeof deliveryLocationSchema>;
 export type CheckoutFormValues = z.infer<typeof checkoutSchema>;
+export type AddPriceFormValues = z.infer<typeof addPriceSchema>;

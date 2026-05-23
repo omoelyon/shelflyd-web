@@ -3,14 +3,15 @@
 import Link from 'next/link';
 import { ArrowRight, ShoppingBag, Store, Users, Sparkles, CheckCircle, TrendingUp, Shield, Layers } from 'lucide-react';
 import FeaturedBusinesses from '@/components/features/business/featured-businesses';
+import StatCard from '@/components/ui/stat-card';
 import { useQuery } from '@tanstack/react-query';
 import { categoriesApi } from '@/lib/api/categories';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const stats = [
-  { icon: Store, label: 'Active Businesses', value: '500+' },
-  { icon: ShoppingBag, label: 'Products Listed', value: '12,000+' },
-  { icon: Users, label: 'Happy Customers', value: '35,000+' },
+const platformStats = [
+  { icon: Store,    label: 'Active Businesses', value: '500+',    accent: '#0058be', bg: '#eff4ff' },
+  { icon: ShoppingBag, label: 'Products Listed', value: '12,000+', accent: '#059669', bg: '#ecfdf5' },
+  { icon: Users,    label: 'Happy Customers',   value: '35,000+', accent: '#d97706', bg: '#fffbeb' },
 ];
 
 const steps = [
@@ -46,9 +47,9 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col">
-      {/* Hero — dark editorial */}
+      {/* ── Hero — dark editorial ── */}
       <section className="relative overflow-hidden bg-[#091426] py-28 md:py-36 px-4">
-        {/* Subtle grid texture */}
+        {/* Grid texture */}
         <div
           className="absolute inset-0 opacity-[0.04]"
           style={{
@@ -67,10 +68,7 @@ export default function LandingPage() {
             Africa&apos;s Multi-Tenant Marketplace
           </div>
 
-          <h1
-            className="text-5xl md:text-[4.5rem] font-bold text-white leading-[1.05] tracking-tight"
-            style={{ fontFamily: 'var(--font-manrope)' }}
-          >
+          <h1 className="text-5xl md:text-[4.5rem] font-bold text-white leading-[1.05] tracking-tight font-heading">
             Every business deserves
             <br />
             <span className="text-[#60a5fa]">its own storefront</span>
@@ -98,52 +96,38 @@ export default function LandingPage() {
 
           {/* Trust indicators */}
           <div className="flex flex-wrap items-center justify-center gap-6 pt-4 text-sm text-white/50">
-            <span className="flex items-center gap-1.5"><Shield className="h-4 w-4 text-[#60a5fa]" /> Verified Businesses</span>
-            <span className="flex items-center gap-1.5"><TrendingUp className="h-4 w-4 text-[#60a5fa]" /> 35,000+ Happy Customers</span>
-            <span className="flex items-center gap-1.5"><CheckCircle className="h-4 w-4 text-[#60a5fa]" /> Secure Payments</span>
+            <span className="flex items-center gap-1.5">
+              <Shield className="h-4 w-4 text-[#60a5fa]" /> Verified Businesses
+            </span>
+            <span className="flex items-center gap-1.5">
+              <TrendingUp className="h-4 w-4 text-[#60a5fa]" /> 35,000+ Happy Customers
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle className="h-4 w-4 text-[#60a5fa]" /> Secure Payments
+            </span>
           </div>
         </div>
       </section>
 
-      {/* Stats — tonal layering, no borders */}
+      {/* ── Stats — tonal layering ── */}
       <section className="bg-[#f8f9ff] py-16 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {stats.map(({ icon: Icon, label, value }) => (
-              <div
-                key={label}
-                className="flex items-center gap-5 p-7 rounded-2xl bg-white shadow-[0_4px_24px_rgba(9,20,38,0.06)]"
-              >
-                <div className="h-12 w-12 rounded-xl bg-[#eff4ff] flex items-center justify-center shrink-0">
-                  <Icon className="h-6 w-6 text-[#0058be]" />
-                </div>
-                <div>
-                  <div
-                    className="text-3xl font-bold text-[#091426]"
-                    style={{ fontFamily: 'var(--font-manrope)' }}
-                  >
-                    {value}
-                  </div>
-                  <div className="text-sm text-[#64748b] mt-0.5">{label}</div>
-                </div>
-              </div>
+            {platformStats.map((s) => (
+              <StatCard key={s.label} {...s} className="p-7 shadow-card-lg" />
             ))}
           </div>
         </div>
       </section>
 
-      {/* Categories */}
+      {/* ── Categories ── */}
       <section className="bg-[#eff4ff] py-16 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="mb-10 text-center">
             <p className="text-xs font-semibold text-[#0058be] uppercase tracking-[0.1em] mb-2">Browse</p>
-            <h2
-              className="text-3xl font-bold text-[#091426]"
-              style={{ fontFamily: 'var(--font-manrope)' }}
-            >
-              Shop by Category
-            </h2>
+            <h2 className="text-3xl font-bold text-[#091426] font-heading">Shop by Category</h2>
           </div>
+
           {catsLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -156,14 +140,16 @@ export default function LandingPage() {
                 <Link
                   key={cat.id}
                   href={`/products?category=${encodeURIComponent(cat.name)}`}
-                  className="group flex flex-col items-center gap-2.5 p-5 rounded-2xl bg-white hover:shadow-[0_8px_24px_rgba(9,20,38,0.1)] transition-all duration-200 hover:-translate-y-0.5"
+                  className="group flex flex-col items-center gap-2.5 p-5 rounded-2xl bg-white hover:shadow-card-hover transition-all duration-200 hover:-translate-y-0.5"
                 >
                   {cat.icon ? (
                     <span className="text-3xl">{cat.icon}</span>
                   ) : (
                     <Layers className="h-7 w-7 text-[#0058be]" />
                   )}
-                  <span className="text-sm font-semibold text-[#0b1c30] text-center leading-tight">{cat.name}</span>
+                  <span className="text-sm font-semibold text-[#0b1c30] text-center leading-tight">
+                    {cat.name}
+                  </span>
                   <span className="text-[11px] text-[#64748b]">{cat.productCount} items</span>
                 </Link>
               ))}
@@ -172,18 +158,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Featured Businesses */}
+      {/* ── Featured Businesses ── */}
       <section className="py-16 px-4 bg-[#f8f9ff]">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-end justify-between mb-10">
             <div>
               <p className="text-xs font-semibold text-[#0058be] uppercase tracking-[0.1em] mb-2">Explore</p>
-              <h2
-                className="text-3xl font-bold text-[#091426]"
-                style={{ fontFamily: 'var(--font-manrope)' }}
-              >
-                Featured Businesses
-              </h2>
+              <h2 className="text-3xl font-bold text-[#091426] font-heading">Featured Businesses</h2>
             </div>
             <Link
               href="/businesses"
@@ -196,23 +177,19 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Seller CTA — navy → blue gradient */}
+      {/* ── Seller CTA ── */}
       <section className="py-20 px-4 bg-[#eff4ff]">
         <div className="max-w-6xl mx-auto">
-          <div
-            className="rounded-3xl p-10 md:p-14 text-white relative overflow-hidden"
-            style={{ background: 'linear-gradient(135deg, #091426 0%, #0058be 100%)' }}
-          >
-            <div className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-white/5" />
-            <div className="absolute -bottom-24 -left-12 h-80 w-80 rounded-full bg-white/5" />
+          <div className="rounded-3xl p-10 md:p-14 text-white relative overflow-hidden gradient-primary">
+            <div className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-white/[0.05]" />
+            <div className="absolute -bottom-24 -left-12 h-80 w-80 rounded-full bg-white/[0.05]" />
 
             <div className="relative grid md:grid-cols-2 gap-10 items-center">
               <div className="space-y-6">
-                <p className="text-xs font-semibold text-white/60 uppercase tracking-[0.1em]">For Sellers</p>
-                <h2
-                  className="text-3xl md:text-4xl font-bold leading-tight"
-                  style={{ fontFamily: 'var(--font-manrope)' }}
-                >
+                <p className="text-xs font-semibold text-white/60 uppercase tracking-[0.1em]">
+                  For Sellers
+                </p>
+                <h2 className="text-3xl md:text-4xl font-bold leading-tight font-heading">
                   Ready to grow your business on Shelflyd?
                 </h2>
                 <p className="text-white/65 text-base leading-relaxed">
@@ -241,36 +218,26 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How it works */}
+      {/* ── How it works ── */}
       <section className="py-20 px-4 bg-[#f8f9ff]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-xs font-semibold text-[#0058be] uppercase tracking-[0.1em] mb-2">Simple Process</p>
-            <h2
-              className="text-3xl font-bold text-[#091426]"
-              style={{ fontFamily: 'var(--font-manrope)' }}
-            >
-              How It Works
-            </h2>
+            <p className="text-xs font-semibold text-[#0058be] uppercase tracking-[0.1em] mb-2">
+              Simple Process
+            </p>
+            <h2 className="text-3xl font-bold text-[#091426] font-heading">How It Works</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+            {/* Connector line */}
             <div className="hidden md:block absolute top-10 left-[calc(33%+1rem)] right-[calc(33%+1rem)] h-px bg-gradient-to-r from-transparent via-[#0058be]/30 to-transparent" />
 
             {steps.map(({ step, title, desc }) => (
-              <div key={step} className="relative bg-white rounded-2xl p-7 text-center shadow-[0_4px_24px_rgba(9,20,38,0.06)]">
-                <div
-                  className="h-14 w-14 rounded-2xl bg-[#091426] text-white text-lg font-bold flex items-center justify-center mx-auto mb-5 shadow-lg shadow-[#091426]/30"
-                  style={{ fontFamily: 'var(--font-manrope)' }}
-                >
+              <div key={step} className="relative bg-white rounded-2xl p-7 text-center shadow-card-lg">
+                <div className="h-14 w-14 rounded-2xl bg-[#091426] text-white text-lg font-bold font-heading flex items-center justify-center mx-auto mb-5 shadow-lg shadow-[#091426]/30">
                   {step}
                 </div>
-                <h3
-                  className="font-bold text-base mb-2 text-[#091426]"
-                  style={{ fontFamily: 'var(--font-manrope)' }}
-                >
-                  {title}
-                </h3>
+                <h3 className="font-bold text-base mb-2 text-[#091426] font-heading">{title}</h3>
                 <p className="text-[#64748b] text-sm leading-relaxed">{desc}</p>
               </div>
             ))}

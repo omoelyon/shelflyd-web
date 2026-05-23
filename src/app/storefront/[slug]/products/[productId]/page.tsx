@@ -67,7 +67,7 @@ export default function StorefrontProductPage({ params }: Props) {
     );
   }
 
-  const selectedPrice = product.prices?.find((p) => p.unitId === Number(selectedUnitId));
+  const selectedPrice = product.prices?.find((p) => p.unit === Number(selectedUnitId));
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
@@ -124,8 +124,8 @@ export default function StorefrontProductPage({ params }: Props) {
                 </SelectTrigger>
                 <SelectContent>
                   {product.prices.map((p) => (
-                    <SelectItem key={p.unitId} value={String(p.unitId)}>
-                      Unit #{p.unitId} — {p.currency} {p.price.toLocaleString()}
+                    <SelectItem key={p.unit} value={String(p.unit)}>
+                      {p.unitName} — {p.currency} {p.price.toLocaleString()}
                     </SelectItem>
                   ))}
                 </SelectContent>

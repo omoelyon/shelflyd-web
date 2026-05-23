@@ -49,75 +49,123 @@
 }
 
 :root {
-  /* Aeon Exchange — "Architectural Marketplace" */
-  --background: #f8f9ff;
-  --foreground: #0b1c30;
-  --card: #ffffff;
+  /* ── Aeon Exchange — "Architectural Marketplace" ── */
+
+  /* Core surfaces */
+  --background:  #f8f9ff;
+  --foreground:  #0b1c30;
+  --card:        #ffffff;
   --card-foreground: #0b1c30;
-  --popover: #ffffff;
+  --popover:     #ffffff;
   --popover-foreground: #0b1c30;
-  /* Platform default navy — overridden per-business at runtime via JS */
-  --primary: #091426;
+
+  /* Aeon tonal surface scale */
+  --surface:                  #f8f9ff;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low:    #eff4ff;
+  --surface-container:        #e5eeff;
+  --surface-container-high:   #dce9ff;
+  --surface-container-highest:#d3e4fe;
+  --surface-dim:              #cbdbf5;
+  --on-surface:               #0b1c30;
+  --on-surface-variant:       #45474c;
+  --outline-variant:          rgba(9, 20, 38, 0.10);
+
+  /* Brand */
+  --primary:            #091426;
   --primary-foreground: #ffffff;
-  --secondary: #eff4ff;
-  --secondary-foreground: #0b1c30;
-  --muted: #eff4ff;
-  --muted-foreground: #64748b;
-  --accent: #eff4ff;
-  --accent-foreground: #0b1c30;
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #091426;
+  --secondary:          #0058be;
+  --secondary-foreground: #ffffff;
+  --secondary-container: #2170e4;
+
+  /* Utility roles */
+  --muted:              #eff4ff;
+  --muted-foreground:   #64748b;
+  --accent:             #eff4ff;
+  --accent-foreground:  #0b1c30;
+  --destructive:        oklch(0.577 0.245 27.325);
+
+  /* Borders — Aeon uses near-invisible tonal lines, not grey strokes */
+  --border:  rgba(9, 20, 38, 0.08);
+  --input:   rgba(9, 20, 38, 0.08);
+  --ring:    #091426;
+
+  /* Charts */
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --radius: 0.5rem;
-  /* Sidebar — dark navy to match admin/dashboard theme */
-  --sidebar: #091426;
-  --sidebar-foreground: #cbd5e1;
-  --sidebar-primary: #0058be;
+
+  /* Radius */
+  --radius: 0.625rem;
+
+  /* Dark navy sidebar */
+  --sidebar:                    #091426;
+  --sidebar-foreground:         #cbd5e1;
+  --sidebar-primary:            #0058be;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: rgba(255, 255, 255, 0.07);
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgba(255, 255, 255, 0.07);
-  --sidebar-ring: #0058be;
+  --sidebar-accent:             rgba(255, 255, 255, 0.07);
+  --sidebar-accent-foreground:  #ffffff;
+  --sidebar-border:             rgba(255, 255, 255, 0.07);
+  --sidebar-ring:               #0058be;
+
+  /* Ambient elevation shadow */
+  --shadow-ambient: 0 20px 40px rgba(11, 28, 48, 0.06);
+  --shadow-card:    0 1px 3px rgba(9, 20, 38, 0.06), 0 1px 2px rgba(9, 20, 38, 0.04);
 }
 
 .dark {
-  --background: #0b1c30;
-  --foreground: #e2e8f0;
-  --card: #0f2540;
+  --background:  #0b1c30;
+  --foreground:  #e2e8f0;
+  --card:        #0f2540;
   --card-foreground: #e2e8f0;
-  --popover: #0f2540;
+  --popover:     #0f2540;
   --popover-foreground: #e2e8f0;
-  --primary: #3b82f6;
+
+  --surface:                  #0b1c30;
+  --surface-container-lowest: #060f1a;
+  --surface-container-low:    #0f2540;
+  --surface-container:        #142e50;
+  --surface-container-high:   #1a3860;
+  --surface-container-highest:#213d6a;
+  --on-surface:               #e2e8f0;
+  --on-surface-variant:       #94a3b8;
+  --outline-variant:          rgba(255, 255, 255, 0.08);
+
+  --primary:            #3b82f6;
   --primary-foreground: #ffffff;
-  --secondary: #1e3a5f;
-  --secondary-foreground: #e2e8f0;
-  --muted: #1e3a5f;
-  --muted-foreground: #94a3b8;
-  --accent: #1e3a5f;
-  --accent-foreground: #e2e8f0;
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.12);
-  --ring: #3b82f6;
+  --secondary:          #3b82f6;
+  --secondary-foreground: #ffffff;
+  --secondary-container: #1d4ed8;
+
+  --muted:              #1e3a5f;
+  --muted-foreground:   #94a3b8;
+  --accent:             #1e3a5f;
+  --accent-foreground:  #e2e8f0;
+  --destructive:        oklch(0.704 0.191 22.216);
+
+  --border:  rgba(255, 255, 255, 0.08);
+  --input:   rgba(255, 255, 255, 0.12);
+  --ring:    #3b82f6;
+
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: #060f1a;
-  --sidebar-foreground: #94a3b8;
-  --sidebar-primary: #3b82f6;
+
+  --sidebar:                    #060f1a;
+  --sidebar-foreground:         #94a3b8;
+  --sidebar-primary:            #3b82f6;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: rgba(255, 255, 255, 0.06);
-  --sidebar-accent-foreground: #e2e8f0;
-  --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-ring: #3b82f6;
+  --sidebar-accent:             rgba(255, 255, 255, 0.06);
+  --sidebar-accent-foreground:  #e2e8f0;
+  --sidebar-border:             rgba(255, 255, 255, 0.06);
+  --sidebar-ring:               #3b82f6;
+
+  --shadow-ambient: 0 20px 40px rgba(0, 0, 0, 0.3);
+  --shadow-card:    0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 @layer base {
@@ -135,45 +183,94 @@
     font-family: var(--font-manrope), var(--font-inter), system-ui, sans-serif;
   }
 
-  ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 9999px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-  }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
   ::selection {
     background-color: color-mix(in srgb, var(--primary) 15%, transparent);
   }
 }
 
-/* Dynamic primary colour helpers */
-.bg-primary\/10 {
-  background-color: color-mix(in srgb, var(--primary) 10%, transparent);
+/* ── Aeon surface utilities ──────────────────────────────────────────────── */
+.bg-surface                   { background-color: var(--surface); }
+.bg-surface-low               { background-color: var(--surface-container-low); }
+.bg-surface-container         { background-color: var(--surface-container); }
+.bg-surface-high              { background-color: var(--surface-container-high); }
+.bg-surface-highest           { background-color: var(--surface-container-highest); }
+.bg-surface-lowest            { background-color: var(--surface-container-lowest); }
+.text-on-surface              { color: var(--on-surface); }
+.text-on-surface-variant      { color: var(--on-surface-variant); }
+.border-outline-variant       { border-color: var(--outline-variant); }
+.shadow-ambient               { box-shadow: var(--shadow-ambient); }
+.shadow-card                  { box-shadow: var(--shadow-card); }
+
+/* ── Aeon glassmorphism helpers ──────────────────────────────────────────── */
+.glass {
+  background-color: rgba(248, 249, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
-.bg-primary\/8 {
-  background-color: color-mix(in srgb, var(--primary) 8%, transparent);
+.glass-dark {
+  background-color: rgba(9, 20, 38, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
-.bg-primary\/15 {
-  background-color: color-mix(in srgb, var(--primary) 15%, transparent);
+.glass-surface {
+  background-color: color-mix(in srgb, var(--surface-container-low) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
-.text-primary {
-  color: var(--primary);
+
+/* ── Gradient CTA button ─────────────────────────────────────────────────── */
+.btn-primary-gradient {
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-container) 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 88, 190, 0.25);
+  transition: opacity 150ms ease, transform 150ms ease, box-shadow 150ms ease;
 }
-.border-primary {
-  border-color: var(--primary);
+.btn-primary-gradient:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 88, 190, 0.30);
 }
-.ring-primary {
-  --tw-ring-color: var(--primary);
+
+/* ── Dynamic primary colour helpers ─────────────────────────────────────── */
+.bg-primary\/10  { background-color: color-mix(in srgb, var(--primary) 10%, transparent); }
+.bg-primary\/8   { background-color: color-mix(in srgb, var(--primary)  8%, transparent); }
+.bg-primary\/15  { background-color: color-mix(in srgb, var(--primary) 15%, transparent); }
+.text-primary    { color: var(--primary); }
+.border-primary  { border-color: var(--primary); }
+.ring-primary    { --tw-ring-color: var(--primary); }
+.shadow-primary\/20 { --tw-shadow-color: color-mix(in srgb, var(--primary) 20%, transparent); }
+
+/* ── Aeon elevation scale ────────────────────────────────────────────────── */
+/* "shadow-card"  is defined above (--shadow-card CSS var, very subtle).     */
+/* These named shadows match the pattern used across dashboard pages.        */
+.shadow-card-md   { box-shadow: 0 2px 12px rgba(9, 20, 38, 0.06); }
+.shadow-card-lg   { box-shadow: 0 4px 24px rgba(9, 20, 38, 0.08); }
+.shadow-card-hover{ box-shadow: 0 4px 20px rgba(9, 20, 38, 0.10); }
+
+/* ── Gradient helpers ────────────────────────────────────────────────────── */
+.gradient-primary {
+  background: linear-gradient(135deg, #091426 0%, #0058be 100%);
 }
-.shadow-primary\/20 {
-  --tw-shadow-color: color-mix(in srgb, var(--primary) 20%, transparent);
+.gradient-primary-soft {
+  background: linear-gradient(135deg, #0d1f3c 0%, #1565c0 100%);
+}
+
+/* ── Typography helpers ──────────────────────────────────────────────────── */
+/* Manrope is already applied to h1–h6 in @layer base. Use .font-heading     */
+/* for non-heading elements (stat numbers, card titles, labels) that need it. */
+.font-heading {
+  font-family: var(--font-manrope), var(--font-inter), system-ui, sans-serif;
+}
+
+/* ── Aeon card shell ─────────────────────────────────────────────────────── */
+/* Consistent surface for cards, replacing Card from shadcn when needed.    */
+.card-aeon {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 2px 12px rgba(9, 20, 38, 0.06);
 }

@@ -13,7 +13,11 @@ export const categoriesApi = {
   },
 
   update: async (id: number, data: CreateCategoryRequest): Promise<Category> => {
-    const res = await apiClient.put(`/categories/${id}`, data);
+    const res = await apiClient.put(`/admin/categories/${id}`, data);
     return res.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await apiClient.delete(`/admin/categories/${id}`);
   },
 };

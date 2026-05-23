@@ -62,7 +62,7 @@ export default function ProductDetailPage({ params }: Props) {
     return <div className="text-center py-24 text-muted-foreground">Product not found.</div>;
   }
 
-  const selectedPrice = product.prices?.find((p) => p.unitId === Number(selectedUnitId));
+  const selectedPrice = product.prices?.find((p) => p.unit === Number(selectedUnitId));
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-10">
@@ -110,8 +110,8 @@ export default function ProductDetailPage({ params }: Props) {
               </SelectTrigger>
               <SelectContent>
                 {product.prices.map((p) => (
-                  <SelectItem key={p.unitId} value={String(p.unitId)}>
-                    Unit #{p.unitId} — {p.currency} {p.price.toLocaleString()}
+                  <SelectItem key={p.unit} value={String(p.unit)}>
+                    {p.unitName} — {p.currency} {p.price.toLocaleString()}
                   </SelectItem>
                 ))}
               </SelectContent>

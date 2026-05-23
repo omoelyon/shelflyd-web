@@ -30,4 +30,13 @@ export const productsApi = {
     const res = await apiClient.get('/admin/products', { params: { page, size } });
     return res.data;
   },
+
+  uploadImage: async (file: File): Promise<{ url: string }> => {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await apiClient.post('/business/products/image/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  },
 };

@@ -31,8 +31,9 @@ export default function CheckoutPage({ params }: Props) {
   const cart = carts?.find((c) => c.cartId === cartId);
 
   const { data: locations } = useQuery({
-    queryKey: ['delivery-locations'],
-    queryFn: deliveryApi.list,
+    queryKey: ['delivery-locations', cart?.businessId],
+    queryFn: () => deliveryApi.listByBusiness(cart!.businessId),
+    enabled: !!cart?.businessId,
   });
 
   const {

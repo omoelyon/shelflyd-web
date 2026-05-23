@@ -120,8 +120,10 @@ export interface Price extends BaseEntity {
 }
 
 export interface PriceDetail {
-  unitId: number;
+  id: number;
   price: number;
+  unit: number;      // unitId
+  unitName: string;
   currency: Currency;
 }
 
@@ -133,7 +135,7 @@ export interface Product extends BaseEntity {
   image: string;
   status: ProductStatus;
   businessId: number;
-  prices: Price[];
+  prices: PriceDetail[];  // backend field name: "prices" (PriceDetail shape)
 }
 
 export interface CreateProductRequest {
@@ -149,6 +151,7 @@ export interface CreateProductRequest {
 // ─── Cart ─────────────────────────────────────────────────────────────────────
 
 export interface CartProduct {
+  productId: number;
   name: string;
   type: string;
   image: string;
@@ -160,6 +163,7 @@ export interface CartProduct {
 
 export interface CartResponse {
   cartId: number;
+  businessId: number;
   products: CartProduct[];
   totalCost: number;
 }
@@ -254,11 +258,28 @@ export interface UpdateInventoryRequest {
   quantity: number;
 }
 
+// ─── Units ───────────────────────────────────────────────────────────────────
+
+export interface Unit extends BaseEntity {
+  name: string;
+  symbol: string;
+  description?: string;
+  productId: number;
+  isBaseUnit: boolean;
+  weight: number;
+}
+
 // ─── Pricing ─────────────────────────────────────────────────────────────────
 
 export interface CreatePriceRequest {
   productId: number;
   unitId: number;
+  price: number;
+  currency: Currency;
+}
+
+export interface AddProductPriceRequest {
+  unitName: string;
   price: number;
   currency: Currency;
 }
@@ -311,6 +332,13 @@ export interface SpringPage<T> {
 export type PagedProducts = SpringPage<Product>;
 export type PagedOrders = SpringPage<Order>;
 export type PagedPayments = SpringPage<Payment>;
+
+// ─── Analytics ───────────────────────────────────────────────────────────────
+
+export interface RevenueDataPoint {
+  date: string;    // "YYYY-MM-DD"
+  revenue: number;
+}
 
 // ─── API Error ────────────────────────────────────────────────────────────────
 

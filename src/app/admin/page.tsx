@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { businessesApi } from '@/lib/api/businesses';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Building2, CheckCircle, Clock, Ban, ArrowUpRight, TrendingUp, Package } from 'lucide-react';
+import { Building2, CheckCircle, Clock, Ban, ArrowUpRight, Package } from 'lucide-react';
 import Link from 'next/link';
 import { formatStatus } from '@/lib/utils';
 

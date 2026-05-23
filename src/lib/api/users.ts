@@ -7,3 +7,10 @@ export const usersApi = {
     return res.data;
   },
 };
+
+export const adminUsersApi = {
+  list: async (): Promise<User[]> => {
+    const res = await apiClient.get('/admin/users');
+    return res.data;
+  },
+};

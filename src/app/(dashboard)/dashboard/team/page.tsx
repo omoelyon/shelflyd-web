@@ -6,14 +6,15 @@ import { teamsApi } from '@/lib/api/teams';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { inviteTeammateSchema, type InviteTeammateFormValues } from '@/lib/validations';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import PageHeader from '@/components/ui/page-header';
+import EmptyState from '@/components/ui/empty-state';
+import StatusBadge from '@/components/ui/status-badge';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
 import { UserPlus, Users, X, Mail } from 'lucide-react';
@@ -70,59 +71,62 @@ export default function DashboardTeamPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Team</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            Manage your team members and invites.
+      <PageHeader
+        title="Team"
+        subtitle="Manage your team members and invites."
+        action={
+          <Button
+            onClick={() => setInviteDialogOpen(true)}
+            className="bg-[#091426] text-white hover:bg-[#091426]/90"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Invite Member
+          </Button>
+        }
+      />
+
+      {/* ── Active members ── */}
+      <div className="bg-white rounded-2xl shadow-card-md overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-[#f1f5f9]">
+          <Users className="h-4 w-4 text-[#64748b]" />
+          <p className="font-semibold text-sm text-[#091426] font-heading">
+            Active Members ({members?.length ?? 0})
           </p>
         </div>
-        <Button
-          onClick={() => setInviteDialogOpen(true)}
-          className="bg-primary text-primary-foreground hover:opacity-90"
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          Invite Member
-        </Button>
-      </div>
-
-      {/* Active members */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Active Members ({members?.length ?? 0})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <div className="p-4">
           {membersLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14" />)}
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 rounded-xl" />
+              ))}
             </div>
-          ) : members?.length === 0 ? (
-            <p className="text-muted-foreground text-sm text-center py-6">No team members yet.</p>
+          ) : !members?.length ? (
+            <EmptyState
+              icon={Users}
+              title="No team members yet"
+              subtitle="Invite colleagues to help manage your store."
+              action={{ label: 'Invite Someone', onClick: () => setInviteDialogOpen(true) }}
+            />
           ) : (
             <div className="space-y-2">
-              {members?.map((member) => (
-                <div key={member.uuid} className="flex items-center justify-between p-3 rounded-lg border border-border">
+              {members.map((member) => (
+                <div
+                  key={member.uuid}
+                  className="flex items-center justify-between p-3 rounded-xl bg-[#f8f9ff] hover:bg-[#eff4ff] transition-colors"
+                >
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
+                    <div className="h-9 w-9 rounded-full bg-[#eff4ff] flex items-center justify-center text-[#0058be] font-semibold text-sm shrink-0">
                       {member.userId}
                     </div>
                     <div>
-                      <p className="text-sm font-medium">User #{member.userId}</p>
-                      <Badge
-                        variant="secondary"
-                        className={member.role === 'ADMIN' ? 'bg-purple-100 text-purple-700 text-xs' : 'bg-gray-100 text-gray-700 text-xs'}
-                      >
-                        {member.role}
-                      </Badge>
+                      <p className="text-sm font-semibold text-[#091426]">User #{member.userId}</p>
+                      <StatusBadge status={member.role} type="role" raw />
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
+                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
                     onClick={() => removeMemberMutation.mutate(member.uuid)}
                   >
                     <X className="h-4 w-4" />
@@ -131,43 +135,48 @@ export default function DashboardTeamPage() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Pending invites */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Mail className="h-4 w-4" />
+      {/* ── Pending invites ── */}
+      <div className="bg-white rounded-2xl shadow-card-md overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-[#f1f5f9]">
+          <Mail className="h-4 w-4 text-[#64748b]" />
+          <p className="font-semibold text-sm text-[#091426] font-heading">
             Pending Invites ({pendingInvites.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div className="p-4">
           {invitesLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-14" />)}
+              {Array.from({ length: 2 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 rounded-xl" />
+              ))}
             </div>
-          ) : pendingInvites.length === 0 ? (
-            <p className="text-muted-foreground text-sm text-center py-6">No pending invites.</p>
+          ) : !pendingInvites.length ? (
+            <EmptyState
+              icon={Mail}
+              title="No pending invites"
+              subtitle="Sent invitations will appear here until accepted."
+            />
           ) : (
             <div className="space-y-2">
               {pendingInvites.map((invite) => (
-                <div key={invite.uuid} className="flex items-center justify-between p-3 rounded-lg border border-border">
+                <div
+                  key={invite.uuid}
+                  className="flex items-center justify-between p-3 rounded-xl bg-[#f8f9ff] hover:bg-[#eff4ff] transition-colors"
+                >
                   <div>
-                    <p className="text-sm font-medium">{invite.email}</p>
+                    <p className="text-sm font-semibold text-[#091426]">{invite.email}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 text-xs">
-                        PENDING
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs">
-                        {invite.role}
-                      </Badge>
+                      <StatusBadge status={invite.status} type="invite" />
+                      <StatusBadge status={invite.role} type="role" raw />
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
+                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
                     onClick={() => cancelInviteMutation.mutate(invite.uuid)}
                   >
                     Cancel
@@ -176,26 +185,30 @@ export default function DashboardTeamPage() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Invite dialog */}
+      {/* ── Invite dialog ── */}
       <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Invite Team Member</DialogTitle>
           </DialogHeader>
+
           <form
             onSubmit={handleSubmit((d) => inviteMutation.mutate(d))}
             className="space-y-4 mt-2"
           >
-            <div className="space-y-1">
-              <Label>Email Address</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-[#091426]">Email Address</Label>
               <Input placeholder="colleague@example.com" {...register('email')} />
-              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+              {errors.email && (
+                <p className="text-xs text-destructive">{errors.email.message}</p>
+              )}
             </div>
-            <div className="space-y-1">
-              <Label>Role</Label>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-[#091426]">Role</Label>
               <Controller
                 name="role"
                 control={control}
@@ -212,13 +225,18 @@ export default function DashboardTeamPage() {
                 )}
               />
             </div>
-            <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => setInviteDialogOpen(false)}>
+
+            <div className="flex justify-end gap-3 pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setInviteDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="bg-primary text-primary-foreground hover:opacity-90"
+                className="bg-[#091426] text-white hover:bg-[#091426]/90"
                 disabled={inviteMutation.isPending}
               >
                 {inviteMutation.isPending ? 'Sending...' : 'Send Invite'}

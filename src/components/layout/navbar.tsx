@@ -40,7 +40,7 @@ export default function Navbar() {
     : '';
 
   return (
-    <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-xl border-b border-[#e2e8f0]/60 shadow-[0_1px_3px_0_rgba(9,20,38,0.06)]">
+    <header className="sticky top-0 z-50 glass shadow-[0_1px_0_rgba(9,20,38,0.06)]">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 font-bold text-xl shrink-0">

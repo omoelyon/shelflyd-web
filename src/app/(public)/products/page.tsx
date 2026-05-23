@@ -1,15 +1,17 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { productsApi } from '@/lib/api/products';
 import { categoriesApi } from '@/lib/api/categories';
 import ProductCard from '@/components/features/products/product-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import EmptyState from '@/components/ui/empty-state';
+import PaginationControls from '@/components/ui/pagination-controls';
 import { Search, Package, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -18,17 +20,10 @@ function ProductsContent() {
 
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState(categoryParam);
-
-  // Reset page when category changes
-  useEffect(() => {
-    setActiveCategory(categoryParam);
-    setPage(0);
-  }, [categoryParam]);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['products', page, activeCategory],
-    queryFn: () => productsApi.listAll(page, 15, activeCategory || undefined),
+    queryKey: ['products', page, categoryParam],
+    queryFn: () => productsApi.listAll(page, 15, categoryParam || undefined),
   });
 
   const { data: categories } = useQuery({
@@ -40,12 +35,11 @@ function ProductsContent() {
     (p) =>
       !search ||
       p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.description?.toLowerCase().includes(search.toLowerCase())
+      p.description?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleCategoryClick = (name: string) => {
-    const next = name === activeCategory ? '' : name;
-    setActiveCategory(next);
+    const next = name === categoryParam ? '' : name;
     setPage(0);
     const params = new URLSearchParams(searchParams.toString());
     if (next) params.set('category', next);
@@ -55,14 +49,13 @@ function ProductsContent() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      {/* Header */}
+      {/* Page header */}
       <div className="mb-8">
-        <p className="text-xs font-semibold text-[#0058be] uppercase tracking-[0.1em] mb-1">Marketplace</p>
-        <h1
-          className="text-3xl font-bold text-[#091426] mb-1"
-          style={{ fontFamily: 'var(--font-manrope)' }}
-        >
-          {activeCategory ? activeCategory : 'All Products'}
+        <p className="text-xs font-semibold text-[#0058be] uppercase tracking-[0.1em] mb-1">
+          Marketplace
+        </p>
+        <h1 className="text-3xl font-bold text-[#091426] font-heading mb-1">
+          {categoryParam || 'All Products'}
         </h1>
         <p className="text-[#64748b] text-sm">
           Browse products from all businesses
@@ -70,10 +63,10 @@ function ProductsContent() {
         </p>
       </div>
 
-      {/* Search + filter row */}
+      {/* Search + active-category chip */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative max-w-sm w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b] pointer-events-none" />
           <Input
             placeholder="Search products..."
             className="pl-9"
@@ -81,12 +74,13 @@ function ProductsContent() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        {activeCategory && (
+        {categoryParam && (
           <button
-            onClick={() => handleCategoryClick(activeCategory)}
+            onClick={() => handleCategoryClick(categoryParam)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#091426] text-white text-sm font-medium hover:bg-[#091426]/90 transition-colors self-start"
           >
-            {activeCategory} <X className="h-3.5 w-3.5" />
+            {categoryParam}
+            <X className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
@@ -98,11 +92,12 @@ function ProductsContent() {
             <button
               key={cat.id}
               onClick={() => handleCategoryClick(cat.name)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                activeCategory === cat.name
+              className={cn(
+                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                categoryParam === cat.name
                   ? 'bg-[#091426] text-white'
-                  : 'bg-white text-[#64748b] hover:bg-[#eff4ff] hover:text-[#091426] shadow-sm'
-              }`}
+                  : 'bg-white text-[#64748b] hover:bg-[#eff4ff] hover:text-[#091426] shadow-card',
+              )}
             >
               {cat.icon && <span>{cat.icon}</span>}
               {cat.name}
@@ -112,6 +107,7 @@ function ProductsContent() {
         </div>
       )}
 
+      {/* Loading skeletons */}
       {isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {Array.from({ length: 12 }).map((_, i) => (
@@ -120,28 +116,34 @@ function ProductsContent() {
         </div>
       )}
 
+      {/* Error */}
       {isError && (
-        <div className="text-center py-16">
-          <p className="text-[#64748b] mb-4">Failed to load products.</p>
-          <button onClick={() => refetch()} className="text-[#0058be] underline text-sm">Try again</button>
-        </div>
+        <EmptyState
+          icon={Package}
+          title="Failed to load products"
+          subtitle="Something went wrong. Please try again."
+          action={{ label: 'Try again', onClick: () => refetch() }}
+        />
       )}
 
+      {/* Results */}
       {!isLoading && !isError && (
         <>
           {!filtered?.length ? (
-            <div className="text-center py-16 space-y-3">
-              <Package className="h-12 w-12 text-[#cbd5e1] mx-auto" />
-              <p className="text-[#64748b]">No products found{activeCategory ? ` in "${activeCategory}"` : ''}.</p>
-              {activeCategory && (
-                <button
-                  onClick={() => handleCategoryClick(activeCategory)}
-                  className="text-[#0058be] text-sm underline"
-                >
-                  Clear filter
-                </button>
-              )}
-            </div>
+            <EmptyState
+              icon={Package}
+              title={
+                categoryParam
+                  ? `No products in "${categoryParam}"`
+                  : 'No products found'
+              }
+              subtitle={search ? `No results for "${search}".` : undefined}
+              action={
+                categoryParam
+                  ? { label: 'Clear filter', onClick: () => handleCategoryClick(categoryParam) }
+                  : undefined
+              }
+            />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filtered.map((product) => (
@@ -150,19 +152,15 @@ function ProductsContent() {
             </div>
           )}
 
-          {data && data.totalPages > 1 && (
-            <div className="flex items-center justify-center gap-3 mt-10">
-              <Button variant="outline" disabled={data.first} onClick={() => setPage((p) => p - 1)}>
-                Previous
-              </Button>
-              <span className="text-sm text-[#64748b]">
-                Page {data.pageable.pageNumber + 1} of {data.totalPages}
-              </span>
-              <Button variant="outline" disabled={data.last} onClick={() => setPage((p) => p + 1)}>
-                Next
-              </Button>
-            </div>
-          )}
+          <PaginationControls
+            page={page}
+            totalPages={data?.totalPages ?? 0}
+            isFirst={data?.first ?? true}
+            isLast={data?.last ?? true}
+            onPrev={() => setPage((p) => p - 1)}
+            onNext={() => setPage((p) => p + 1)}
+            className="mt-10"
+          />
         </>
       )}
     </div>

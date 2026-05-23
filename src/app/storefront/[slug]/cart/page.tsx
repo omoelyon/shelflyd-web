@@ -41,11 +41,9 @@ export default function StorefrontCartPage({ params }: Props) {
     if (allCarts) setCarts(allCarts);
   }, [allCarts, setCarts]);
 
-  // Filter cart for this business
+  // Filter cart for this specific business by businessId
   const businessCart = info && allCarts
-    ? allCarts.find((c) =>
-        c.products.length > 0
-      )
+    ? allCarts.find((c) => c.businessId === info.id) ?? null
     : null;
 
   const removeProductMutation = useMutation({
@@ -115,8 +113,8 @@ export default function StorefrontCartPage({ params }: Props) {
           <CardTitle className="text-base">{info?.name ?? 'Cart'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {businessCart.products.map((product, i) => (
-            <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-muted/40">
+          {businessCart.products.map((product) => (
+            <div key={product.productId} className="flex items-center gap-4 p-3 rounded-lg bg-muted/40">
               <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-muted shrink-0">
                 {product.image ? (
                   <Image src={product.image} alt={product.name} fill className="object-cover" unoptimized />
@@ -136,7 +134,7 @@ export default function StorefrontCartPage({ params }: Props) {
                   variant="ghost"
                   size="sm"
                   className="text-destructive hover:text-destructive mt-1"
-                  onClick={() => removeProductMutation.mutate(i)}
+                  onClick={() => removeProductMutation.mutate(product.productId)}
                   disabled={removeProductMutation.isPending}
                 >
                   <Trash2 className="h-3 w-3" />

@@ -7,6 +7,7 @@ import type {
   PagedProducts,
   PagedOrders,
   PagedPayments,
+  RevenueDataPoint,
 } from '@/types';
 
 export const businessesApi = {
@@ -44,6 +45,11 @@ export const businessesApi = {
 
   getStats: async (): Promise<BusinessStats> => {
     const res = await apiClient.get('/business/stats');
+    return res.data;
+  },
+
+  getRevenueHistory: async (days = 30): Promise<RevenueDataPoint[]> => {
+    const res = await apiClient.get('/business/stats/revenue', { params: { days } });
     return res.data;
   },
 

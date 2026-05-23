@@ -34,8 +34,8 @@ function SuccessContent() {
             <Link href="/products" className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}>
               Continue Shopping
             </Link>
-            <Link href="/account" className={cn(buttonVariants({ variant: 'outline' }))}>
-              View My Orders
+            <Link href="/" className={cn(buttonVariants({ variant: 'outline' }))}>
+              Back to Home
             </Link>
           </div>
         </CardContent>

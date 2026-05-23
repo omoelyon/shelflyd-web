@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { settingsApi } from '@/lib/api/settings';
-import { businessesApi } from '@/lib/api/businesses';
 import { useThemeStore } from '@/stores/theme.store';
 import BrandIdentityForm from '@/components/features/settings/brand-identity-form';
 import LogoUploader from '@/components/features/settings/logo-uploader';
@@ -14,7 +13,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Store } from 'lucide-react';
+import { Store, MapPin, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
@@ -24,11 +23,6 @@ export default function SettingsPage() {
   const { data: business, isLoading, isError } = useQuery({
     queryKey: ['business-settings'],
     queryFn: settingsApi.getSettings,
-  });
-
-  const { data: profileCheck } = useQuery({
-    queryKey: ['business-profile'],
-    queryFn: businessesApi.getProfile,
   });
 
   useEffect(() => {
@@ -117,6 +111,28 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
           <ThemeColorPicker business={business} />
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Delivery Zones */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Delivery Zones</CardTitle>
+          <CardDescription>
+            Manage the areas you deliver to and the fees you charge.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            href="/dashboard/settings/delivery"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#091426] text-white text-sm font-medium hover:bg-[#091426]/90 transition-colors"
+          >
+            <MapPin className="h-4 w-4" />
+            Manage Delivery Locations
+            <ArrowRight className="h-4 w-4 ml-1" />
+          </Link>
         </CardContent>
       </Card>
     </div>
