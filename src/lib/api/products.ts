@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { Product, PagedProducts, CreateProductRequest } from '@/types';
+import type { Product, PagedProducts, CreateProductRequest, UpdateProductRequest } from '@/types';
 
 export const productsApi = {
   listAll: async (page = 0, size = 15, category?: string): Promise<PagedProducts> => {
@@ -24,6 +24,15 @@ export const productsApi = {
   create: async (data: CreateProductRequest): Promise<Product> => {
     const res = await apiClient.post('/business/products', data);
     return res.data;
+  },
+
+  update: async (id: number, data: UpdateProductRequest): Promise<Product> => {
+    const res = await apiClient.patch(`/business/products/${id}`, data);
+    return res.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await apiClient.delete(`/business/products/${id}`);
   },
 
   adminListAll: async (page = 0, size = 15): Promise<PagedProducts> => {

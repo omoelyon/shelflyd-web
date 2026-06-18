@@ -39,6 +39,7 @@ export interface User extends BaseEntity {
   email: string;
   phone: string;
   username?: string;
+  admin?: boolean;
 }
 
 // ─── Business ────────────────────────────────────────────────────────────────
@@ -148,6 +149,15 @@ export interface CreateProductRequest {
   priceDetails?: PriceDetail[];
 }
 
+export interface UpdateProductRequest {
+  name?: string;
+  type?: string;
+  description?: string;
+  category?: number;
+  image?: string;
+  status?: ProductStatus;
+}
+
 // ─── Cart ─────────────────────────────────────────────────────────────────────
 
 export interface CartProduct {
@@ -190,6 +200,18 @@ export interface CheckoutResponse {
   payment_type: PaymentType;
   url: string;
   reference: string;
+}
+
+// ─── Order Items ─────────────────────────────────────────────────────────────
+
+export interface OrderItem {
+  productId: number;
+  name: string;
+  image: string | null;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  totalPrice: number;
 }
 
 // ─── Orders ───────────────────────────────────────────────────────────────────

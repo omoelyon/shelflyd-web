@@ -1,53 +1,37 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { usersApi } from '@/lib/api/users';
-import { deliveryApi } from '@/lib/api/delivery';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { deliveryLocationSchema, type DeliveryLocationFormValues } from '@/lib/validations';
+import { ordersApi } from '@/lib/api/orders';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
-import { getApiError } from '@/lib/utils';
-import { User, MapPin, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { User, ShoppingBag, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
+
+const statusColor: Record<string, string> = {
+  CREATED:   'bg-slate-100 text-slate-700',
+  PAID:      'bg-blue-100 text-blue-700',
+  PREPARING: 'bg-amber-100 text-amber-700',
+  DELIVERED: 'bg-green-100 text-green-700',
+  PICKED_UP: 'bg-purple-100 text-purple-700',
+  CANCELLED: 'bg-red-100 text-red-700',
+};
 
 export default function AccountPage() {
-  const [addingLocation, setAddingLocation] = useState(false);
-  const qc = useQueryClient();
-
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['me'],
     queryFn: usersApi.me,
   });
 
-  const { data: locations, isLoading: locLoading } = useQuery({
-    queryKey: ['delivery-locations'],
-    queryFn: deliveryApi.list,
-  });
-
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<DeliveryLocationFormValues>({
-    resolver: zodResolver(deliveryLocationSchema),
-  });
-
-  const addLocationMutation = useMutation({
-    mutationFn: deliveryApi.create,
-    onSuccess: () => {
-      toast.success('Location added!');
-      qc.invalidateQueries({ queryKey: ['delivery-locations'] });
-      setAddingLocation(false);
-      reset();
-    },
-    onError: (error) => toast.error(getApiError(error, 'Failed to add location.')),
+  const { data: ordersPage, isLoading: ordersLoading } = useQuery({
+    queryKey: ['my-customer-orders'],
+    queryFn: () => ordersApi.getMyCustomerOrders(0, 5),
   });
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
-      <h1 className="text-2xl font-bold">My Account</h1>
+      <h1 className="text-2xl font-bold text-[#091426]">My Account</h1>
 
       {/* Profile */}
       <Card>
@@ -62,6 +46,7 @@ export default function AccountPage() {
             <div className="space-y-3">
               <Skeleton className="h-5 w-48" />
               <Skeleton className="h-5 w-64" />
+              <Skeleton className="h-5 w-40" />
             </div>
           ) : user ? (
             <div className="space-y-2 text-sm">
@@ -73,10 +58,12 @@ export default function AccountPage() {
                 <span className="text-muted-foreground w-28">Email:</span>
                 <span className="font-medium">{user.email}</span>
               </div>
-              <div className="flex gap-2">
-                <span className="text-muted-foreground w-28">Phone:</span>
-                <span className="font-medium">{user.phone}</span>
-              </div>
+              {user.phone && (
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground w-28">Phone:</span>
+                  <span className="font-medium">{user.phone}</span>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-muted-foreground text-sm">Could not load profile.</p>
@@ -84,63 +71,44 @@ export default function AccountPage() {
         </CardContent>
       </Card>
 
-      {/* Delivery Locations */}
+      {/* Recent Orders */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            Saved Delivery Locations
+            <ShoppingBag className="h-4 w-4" />
+            Recent Orders
           </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setAddingLocation(!addingLocation)}
+          <Link
+            href="/account/orders"
+            className="text-xs text-primary hover:underline flex items-center gap-0.5"
           >
-            <Plus className="h-4 w-4 mr-1" />
-            Add
-          </Button>
+            View all <ChevronRight className="h-3 w-3" />
+          </Link>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {addingLocation && (
-            <form
-              onSubmit={handleSubmit((d) => addLocationMutation.mutate(d as DeliveryLocationFormValues))}
-              className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border"
-            >
-              <div className="space-y-1">
-                <Label>Address</Label>
-                <Input placeholder="12 Bode Thomas Street, Lagos" {...register('location')} />
-                {errors.location && <p className="text-xs text-destructive">{errors.location.message}</p>}
-              </div>
-              <div className="space-y-1">
-                <Label>Delivery fee (₦)</Label>
-                <Input type="number" placeholder="1500" {...register('amount', { valueAsNumber: true })} />
-                {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
-              </div>
-              <div className="flex gap-2">
-                <Button type="submit" size="sm" className="bg-primary text-primary-foreground" disabled={addLocationMutation.isPending}>
-                  {addLocationMutation.isPending ? 'Saving...' : 'Save'}
-                </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => setAddingLocation(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          )}
-
-          {locLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-14" />)}
+        <CardContent>
+          {ordersLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14" />)}
             </div>
-          ) : locations?.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">No saved locations.</p>
+          ) : !ordersPage?.content?.length ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              No orders yet. Start shopping!
+            </p>
           ) : (
-            <div className="space-y-2">
-              {locations?.map((loc) => (
-                <div key={loc.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
+            <div className="divide-y divide-border">
+              {ordersPage.content.map((order) => (
+                <div key={order.id} className="flex items-center justify-between py-3">
                   <div>
-                    <p className="text-sm font-medium">{loc.location}</p>
-                    <p className="text-xs text-muted-foreground">Fee: ₦{loc.amount.toLocaleString()}</p>
+                    <p className="text-sm font-medium">Order #{order.id}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {order.orderType ?? 'Standard'}
+                    </p>
                   </div>
+                  <Badge
+                    className={`text-xs font-medium border-0 ${statusColor[order.status] ?? 'bg-slate-100 text-slate-700'}`}
+                  >
+                    {order.status.replace('_', ' ')}
+                  </Badge>
                 </div>
               ))}
             </div>

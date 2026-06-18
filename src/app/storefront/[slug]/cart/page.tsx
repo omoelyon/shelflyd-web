@@ -149,7 +149,7 @@ export default function StorefrontCartPage({ params }: Props) {
             <p className="text-xl font-bold text-primary">₦{businessCart.totalCost.toLocaleString()}</p>
           </div>
           <Link
-            href={`/checkout/${businessCart.cartId}`}
+            href={`/storefront/${slug}/checkout?cartId=${businessCart.cartId}`}
             className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}
           >
             Checkout

@@ -4,6 +4,8 @@ import { useAuthStore } from '@/stores/auth.store';
 import { Button } from '@/components/ui/button';
 import { LogOut, Bell, Search } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { businessesApi } from '@/lib/api/businesses';
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Overview',
@@ -22,6 +24,13 @@ export default function DashboardHeader() {
   const router = useRouter();
   const pathname = usePathname();
 
+  const { data: business } = useQuery({
+    queryKey: ['my-business'],
+    queryFn: businessesApi.getProfile,
+    retry: false,
+    staleTime: 60_000,
+  });
+
   const handleLogout = async () => {
     await fetch('/api/auth/clear-cookie', { method: 'POST' });
     logout();
@@ -32,6 +41,7 @@ export default function DashboardHeader() {
   const initials = user
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
     : '?';
+  const roleLabel = business?.ownerId === user?.id ? 'Owner' : 'Team Member';
 
   return (
     <header className="sticky top-0 z-40 h-14 glass shadow-[0_1px_0_rgba(9,20,38,0.06)] flex items-center justify-between px-4 md:px-6 shrink-0">
@@ -76,7 +86,7 @@ export default function DashboardHeader() {
               {user ? `${user.firstName} ${user.lastName}` : 'Loading…'}
             </p>
             <p className="text-[10px] text-[#64748b] leading-none mt-0.5 uppercase tracking-widest">
-              Owner
+              {roleLabel}
             </p>
           </div>
         </div>

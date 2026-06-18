@@ -28,6 +28,12 @@ export const registerSchema = z.object({
 export const registerBusinessSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
   description: z.string().optional(),
+  slug: z
+    .string()
+    .regex(/^[a-z0-9-]+$/, 'Slug may only contain lowercase letters, numbers, and hyphens')
+    .min(3, 'Slug must be at least 3 characters')
+    .optional()
+    .or(z.literal('')),
 });
 
 export const updateSettingsSchema = z.object({
@@ -79,6 +85,25 @@ export const checkoutSchema = z.object({
   locationId: z.number().optional(),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  otp: z.string().length(6, 'OTP must be 6 digits').regex(/^\d+$/, 'OTP must be numeric'),
+  newPassword: z
+    .string()
+    .min(8, 'Minimum 8 characters')
+    .regex(/[A-Z]/, 'Must include uppercase')
+    .regex(/[a-z]/, 'Must include lowercase')
+    .regex(/[0-9]/, 'Must include number'),
+  confirmPassword: z.string(),
+}).refine((d) => d.newPassword === d.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+});
+
 export type LoginFormValues = z.infer<typeof loginSchema>;
 export type RegisterFormValues = z.infer<typeof registerSchema>;
 export type RegisterBusinessFormValues = z.infer<typeof registerBusinessSchema>;
@@ -90,3 +115,5 @@ export type AcceptInviteFormValues = z.infer<typeof acceptInviteSchema>;
 export type DeliveryLocationFormValues = z.infer<typeof deliveryLocationSchema>;
 export type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 export type AddPriceFormValues = z.infer<typeof addPriceSchema>;
+export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;

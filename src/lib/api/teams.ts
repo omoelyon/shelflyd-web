@@ -37,7 +37,7 @@ export const teamsApi = {
   },
 
   myPendingInvites: async (): Promise<TeamInvite[]> => {
-    const res = await apiClient.get('/invites/pending');
+    const res = await apiClient.get('/invites');
     return res.data;
   },
 

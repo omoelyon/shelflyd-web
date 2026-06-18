@@ -13,14 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
-import { Store, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
-
-const passwordHints = [
-  'At least 8 characters',
-  'One uppercase letter',
-  'One number',
-  'One special character',
-];
+import { Store, Eye, EyeOff } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -66,17 +59,6 @@ export default function RegisterPage() {
             Create your account and start selling to customers across Africa today.
           </p>
 
-          <div className="space-y-4">
-            <p className="text-sm font-medium text-white/60 uppercase tracking-wide">Password requirements</p>
-            <ul className="space-y-2.5">
-              {passwordHints.map((hint) => (
-                <li key={hint} className="flex items-center gap-3">
-                  <CheckCircle2 className="h-4.5 w-4.5 text-white/60 shrink-0" />
-                  <span className="text-sm text-white/80">{hint}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
         <p className="mt-auto relative z-10 text-sm text-white/50">

@@ -13,8 +13,9 @@ import { ArrowLeft, Package, MapPin, Calendar, Hash, Truck } from 'lucide-react'
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
-import type { Order, OrderStatus } from '@/types';
+import type { Order, OrderItem, OrderStatus } from '@/types';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 function nextStatuses(order: Order): OrderStatus[] {
@@ -53,6 +54,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const { data: deliveryLocations } = useQuery({
     queryKey: ['delivery-locations'],
     queryFn: deliveryApi.list,
+  });
+
+  const { data: orderItems } = useQuery({
+    queryKey: ['order-items', orderId],
+    queryFn: () => ordersApi.getItems(orderId),
+    enabled: !!order,
   });
 
   const updateStatusMutation = useMutation({
@@ -172,13 +179,59 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      {/* Info block */}
-      <div className="bg-[#eff4ff] rounded-2xl p-4 flex gap-3">
-        <Package className="h-4.5 w-4.5 text-[#0058be] shrink-0 mt-0.5" />
-        <p className="text-xs text-[#64748b] leading-relaxed">
-          Cart items are captured at checkout time. To see full item details,
-          view the payment record linked to this order (Cart #{order.cartId}).
-        </p>
+      {/* Order items */}
+      <div className="bg-white rounded-2xl shadow-card-md overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-[#f1f5f9]">
+          <Package className="h-4 w-4 text-[#64748b]" />
+          <h2 className="font-semibold text-sm text-[#091426] font-heading">
+            Items ({orderItems?.length ?? '…'})
+          </h2>
+        </div>
+        <div className="divide-y divide-[#f1f5f9]">
+          {!orderItems ? (
+            <div className="p-4 space-y-3">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="flex gap-3 animate-pulse">
+                  <div className="h-12 w-12 rounded-lg bg-[#f1f5f9] shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 bg-[#f1f5f9] rounded w-1/2" />
+                    <div className="h-3 bg-[#f1f5f9] rounded w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : orderItems.length === 0 ? (
+            <p className="p-5 text-sm text-[#64748b]">No items found.</p>
+          ) : (
+            orderItems.map((item: OrderItem) => (
+              <div key={item.productId} className="flex items-center gap-3 px-5 py-3">
+                {item.image ? (
+                  <Image
+                    src={item.image}
+                    alt={item.name}
+                    width={48}
+                    height={48}
+                    className="h-12 w-12 rounded-lg object-cover shrink-0 bg-[#f1f5f9]"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="h-12 w-12 rounded-lg bg-[#f1f5f9] flex items-center justify-center shrink-0">
+                    <Package className="h-5 w-5 text-[#cbd5e1]" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#091426] truncate">{item.name}</p>
+                  <p className="text-xs text-[#64748b]">
+                    {item.quantity} {item.unit} × ₦{Number(item.unitPrice).toLocaleString()}
+                  </p>
+                </div>
+                <p className="text-sm font-semibold text-[#091426] shrink-0">
+                  ₦{Number(item.totalPrice).toLocaleString()}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

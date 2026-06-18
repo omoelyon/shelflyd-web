@@ -2,15 +2,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Store, Building2, Package, ShieldCheck, LayoutDashboard, Users, ShoppingBag, Tag } from 'lucide-react';
+import { Store, Building2, Package, ShieldCheck, LayoutDashboard, Users, ShoppingBag, Tag, CreditCard } from 'lucide-react';
 
 const adminNav = [
-  { href: '/admin',            label: 'Overview',   icon: LayoutDashboard },
-  { href: '/admin/businesses', label: 'Businesses', icon: Building2 },
-  { href: '/admin/products',   label: 'Products',   icon: Package },
-  { href: '/admin/orders',     label: 'Orders',     icon: ShoppingBag },
-  { href: '/admin/categories', label: 'Categories', icon: Tag },
-  { href: '/admin/users',      label: 'Users',      icon: Users },
+  { href: '/admin',             label: 'Overview',   icon: LayoutDashboard },
+  { href: '/admin/businesses',  label: 'Businesses', icon: Building2 },
+  { href: '/admin/products',    label: 'Products',   icon: Package },
+  { href: '/admin/orders',      label: 'Orders',     icon: ShoppingBag },
+  { href: '/admin/payments',    label: 'Payments',   icon: CreditCard },
+  { href: '/admin/categories',  label: 'Categories', icon: Tag },
+  { href: '/admin/users',       label: 'Users',      icon: Users },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

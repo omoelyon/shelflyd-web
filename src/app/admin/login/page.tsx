@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api/auth';
+import { usersApi } from '@/lib/api/users';
 import { useAuthStore } from '@/stores/auth.store';
 import { loginSchema, type LoginFormValues } from '@/lib/validations';
 import { Input } from '@/components/ui/input';
@@ -31,13 +32,26 @@ export default function AdminLoginPage() {
   const { mutate, isPending } = useMutation({
     mutationFn: authApi.login,
     onSuccess: async ({ token }) => {
-      setToken(token);
-      await fetch('/api/auth/set-cookie', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
-      });
-      router.push('/admin');
+      // Set token temporarily to make the profile call
+      localStorage.setItem('mm_token', token);
+      try {
+        const profile = await usersApi.me();
+        if (!profile.admin) {
+          localStorage.removeItem('mm_token');
+          toast.error('Access denied. This account does not have admin privileges.');
+          return;
+        }
+        setToken(token);
+        await fetch('/api/auth/set-cookie', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+        router.push('/admin');
+      } catch {
+        localStorage.removeItem('mm_token');
+        toast.error('Could not verify admin privileges. Please try again.');
+      }
     },
     onError: (error) => toast.error(getApiError(error, 'Invalid credentials.')),
   });
