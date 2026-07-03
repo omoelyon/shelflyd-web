@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -16,6 +16,14 @@ import { getApiError } from '@/lib/utils';
 import { Store, Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react';
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense>
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}
+
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const prefillEmail = searchParams.get('email') ?? '';
