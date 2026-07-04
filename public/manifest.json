@@ -1,0 +1,49 @@
+{
+  "name": "Shelflyd",
+  "short_name": "Shelflyd",
+  "description": "The marketplace platform for African businesses",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#091426",
+  "orientation": "portrait-primary",
+  "categories": ["shopping", "business"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/dashboard",
+      "description": "Go to your business dashboard"
+    },
+    {
+      "name": "My Orders",
+      "url": "/account/orders",
+      "description": "View your orders"
+    }
+  ]
+}
