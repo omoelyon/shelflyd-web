@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { authApi } from '@/lib/api/auth';
 import { useAuthStore } from '@/stores/auth.store';
+import { mergeGuestCartIntoServer } from '@/lib/guest-cart-merge';
 import { loginSchema, type LoginFormValues } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +25,17 @@ const features = [
 ];
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get('from');
   const { setToken } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -45,8 +56,9 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
       });
+      await mergeGuestCartIntoServer();
       toast.success('Welcome back!');
-      router.push('/dashboard');
+      router.push(from || '/dashboard');
     },
     onError: (error) => toast.error(getApiError(error, 'Invalid email or password.')),
   });
@@ -165,7 +177,10 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Don&apos;t have an account?{' '}
-            <Link href="/auth/register" className="text-primary font-medium hover:underline">
+            <Link
+              href={`/auth/register${from ? `?from=${encodeURIComponent(from)}` : ''}`}
+              className="text-primary font-medium hover:underline"
+            >
               Create one
             </Link>
           </p>

@@ -6,6 +6,7 @@ import { storefrontApi } from '@/lib/api/storefront';
 import { useThemeStore } from '@/stores/theme.store';
 import { useCartStore } from '@/stores/cart.store';
 import { useAuthStore } from '@/stores/auth.store';
+import { useGuestCartStore } from '@/stores/guest-cart.store';
 import { cartApi } from '@/lib/api/cart';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -24,8 +25,10 @@ export default function StorefrontLayout({ children, params }: Props) {
   const { slug } = use(params);
   const { loadFromBusiness } = useThemeStore();
   const { setCarts } = useCartStore();
-  const totalItems = useCartStore((s) => s.getTotalItems());
+  const serverTotalItems = useCartStore((s) => s.getTotalItems());
+  const guestTotalItems = useGuestCartStore((s) => s.getTotalItems());
   const { isAuthenticated } = useAuthStore();
+  const totalItems = isAuthenticated ? serverTotalItems : guestTotalItems;
 
   const { data: info, isLoading } = useQuery({
     queryKey: ['storefront', slug],
@@ -109,21 +112,20 @@ export default function StorefrontLayout({ children, params }: Props) {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-            {isAuthenticated ? (
-              <Link href={`/storefront/${slug}/cart`} className="relative">
-                <div className="h-9 w-9 rounded-lg flex items-center justify-center text-[#64748b] hover:text-[#091426] hover:bg-[#eff4ff] transition-colors">
-                  <ShoppingCart className="h-4.5 w-4.5" />
-                  {totalItems > 0 && (
-                    <Badge
-                      className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs text-white"
-                      style={{ backgroundColor: themeColor }}
-                    >
-                      {totalItems > 9 ? '9+' : totalItems}
-                    </Badge>
-                  )}
-                </div>
-              </Link>
-            ) : (
+            <Link href={`/storefront/${slug}/cart`} className="relative">
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center text-[#64748b] hover:text-[#091426] hover:bg-[#eff4ff] transition-colors">
+                <ShoppingCart className="h-4.5 w-4.5" />
+                {totalItems > 0 && (
+                  <Badge
+                    className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs text-white"
+                    style={{ backgroundColor: themeColor }}
+                  >
+                    {totalItems > 9 ? '9+' : totalItems}
+                  </Badge>
+                )}
+              </div>
+            </Link>
+            {!isAuthenticated && (
               <Link
                 href="/auth/login"
                 className={cn(
@@ -132,7 +134,7 @@ export default function StorefrontLayout({ children, params }: Props) {
                 )}
                 style={{ backgroundColor: themeColor }}
               >
-                Login to Shop
+                Login
               </Link>
             )}
           </div>

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PROTECTED_PATHS = ['/dashboard', '/cart', '/checkout', '/account', '/invites'];
+const PROTECTED_PATHS = ['/dashboard', '/checkout', '/account', '/invites'];
 const ADMIN_PATHS = ['/admin'];
 const RESERVED_SUBDOMAINS = ['www', 'api'];
 

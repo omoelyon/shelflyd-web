@@ -7,8 +7,9 @@ import { storefrontApi } from '@/lib/api/storefront';
 import { cartApi } from '@/lib/api/cart';
 import { useCartStore } from '@/stores/cart.store';
 import { useAuthStore } from '@/stores/auth.store';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { cn, formatStatus } from '@/lib/utils';
+import { useGuestCartStore } from '@/stores/guest-cart.store';
+import { Button } from '@/components/ui/button';
+import { formatStatus } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -26,8 +27,14 @@ export default function StorefrontProductPage({ params }: Props) {
   const id = Number(productId);
   const { isAuthenticated } = useAuthStore();
   const updateCart = useCartStore((s) => s.updateCart);
+  const addGuestItem = useGuestCartStore((s) => s.addItem);
   const [selectedUnitId, setSelectedUnitId] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
+
+  const { data: info } = useQuery({
+    queryKey: ['storefront', slug],
+    queryFn: () => storefrontApi.getInfo(slug),
+  });
 
   const { data: product, isLoading, isError } = useQuery({
     queryKey: ['storefront', slug, 'product', id],
@@ -43,6 +50,27 @@ export default function StorefrontProductPage({ params }: Props) {
     },
     onError: (error) => toast.error(getApiError(error, 'Failed to add to cart.')),
   });
+
+  const selectedPrice = product?.prices?.find((p) => p.unit === Number(selectedUnitId));
+
+  const handleAddToCart = () => {
+    if (isAuthenticated) {
+      addToCart.mutate();
+      return;
+    }
+    if (!info || !product || !selectedPrice) return;
+    addGuestItem(info.id, {
+      productId: id,
+      unitId: Number(selectedUnitId),
+      quantity,
+      name: product.name,
+      type: product.type,
+      image: product.image,
+      unit: selectedPrice.unitName,
+      unitPrice: selectedPrice.price,
+    });
+    toast.success('Added to cart!');
+  };
 
   if (isLoading) {
     return (
@@ -66,8 +94,6 @@ export default function StorefrontProductPage({ params }: Props) {
       </div>
     );
   }
-
-  const selectedPrice = product.prices?.find((p) => p.unit === Number(selectedUnitId));
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
@@ -154,21 +180,15 @@ export default function StorefrontProductPage({ params }: Props) {
           </div>
 
           {/* Add to cart */}
-          {isAuthenticated ? (
-            <Button
-              className="w-full bg-primary text-primary-foreground hover:opacity-90"
-              size="lg"
-              disabled={!selectedUnitId || (product.status !== 'IN_STOCK' && product.status !== 'LOW_STOCK') || addToCart.isPending}
-              onClick={() => addToCart.mutate()}
-            >
-              <ShoppingCart className="mr-2 h-4 w-4" />
-              {addToCart.isPending ? 'Adding...' : 'Add to Cart'}
-            </Button>
-          ) : (
-            <Link href="/auth/login" className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'w-full')}>
-              Login to Add to Cart
-            </Link>
-          )}
+          <Button
+            className="w-full bg-primary text-primary-foreground hover:opacity-90"
+            size="lg"
+            disabled={!selectedUnitId || (product.status !== 'IN_STOCK' && product.status !== 'LOW_STOCK') || addToCart.isPending}
+            onClick={handleAddToCart}
+          >
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            {addToCart.isPending ? 'Adding...' : 'Add to Cart'}
+          </Button>
         </div>
       </div>
     </div>

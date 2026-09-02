@@ -97,7 +97,11 @@ export default function AccountPage() {
           ) : (
             <div className="divide-y divide-border">
               {ordersPage.content.map((order) => (
-                <div key={order.id} className="flex items-center justify-between py-3">
+                <Link
+                  key={order.id}
+                  href={`/account/orders/${order.id}`}
+                  className="flex items-center justify-between py-3 hover:bg-slate-50 -mx-1 px-1 rounded transition-colors"
+                >
                   <div>
                     <p className="text-sm font-medium">Order #{order.id}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
@@ -109,7 +113,7 @@ export default function AccountPage() {
                   >
                     {order.status.replace('_', ' ')}
                   </Badge>
-                </div>
+                </Link>
               ))}
             </div>
           )}

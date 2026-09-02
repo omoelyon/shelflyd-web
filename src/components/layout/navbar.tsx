@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/stores/auth.store';
 import { useCartStore } from '@/stores/cart.store';
+import { useGuestCartStore } from '@/stores/guest-cart.store';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -26,7 +27,9 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, user, logout } = useAuthStore();
-  const totalItems = useCartStore((s) => s.getTotalItems());
+  const serverTotalItems = useCartStore((s) => s.getTotalItems());
+  const guestTotalItems = useGuestCartStore((s) => s.getTotalItems());
+  const totalItems = isAuthenticated ? serverTotalItems : guestTotalItems;
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -73,18 +76,16 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          {isAuthenticated && (
-            <Link href="/cart" className="relative">
-              <Button variant="ghost" size="icon" className="relative h-9 w-9 text-[#64748b] hover:text-[#091426] hover:bg-[#eff4ff]">
-                <ShoppingCart className="h-4.5 w-4.5" />
-                {totalItems > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-[#0058be] text-white text-[10px] font-bold flex items-center justify-center">
-                    {totalItems > 9 ? '9+' : totalItems}
-                  </span>
-                )}
-              </Button>
-            </Link>
-          )}
+          <Link href="/cart" className="relative">
+            <Button variant="ghost" size="icon" className="relative h-9 w-9 text-[#64748b] hover:text-[#091426] hover:bg-[#eff4ff]">
+              <ShoppingCart className="h-4.5 w-4.5" />
+              {totalItems > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-[#0058be] text-white text-[10px] font-bold flex items-center justify-center">
+                  {totalItems > 9 ? '9+' : totalItems}
+                </span>
+              )}
+            </Button>
+          </Link>
 
           {isAuthenticated ? (
             <DropdownMenu>

@@ -56,8 +56,9 @@ export default function MyOrdersPage() {
         <>
           <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
             {data.content.map((order) => (
-              <div
+              <Link
                 key={order.id}
+                href={`/account/orders/${order.id}`}
                 className="flex items-center justify-between px-4 py-4 bg-white hover:bg-slate-50 transition-colors"
               >
                 <div>
@@ -72,7 +73,7 @@ export default function MyOrdersPage() {
                 >
                   {order.status.replace('_', ' ')}
                 </Badge>
-              </div>
+              </Link>
             ))}
           </div>
 

@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { authApi } from '@/lib/api/auth';
 import { registerSchema, type RegisterFormValues } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,17 @@ import { getApiError } from '@/lib/utils';
 import { Store, Eye, EyeOff } from 'lucide-react';
 
 export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get('from');
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -31,7 +41,7 @@ export default function RegisterPage() {
     mutationFn: authApi.register,
     onSuccess: () => {
       toast.success('Account created! Please sign in.');
-      router.push('/auth/login');
+      router.push(`/auth/login${from ? `?from=${encodeURIComponent(from)}` : ''}`);
     },
     onError: (error) => toast.error(getApiError(error, 'Registration failed.')),
   });
@@ -163,7 +173,10 @@ export default function RegisterPage() {
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{' '}
-            <Link href="/auth/login" className="text-primary font-medium hover:underline">
+            <Link
+              href={`/auth/login${from ? `?from=${encodeURIComponent(from)}` : ''}`}
+              className="text-primary font-medium hover:underline"
+            >
               Sign in
             </Link>
           </p>

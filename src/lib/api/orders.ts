@@ -14,6 +14,18 @@ export const ordersApi = {
     return res.data;
   },
 
+  /** Customer: a single order I placed */
+  getMyOrderById: async (id: number): Promise<Order> => {
+    const res = await apiClient.get(`/orders/${id}`);
+    return res.data;
+  },
+
+  /** Customer: line items for an order I placed */
+  getMyOrderItems: async (id: number): Promise<OrderItem[]> => {
+    const res = await apiClient.get(`/orders/${id}/items`);
+    return res.data;
+  },
+
   getById: async (id: number): Promise<Order> => {
     const res = await apiClient.get(`/business/orders/${id}`);
     return res.data;

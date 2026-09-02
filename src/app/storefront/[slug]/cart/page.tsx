@@ -1,11 +1,13 @@
 'use client';
 
 import { use, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { storefrontApi } from '@/lib/api/storefront';
 import { cartApi } from '@/lib/api/cart';
 import { useCartStore } from '@/stores/cart.store';
 import { useAuthStore } from '@/stores/auth.store';
+import { useGuestCartStore, toCartResponse } from '@/stores/guest-cart.store';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,14 +24,18 @@ interface Props {
 
 export default function StorefrontCartPage({ params }: Props) {
   const { slug } = use(params);
+  const router = useRouter();
   const { setCarts } = useCartStore();
   const { isAuthenticated } = useAuthStore();
+  const removeGuestItem = useGuestCartStore((s) => s.removeItem);
   const qc = useQueryClient();
 
   const { data: info } = useQuery({
     queryKey: ['storefront', slug],
     queryFn: () => storefrontApi.getInfo(slug),
   });
+
+  const guestCart = useGuestCartStore((s) => (info ? s.getCart(info.id) : undefined));
 
   const { data: allCarts, isLoading } = useQuery({
     queryKey: ['carts'],
@@ -42,9 +48,15 @@ export default function StorefrontCartPage({ params }: Props) {
   }, [allCarts, setCarts]);
 
   // Filter cart for this specific business by businessId
-  const businessCart = info && allCarts
+  const serverCart = info && allCarts
     ? allCarts.find((c) => c.businessId === info.id) ?? null
     : null;
+
+  const businessCart = isAuthenticated
+    ? serverCart
+    : guestCart
+      ? toCartResponse(guestCart)
+      : null;
 
   const removeProductMutation = useMutation({
     mutationFn: (productId: number) => cartApi.removeProduct(productId),
@@ -55,17 +67,20 @@ export default function StorefrontCartPage({ params }: Props) {
     onError: (error) => toast.error(getApiError(error, 'Failed to remove item.')),
   });
 
-  if (!isAuthenticated) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-10 text-center space-y-4">
-        <ShoppingCart className="h-16 w-16 text-muted-foreground mx-auto" />
-        <h2 className="text-xl font-semibold">Sign in to view your cart</h2>
-        <Link href="/auth/login" className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}>
-          Sign In
-        </Link>
-      </div>
-    );
-  }
+  const handleRemove = (productId: number) => {
+    if (isAuthenticated) {
+      removeProductMutation.mutate(productId);
+    } else if (info) {
+      removeGuestItem(info.id, productId);
+      toast.success('Item removed.');
+    }
+  };
+
+  const handleCheckoutClick = () => {
+    if (!isAuthenticated) {
+      router.push(`/auth/login?from=${encodeURIComponent(`/storefront/${slug}/cart`)}`);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -134,7 +149,7 @@ export default function StorefrontCartPage({ params }: Props) {
                   variant="ghost"
                   size="sm"
                   className="text-destructive hover:text-destructive mt-1"
-                  onClick={() => removeProductMutation.mutate(product.productId)}
+                  onClick={() => handleRemove(product.productId)}
                   disabled={removeProductMutation.isPending}
                 >
                   <Trash2 className="h-3 w-3" />
@@ -148,12 +163,21 @@ export default function StorefrontCartPage({ params }: Props) {
             <p className="text-sm text-muted-foreground">Total</p>
             <p className="text-xl font-bold text-primary">₦{businessCart.totalCost.toLocaleString()}</p>
           </div>
-          <Link
-            href={`/storefront/${slug}/checkout?cartId=${businessCart.cartId}`}
-            className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}
-          >
-            Checkout
-          </Link>
+          {isAuthenticated ? (
+            <Link
+              href={`/storefront/${slug}/checkout?cartId=${businessCart.cartId}`}
+              className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}
+            >
+              Checkout
+            </Link>
+          ) : (
+            <Button
+              onClick={handleCheckoutClick}
+              className="bg-primary text-primary-foreground hover:opacity-90"
+            >
+              Sign in to Checkout
+            </Button>
+          )}
         </CardFooter>
       </Card>
     </div>
