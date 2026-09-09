@@ -18,10 +18,10 @@ import { getApiError } from '@/lib/utils';
 import { Store, Eye, EyeOff, ShoppingBag, Users, TrendingUp } from 'lucide-react';
 
 const features = [
-  { icon: ShoppingBag, text: 'Browse thousands of products from African businesses' },
-  { icon: Store, text: 'Launch your own storefront in minutes' },
-  { icon: Users, text: 'Connect with customers across Africa' },
-  { icon: TrendingUp, text: 'Track orders, revenue, and growth' },
+  { icon: ShoppingBag, text: 'Shop from thousands of African businesses' },
+  { icon: Store, text: 'Or launch your own storefront in minutes' },
+  { icon: Users, text: 'Connect buyers and sellers across Africa' },
+  { icon: TrendingUp, text: 'Track your orders, or your business growth' },
 ];
 
 export default function LoginPage() {
@@ -81,10 +81,10 @@ function LoginForm() {
 
         <div className="mt-16 relative z-10">
           <h2 className="text-3xl font-bold leading-tight mb-3">
-            Africa&apos;s marketplace<br />for growing businesses
+            Africa&apos;s marketplace<br />for buyers and sellers
           </h2>
           <p className="text-white/70 text-base mb-10">
-            Sign in to manage your storefront, track orders, and grow your business.
+            Sign in to shop, track your orders, or manage your storefront.
           </p>
 
           <ul className="space-y-4">

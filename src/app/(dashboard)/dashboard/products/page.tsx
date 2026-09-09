@@ -87,6 +87,9 @@ export default function DashboardProductsPage() {
     enabled: !!inventoryProduct,
   });
 
+  const inventoryBaseUnit =
+    inventoryProduct?.prices.find((p) => p.isBaseUnit) ?? inventoryProduct?.prices[0];
+
   // ── Create form ──────────────────────────────────────────────────────────────
 
   const {
@@ -121,11 +124,21 @@ export default function DashboardProductsPage() {
     handleSubmit: handleSubmitPrice,
     control: controlPrice,
     reset: resetPrice,
+    watch: watchPrice,
     formState: { errors: priceErrors },
   } = useForm<AddPriceFormValues>({
     resolver: zodResolver(addPriceSchema),
     defaultValues: { currency: 'NGN' },
   });
+
+  const pricingBaseUnit = pricingProduct?.prices.find((p) => p.isBaseUnit) ?? pricingProduct?.prices[0];
+  const newPriceUnitName = watchPrice('unitName');
+  const isNewNonBaseUnit =
+    !!pricingBaseUnit &&
+    !!newPriceUnitName?.trim() &&
+    !pricingProduct?.prices.some(
+      (p) => p.unitName.trim().toLowerCase() === newPriceUnitName.trim().toLowerCase(),
+    );
 
   // ── Mutations ────────────────────────────────────────────────────────────────
 
@@ -168,7 +181,7 @@ export default function DashboardProductsPage() {
   const saveInventoryMutation = useMutation({
     mutationFn: async ({ productId, quantity }: { productId: number; quantity: number }) => {
       if (inventory) return inventoryApi.update(productId, quantity);
-      return inventoryApi.create({ productId, unitId: inventoryProduct!.prices[0]?.unit ?? 1, quantity });
+      return inventoryApi.create({ productId, quantity });
     },
     onSuccess: () => {
       toast.success('Inventory updated!');
@@ -718,6 +731,16 @@ export default function DashboardProductsPage() {
             <DialogTitle>Inventory — {inventoryProduct?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
+            {inventoryBaseUnit ? (
+              <p className="text-xs text-[#64748b]">
+                Stock is tracked in <span className="font-medium text-[#091426]">{inventoryBaseUnit.unitName}</span>
+                {inventoryProduct && inventoryProduct.prices.length > 1 ? ' — other units convert automatically' : ''}.
+              </p>
+            ) : (
+              <p className="text-xs text-destructive">
+                Add a price/unit for this product before setting inventory.
+              </p>
+            )}
             {inventory && (
               <div className="flex items-center justify-between p-3 rounded-xl bg-[#f8f9ff]">
                 <span className="text-sm text-[#64748b]">Current stock</span>
@@ -741,7 +764,7 @@ export default function DashboardProductsPage() {
               </Button>
               <Button
                 className="bg-[#091426] text-white hover:bg-[#091426]/90"
-                disabled={!inventoryQty || saveInventoryMutation.isPending}
+                disabled={!inventoryQty || !inventoryBaseUnit || saveInventoryMutation.isPending}
                 onClick={() => {
                   if (!inventoryProduct) return;
                   saveInventoryMutation.mutate({
@@ -817,6 +840,26 @@ export default function DashboardProductsPage() {
                     <p className="text-xs text-destructive">{priceErrors.unitName.message}</p>
                   )}
                 </div>
+                {isNewNonBaseUnit && (
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium text-[#091426]">
+                      How many {newPriceUnitName} equal 1 {pricingBaseUnit?.unitName}?
+                    </Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.000001"
+                      placeholder="e.g. 50"
+                      {...registerPrice('conversionFactor', { valueAsNumber: true })}
+                    />
+                    {priceErrors.conversionFactor && (
+                      <p className="text-xs text-destructive">{priceErrors.conversionFactor.message}</p>
+                    )}
+                    <p className="text-xs text-[#64748b]">
+                      Stock is tracked in {pricingBaseUnit?.unitName} — we need this to convert.
+                    </p>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-sm font-medium text-[#091426]">Price</Label>
@@ -851,7 +894,10 @@ export default function DashboardProductsPage() {
                 <Button
                   type="submit"
                   className="w-full bg-[#091426] text-white hover:bg-[#091426]/90"
-                  disabled={addPriceMutation.isPending}
+                  disabled={
+                    addPriceMutation.isPending ||
+                    (isNewNonBaseUnit && !watchPrice('conversionFactor'))
+                  }
                 >
                   {addPriceMutation.isPending ? 'Adding…' : 'Add Price'}
                 </Button>

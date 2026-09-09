@@ -54,7 +54,7 @@ export default function RegisterBusinessPage() {
         <CardHeader>
           <CardTitle>Business Details</CardTitle>
           <CardDescription>
-            Your business will be reviewed by our team before going live.
+            Tell us about your business — you can start selling right away.
           </CardDescription>
         </CardHeader>
         <CardContent>

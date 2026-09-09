@@ -64,6 +64,7 @@ export const addPriceSchema = z.object({
   unitName: z.string().min(1, 'Unit name is required (e.g. Bag, Carton, Piece)'),
   price: z.number().positive('Price must be greater than 0'),
   currency: z.enum(['NGN', 'USD']),
+  conversionFactor: z.number().positive('Conversion factor must be greater than 0').optional(),
 });
 
 export const inviteTeammateSchema = z.object({

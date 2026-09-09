@@ -126,6 +126,7 @@ export interface PriceDetail {
   unit: number;      // unitId
   unitName: string;
   currency: Currency;
+  isBaseUnit: boolean;
 }
 
 export interface Product extends BaseEntity {
@@ -272,7 +273,6 @@ export interface Inventory extends BaseEntity {
 
 export interface CreateInventoryRequest {
   productId: number;
-  unitId: number;
   quantity: number;
 }
 
@@ -304,6 +304,8 @@ export interface AddProductPriceRequest {
   unitName: string;
   price: number;
   currency: Currency;
+  /** Required when adding a new unit to a product that already has a base unit. */
+  conversionFactor?: number;
 }
 
 // ─── Teams ────────────────────────────────────────────────────────────────────

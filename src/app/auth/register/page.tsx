@@ -63,10 +63,10 @@ function RegisterForm() {
 
         <div className="mt-16 relative z-10">
           <h2 className="text-3xl font-bold leading-tight mb-3">
-            Join thousands of<br />African businesses
+            Join thousands of<br />buyers and sellers
           </h2>
           <p className="text-white/70 text-base mb-10">
-            Create your account and start selling to customers across Africa today.
+            Create your account to start shopping, or start selling, across Africa today.
           </p>
 
         </div>
