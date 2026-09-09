@@ -224,6 +224,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   <p className="text-xs text-[#64748b]">
                     {item.quantity} {item.unit} × ₦{Number(item.unitPrice).toLocaleString()}
                   </p>
+                  {item.note && (
+                    <p className="text-xs italic text-[#64748b] mt-0.5">Note: {item.note}</p>
+                  )}
                 </div>
                 <p className="text-sm font-semibold text-[#091426] shrink-0">
                   ₦{Number(item.totalPrice).toLocaleString()}

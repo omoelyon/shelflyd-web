@@ -13,6 +13,7 @@ import { formatStatus } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
 import { ShoppingCart, ArrowLeft } from 'lucide-react';
@@ -30,6 +31,7 @@ export default function StorefrontProductPage({ params }: Props) {
   const addGuestItem = useGuestCartStore((s) => s.addItem);
   const [selectedUnitId, setSelectedUnitId] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
+  const [note, setNote] = useState('');
 
   const { data: info } = useQuery({
     queryKey: ['storefront', slug],
@@ -43,10 +45,16 @@ export default function StorefrontProductPage({ params }: Props) {
 
   const addToCart = useMutation({
     mutationFn: () =>
-      cartApi.add({ productId: id, unitId: Number(selectedUnitId), quantity }),
+      cartApi.add({
+        productId: id,
+        unitId: Number(selectedUnitId),
+        quantity,
+        note: note.trim() || undefined,
+      }),
     onSuccess: (cart) => {
       updateCart(cart);
       toast.success('Added to cart!');
+      setNote('');
     },
     onError: (error) => toast.error(getApiError(error, 'Failed to add to cart.')),
   });
@@ -68,8 +76,10 @@ export default function StorefrontProductPage({ params }: Props) {
       image: product.image,
       unit: selectedPrice.unitName,
       unitPrice: selectedPrice.price,
+      note: note.trim() || undefined,
     });
     toast.success('Added to cart!');
+    setNote('');
   };
 
   if (isLoading) {
@@ -177,6 +187,18 @@ export default function StorefrontProductPage({ params }: Props) {
                 +
               </Button>
             </div>
+          </div>
+
+          {/* Note */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Note (optional)</label>
+            <Textarea
+              placeholder="Ripeness preference, delivery instructions for this item…"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={500}
+              rows={2}
+            />
           </div>
 
           {/* Add to cart */}

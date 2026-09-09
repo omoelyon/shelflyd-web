@@ -170,6 +170,7 @@ export interface CartProduct {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  note?: string;
 }
 
 export interface CartResponse {
@@ -183,6 +184,7 @@ export interface CartUpdateRequest {
   productId: number;
   unitId: number;
   quantity: number;
+  note?: string;
 }
 
 export type OrderType = 'PICKUP' | 'DELIVERY';
@@ -213,6 +215,7 @@ export interface OrderItem {
   unit: string;
   unitPrice: number;
   totalPrice: number;
+  note?: string;
 }
 
 // ─── Orders ───────────────────────────────────────────────────────────────────

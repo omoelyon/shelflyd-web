@@ -11,6 +11,7 @@ export interface GuestCartItem {
   image: string;
   unit: string;
   unitPrice: number;
+  note?: string;
 }
 
 export interface GuestCart {
@@ -47,7 +48,13 @@ export const useGuestCartStore = create<GuestCartState>()(
             itemIndex === -1
               ? [...cart.items, item]
               : cart.items.map((i, idx) =>
-                  idx === itemIndex ? { ...i, quantity: i.quantity + item.quantity } : i
+                  idx === itemIndex
+                    ? {
+                        ...i,
+                        quantity: i.quantity + item.quantity,
+                        note: item.note !== undefined ? item.note : i.note,
+                      }
+                    : i
                 );
           const carts = [...state.carts];
           carts[cartIndex] = { ...cart, items };
@@ -95,6 +102,7 @@ export function toCartResponse(cart: GuestCart): CartResponse {
     quantity: i.quantity,
     unitPrice: i.unitPrice,
     totalPrice: i.unitPrice * i.quantity,
+    note: i.note,
   }));
   return {
     cartId: -1,

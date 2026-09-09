@@ -117,6 +117,9 @@ export default function CartPage() {
                     <p className="text-xs text-muted-foreground">
                       {product.unit} · {product.quantity}x · ₦{product.unitPrice.toLocaleString()} each
                     </p>
+                    {product.note && (
+                      <p className="text-xs italic text-muted-foreground mt-0.5">Note: {product.note}</p>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-primary">₦{product.totalPrice.toLocaleString()}</p>

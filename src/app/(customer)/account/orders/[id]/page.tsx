@@ -131,6 +131,9 @@ export default function OrderDetailPage({ params }: Props) {
                   <p className="text-xs text-muted-foreground">
                     {item.unit} · {item.quantity}x · ₦{item.unitPrice.toLocaleString()} each
                   </p>
+                  {item.note && (
+                    <p className="text-xs italic text-muted-foreground mt-0.5">Note: {item.note}</p>
+                  )}
                 </div>
                 <p className="font-semibold text-primary shrink-0">₦{item.totalPrice.toLocaleString()}</p>
               </div>

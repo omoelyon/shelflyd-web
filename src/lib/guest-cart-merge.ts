@@ -19,6 +19,7 @@ export async function mergeGuestCartIntoServer(): Promise<void> {
           productId: item.productId,
           unitId: item.unitId,
           quantity: item.quantity,
+          note: item.note,
         });
         useCartStore.getState().updateCart(updated);
       } catch {
