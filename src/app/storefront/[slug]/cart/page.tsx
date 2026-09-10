@@ -59,7 +59,8 @@ export default function StorefrontCartPage({ params }: Props) {
       : null;
 
   const removeProductMutation = useMutation({
-    mutationFn: (productId: number) => cartApi.removeProduct(productId),
+    mutationFn: ({ productId, unitId }: { productId: number; unitId: number }) =>
+      cartApi.removeProduct(productId, unitId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['carts'] });
       toast.success('Item removed.');
@@ -67,11 +68,11 @@ export default function StorefrontCartPage({ params }: Props) {
     onError: (error) => toast.error(getApiError(error, 'Failed to remove item.')),
   });
 
-  const handleRemove = (productId: number) => {
+  const handleRemove = (productId: number, unitId: number) => {
     if (isAuthenticated) {
-      removeProductMutation.mutate(productId);
+      removeProductMutation.mutate({ productId, unitId });
     } else if (info) {
-      removeGuestItem(info.id, productId);
+      removeGuestItem(info.id, productId, unitId);
       toast.success('Item removed.');
     }
   };
@@ -129,7 +130,7 @@ export default function StorefrontCartPage({ params }: Props) {
         </CardHeader>
         <CardContent className="space-y-3">
           {businessCart.products.map((product) => (
-            <div key={product.productId} className="flex items-center gap-4 p-3 rounded-lg bg-muted/40">
+            <div key={`${product.productId}-${product.unitId}`} className="flex items-center gap-4 p-3 rounded-lg bg-muted/40">
               <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-muted shrink-0">
                 {product.image ? (
                   <Image src={product.image} alt={product.name} fill className="object-cover" unoptimized />
@@ -152,7 +153,7 @@ export default function StorefrontCartPage({ params }: Props) {
                   variant="ghost"
                   size="sm"
                   className="text-destructive hover:text-destructive mt-1"
-                  onClick={() => handleRemove(product.productId)}
+                  onClick={() => handleRemove(product.productId, product.unitId)}
                   disabled={removeProductMutation.isPending}
                 >
                   <Trash2 className="h-3 w-3" />

@@ -6,10 +6,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ordersApi } from '@/lib/api/orders';
 import { deliveryApi } from '@/lib/api/delivery';
+import { businessesApi } from '@/lib/api/businesses';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronLeft, Package, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Package, MapPin, Store } from 'lucide-react';
 import type { OrderStatus } from '@/types';
 
 const statusColor: Record<OrderStatus | string, string> = {
@@ -49,6 +50,12 @@ export default function OrderDetailPage({ params }: Props) {
     enabled: !!order?.deliveryLocationId,
   });
 
+  const { data: business } = useQuery({
+    queryKey: ['business', order?.businessId],
+    queryFn: () => businessesApi.getById(order!.businessId),
+    enabled: !!order?.businessId,
+  });
+
   const total = items?.reduce((acc, item) => acc + item.totalPrice, 0) ?? 0;
 
   if (orderLoading) {
@@ -74,14 +81,25 @@ export default function OrderDetailPage({ params }: Props) {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href="/account/orders" className="text-muted-foreground hover:text-foreground transition-colors">
-          <ChevronLeft className="h-5 w-5" />
-        </Link>
-        <h1 className="text-2xl font-bold text-[#091426]">Order #{order.id}</h1>
-        <Badge className={`text-xs font-medium border-0 ${statusColor[order.status] ?? 'bg-slate-100 text-slate-700'}`}>
-          {order.status.replace(/_/g, ' ')}
-        </Badge>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Link href="/account/orders" className="text-muted-foreground hover:text-foreground transition-colors">
+            <ChevronLeft className="h-5 w-5" />
+          </Link>
+          <h1 className="text-2xl font-bold text-[#091426]">Order #{order.id}</h1>
+          <Badge className={`text-xs font-medium border-0 ${statusColor[order.status] ?? 'bg-slate-100 text-slate-700'}`}>
+            {order.status.replace(/_/g, ' ')}
+          </Badge>
+        </div>
+        {business && (
+          <Link
+            href={`/storefront/${business.slug}`}
+            className="flex items-center gap-1 text-sm text-primary hover:underline shrink-0"
+          >
+            <Store className="h-4 w-4" />
+            Visit store
+          </Link>
+        )}
       </div>
 
       <Card>
@@ -117,27 +135,43 @@ export default function OrderDetailPage({ params }: Props) {
           ) : !items?.length ? (
             <p className="text-sm text-muted-foreground">No items found for this order.</p>
           ) : (
-            items.map((item) => (
-              <div key={item.productId} className="flex items-center gap-4 p-3 rounded-lg bg-muted/40">
-                <div className="relative h-14 w-14 rounded-lg overflow-hidden bg-muted shrink-0">
-                  {item.image ? (
-                    <Image src={item.image} alt={item.name} fill className="object-cover" unoptimized />
-                  ) : (
-                    <div className="absolute inset-0 bg-muted" />
-                  )}
+            items.map((item) => {
+              const content = (
+                <>
+                  <div className="relative h-14 w-14 rounded-lg overflow-hidden bg-muted shrink-0">
+                    {item.image ? (
+                      <Image src={item.image} alt={item.name} fill className="object-cover" unoptimized />
+                    ) : (
+                      <div className="absolute inset-0 bg-muted" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{item.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.unit} · {item.quantity}x · ₦{item.unitPrice.toLocaleString()} each
+                    </p>
+                    {item.note && (
+                      <p className="text-xs italic text-muted-foreground mt-0.5">Note: {item.note}</p>
+                    )}
+                  </div>
+                  <p className="font-semibold text-primary shrink-0">₦{item.totalPrice.toLocaleString()}</p>
+                  {business && <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
+                </>
+              );
+              return business ? (
+                <Link
+                  key={item.productId}
+                  href={`/storefront/${business.slug}/products/${item.productId}`}
+                  className="flex items-center gap-4 p-3 rounded-lg bg-muted/40 hover:bg-muted/70 transition-colors"
+                >
+                  {content}
+                </Link>
+              ) : (
+                <div key={item.productId} className="flex items-center gap-4 p-3 rounded-lg bg-muted/40">
+                  {content}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {item.unit} · {item.quantity}x · ₦{item.unitPrice.toLocaleString()} each
-                  </p>
-                  {item.note && (
-                    <p className="text-xs italic text-muted-foreground mt-0.5">Note: {item.note}</p>
-                  )}
-                </div>
-                <p className="font-semibold text-primary shrink-0">₦{item.totalPrice.toLocaleString()}</p>
-              </div>
-            ))
+              );
+            })
           )}
         </CardContent>
       </Card>

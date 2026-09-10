@@ -22,8 +22,8 @@ export const cartApi = {
     return res.data;
   },
 
-  removeProduct: async (productId: number): Promise<CartResponse> => {
-    const res = await apiClient.put(`/carts/product/${productId}/remove`);
+  removeProduct: async (productId: number, unitId: number): Promise<CartResponse> => {
+    const res = await apiClient.put(`/carts/product/${productId}/unit/${unitId}/remove`);
     return res.data;
   },
 

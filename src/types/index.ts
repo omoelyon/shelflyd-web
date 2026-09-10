@@ -167,6 +167,7 @@ export interface CartProduct {
   type: string;
   image: string;
   unit: string;
+  unitId: number;
   quantity: number;
   unitPrice: number;
   totalPrice: number;

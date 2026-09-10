@@ -22,7 +22,7 @@ export interface GuestCart {
 interface GuestCartState {
   carts: GuestCart[];
   addItem: (businessId: number, item: Omit<GuestCartItem, 'quantity'> & { quantity: number }) => void;
-  removeItem: (businessId: number, productId: number) => void;
+  removeItem: (businessId: number, productId: number, unitId: number) => void;
   clearBusiness: (businessId: number) => void;
   clearAll: () => void;
   getCart: (businessId: number) => GuestCart | undefined;
@@ -62,12 +62,12 @@ export const useGuestCartStore = create<GuestCartState>()(
         });
       },
 
-      removeItem: (businessId, productId) => {
+      removeItem: (businessId, productId, unitId) => {
         set((state) => ({
           carts: state.carts
             .map((c) =>
               c.businessId === businessId
-                ? { ...c, items: c.items.filter((i) => i.productId !== productId) }
+                ? { ...c, items: c.items.filter((i) => !(i.productId === productId && i.unitId === unitId)) }
                 : c
             )
             .filter((c) => c.items.length > 0),
@@ -99,6 +99,7 @@ export function toCartResponse(cart: GuestCart): CartResponse {
     type: i.type,
     image: i.image,
     unit: i.unit,
+    unitId: i.unitId,
     quantity: i.quantity,
     unitPrice: i.unitPrice,
     totalPrice: i.unitPrice * i.quantity,

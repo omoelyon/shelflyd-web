@@ -17,6 +17,11 @@ export const businessesApi = {
     return res.data;
   },
 
+  getById: async (id: number): Promise<Business> => {
+    const res = await apiClient.get(`/businesses/${id}`);
+    return res.data;
+  },
+
   register: async (data: RegisterBusinessRequest): Promise<Business> => {
     const res = await apiClient.post('/businesses/register', data);
     return res.data;
