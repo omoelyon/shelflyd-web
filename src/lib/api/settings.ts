@@ -12,12 +12,8 @@ export const settingsApi = {
     return res.data;
   },
 
-  uploadLogo: async (file: File): Promise<Business> => {
-    const form = new FormData();
-    form.append('file', file);
-    const res = await apiClient.post('/business/settings/logo/upload', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+  setLogoUrl: async (url: string): Promise<Business> => {
+    const res = await apiClient.patch('/business/settings/logo', { url });
     return res.data;
   },
 

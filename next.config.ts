@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'ui-avatars.com' },
       { protocol: 'https', hostname: 'api.shelflyd.com' },
       { protocol: 'http', hostname: 'localhost' },
+      { protocol: 'https', hostname: '*.r2.dev' },
     ],
   },
   async rewrites() {

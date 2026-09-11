@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { settingsApi } from '@/lib/api/settings';
+import { uploadsApi } from '@/lib/api/uploads';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
@@ -73,20 +74,26 @@ export default function LogoUploader({ business }: Props) {
     setIsUploading(true);
     setUploadProgress(0);
 
-    // Simulate progress
-    const interval = setInterval(() => {
-      setUploadProgress((p) => Math.min(p + 20, 80));
-    }, 200);
-
     try {
-      const updated = await settingsApi.uploadLogo(file);
-      clearInterval(interval);
-      setUploadProgress(100);
+      const { uploadUrl, publicUrl } = await uploadsApi.getPresignedUrl(file.type);
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', uploadUrl);
+        xhr.setRequestHeader('Content-Type', file.type);
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        };
+        xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject());
+        xhr.onerror = () => reject();
+        xhr.send(file);
+      });
+      const updated = await settingsApi.setLogoUrl(publicUrl);
       qc.setQueryData(['business-settings'], updated);
       setLogoSrc(updated.logo ?? fallback);
       toast.success('Logo uploaded!');
     } catch {
-      clearInterval(interval);
       toast.error('Upload failed. Check file and try again.');
     } finally {
       setIsUploading(false);

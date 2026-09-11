@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { businessesApi } from '@/lib/api/businesses';
 import { productsApi } from '@/lib/api/products';
+import { uploadsApi } from '@/lib/api/uploads';
 import { pricingApi } from '@/lib/api/pricing';
 import { inventoryApi } from '@/lib/api/inventory';
 import { categoriesApi } from '@/lib/api/categories';
@@ -232,7 +233,7 @@ export default function DashboardProductsPage() {
     setPreview(URL.createObjectURL(file));
     setUploading(true);
     try {
-      const { url } = await productsApi.uploadImage(file);
+      const url = await uploadsApi.uploadFile(file);
       setVal('image', url);
       toast.success('Image uploaded!');
     } catch (err) {
