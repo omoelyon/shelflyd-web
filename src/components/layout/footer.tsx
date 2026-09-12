@@ -18,7 +18,7 @@ const links = {
 export default function Footer() {
   return (
     <footer className="bg-[#091426] mt-auto">
-      <div className="max-w-7xl mx-auto px-4 py-14 grid grid-cols-1 md:grid-cols-4 gap-10">
+      <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* Brand */}
         <div className="md:col-span-2">
           <Link href="/" className="inline-flex items-center gap-2.5 font-bold text-lg text-white mb-4">
