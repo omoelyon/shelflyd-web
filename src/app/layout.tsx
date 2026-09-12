@@ -44,8 +44,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${manrope.variable} antialiased`}>
+    <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
+      <body className="antialiased">
         <PWARegister />
         <Providers>{children}</Providers>
       </body>
