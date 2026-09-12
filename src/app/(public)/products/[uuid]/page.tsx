@@ -136,7 +136,9 @@ export default function ProductDetailPage({ params }: Props) {
             <label className="text-sm font-medium">Select Unit</label>
             <Select value={selectedUnitId} onValueChange={(v) => setSelectedUnitId(v ?? '')}>
               <SelectTrigger>
-                <SelectValue placeholder="Choose a unit..." />
+                <SelectValue placeholder="Choose a unit...">
+                  {selectedPrice ? `${selectedPrice.unitName} — ${selectedPrice.currency} ${selectedPrice.price.toLocaleString()}` : undefined}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {product.prices.map((p) => (

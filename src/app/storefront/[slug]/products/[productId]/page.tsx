@@ -100,7 +100,7 @@ export default function StorefrontProductPage({ params }: Props) {
     return (
       <div className="text-center py-24 space-y-4">
         <p className="text-muted-foreground">Product not found.</p>
-        <Link href="/" className="text-primary hover:underline text-sm">Back to store</Link>
+        <Link href={`/storefront/${slug}`} className="text-primary hover:underline text-sm">Back to store</Link>
       </div>
     );
   }
@@ -108,7 +108,7 @@ export default function StorefrontProductPage({ params }: Props) {
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <Link
-        href="/"
+        href={`/storefront/${slug}`}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8"
       >
         <ArrowLeft className="h-4 w-4" />
@@ -156,7 +156,9 @@ export default function StorefrontProductPage({ params }: Props) {
               <label className="text-sm font-medium">Select Unit</label>
               <Select value={selectedUnitId} onValueChange={(v) => setSelectedUnitId(v ?? '')}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a unit..." />
+                  <SelectValue placeholder="Choose a unit...">
+                    {selectedPrice ? `${selectedPrice.unitName} — ${selectedPrice.currency} ${selectedPrice.price.toLocaleString()}` : undefined}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {product.prices.map((p) => (
