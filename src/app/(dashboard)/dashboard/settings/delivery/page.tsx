@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { deliveryApi } from '@/lib/api/delivery';
+import { businessesApi } from '@/lib/api/businesses';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,9 +30,15 @@ export default function DeliveryLocationsPage() {
   const [editing, setEditing] = useState<DeliveryLocation | null>(null);
   const qc = useQueryClient();
 
+  const { data: business } = useQuery({
+    queryKey: ['business-profile'],
+    queryFn: businessesApi.getProfile,
+  });
+
   const { data: locations, isLoading } = useQuery({
-    queryKey: ['delivery-locations'],
-    queryFn: deliveryApi.list,
+    queryKey: ['delivery-locations', business?.id],
+    queryFn: () => deliveryApi.listByBusiness(business!.id),
+    enabled: !!business,
   });
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<FormValues>({
@@ -92,7 +99,7 @@ export default function DeliveryLocationsPage() {
       />
 
       <div className="bg-white rounded-2xl shadow-card-md overflow-hidden">
-        {isLoading ? (
+        {isLoading || !business ? (
           <div className="p-4 space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-14 rounded-xl" />

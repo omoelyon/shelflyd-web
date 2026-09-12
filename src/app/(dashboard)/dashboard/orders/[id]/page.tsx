@@ -52,8 +52,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   });
 
   const { data: deliveryLocations } = useQuery({
-    queryKey: ['delivery-locations'],
-    queryFn: deliveryApi.list,
+    queryKey: ['delivery-locations', order?.businessId],
+    queryFn: () => deliveryApi.listByBusiness(order!.businessId),
+    enabled: !!order,
   });
 
   const { data: orderItems } = useQuery({
@@ -127,13 +128,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <div className="flex items-center gap-3">
             <p className="text-xs text-[#64748b]">Advance to:</p>
             <Select
+              value=""
               disabled={updateStatusMutation.isPending}
               onValueChange={(s) => updateStatusMutation.mutate(s as OrderStatus)}
             >
               <SelectTrigger className="h-8 text-xs w-52 border-[rgba(9,20,38,0.12)]">
-                <SelectValue
-                  placeholder={updateStatusMutation.isPending ? 'Updating…' : 'Select next status'}
-                />
+                <SelectValue placeholder={updateStatusMutation.isPending ? 'Updating…' : 'Select next status'}>
+                  {undefined}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {actions.map((s) => (
