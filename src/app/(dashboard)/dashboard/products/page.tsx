@@ -40,7 +40,7 @@ import StatusBadge from '@/components/ui/status-badge';
 import PaginationControls from '@/components/ui/pagination-controls';
 import { toast } from 'sonner';
 import { getApiError, formatStatus } from '@/lib/utils';
-import { Plus, Package, Boxes, Tag, Trash2, ImageIcon, Pencil, AlertTriangle } from 'lucide-react';
+import { Plus, Package, Boxes, Tag, Trash2, ImageIcon, Pencil, AlertTriangle, ArrowLeftRight } from 'lucide-react';
 import Image from 'next/image';
 import type { Product, PriceDetail } from '@/types';
 
@@ -69,6 +69,7 @@ export default function DashboardProductsPage() {
   const [inventoryProduct, setInventoryProduct] = useState<Product | null>(null);
   const [inventoryQty, setInventoryQty] = useState('');
   const [pricingProduct, setPricingProduct] = useState<Product | null>(null);
+  const [conversionDirection, setConversionDirection] = useState<'new-per-base' | 'base-per-new'>('new-per-base');
 
   const qc = useQueryClient();
 
@@ -205,6 +206,7 @@ export default function DashboardProductsPage() {
         );
       }
       resetPrice();
+      setConversionDirection('new-per-base');
     },
     onError: (error) => toast.error(getApiError(error, 'Failed to add price.')),
   });
@@ -792,7 +794,7 @@ export default function DashboardProductsPage() {
       {/* ── Pricing dialog ────────────────────────────────────────────────────── */}
       <Dialog
         open={!!pricingProduct}
-        onOpenChange={(open) => { if (!open) { setPricingProduct(null); resetPrice(); } }}
+        onOpenChange={(open) => { if (!open) { setPricingProduct(null); resetPrice(); setConversionDirection('new-per-base'); } }}
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -838,7 +840,11 @@ export default function DashboardProductsPage() {
               <form
                 onSubmit={handleSubmitPrice((values) => {
                   if (!pricingProduct) return;
-                  addPriceMutation.mutate({ productId: pricingProduct.id, dto: values });
+                  const dto =
+                    conversionDirection === 'base-per-new' && values.conversionFactor
+                      ? { ...values, conversionFactor: 1 / values.conversionFactor }
+                      : values;
+                  addPriceMutation.mutate({ productId: pricingProduct.id, dto });
                 })}
                 className="space-y-3"
               >
@@ -851,14 +857,26 @@ export default function DashboardProductsPage() {
                 </div>
                 {isNewNonBaseUnit && (
                   <div className="space-y-1.5">
-                    <Label className="text-sm font-medium text-[#091426]">
-                      How many {newPriceUnitName} equal 1 {pricingBaseUnit?.unitName}?
-                    </Label>
+                    <div className="flex items-center justify-between gap-2">
+                      <Label className="text-sm font-medium text-[#091426]">
+                        How many {conversionDirection === 'new-per-base' ? newPriceUnitName : pricingBaseUnit?.unitName} equal 1 {conversionDirection === 'new-per-base' ? pricingBaseUnit?.unitName : newPriceUnitName}?
+                      </Label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setConversionDirection((d) => (d === 'new-per-base' ? 'base-per-new' : 'new-per-base'))
+                        }
+                        className="shrink-0 text-xs text-[#0058be] hover:underline flex items-center gap-1"
+                      >
+                        <ArrowLeftRight className="h-3 w-3" />
+                        Switch
+                      </button>
+                    </div>
                     <Input
                       type="number"
                       min="0"
                       step="0.000001"
-                      placeholder="e.g. 50"
+                      placeholder="e.g. 12"
                       {...registerPrice('conversionFactor', { valueAsNumber: true })}
                     />
                     {priceErrors.conversionFactor && (
