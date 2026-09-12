@@ -152,7 +152,12 @@ export default function CheckoutPage({ params }: Props) {
                     onValueChange={(v) => field.onChange(Number(v))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a delivery location..." />
+                      <SelectValue placeholder="Select a delivery location...">
+                        {(() => {
+                          const loc = locations?.find((l) => l.id === field.value);
+                          return loc ? `${loc.location} — ₦${loc.amount.toLocaleString()}` : undefined;
+                        })()}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {locations?.map((loc) => (

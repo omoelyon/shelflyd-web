@@ -215,7 +215,9 @@ export default function DashboardTeamPage() {
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue>
+                        {{ MEMBER: 'Member', ADMIN: 'Admin' }[field.value as string] ?? field.value}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="MEMBER">Member</SelectItem>

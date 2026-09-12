@@ -39,7 +39,7 @@ import EmptyState from '@/components/ui/empty-state';
 import StatusBadge from '@/components/ui/status-badge';
 import PaginationControls from '@/components/ui/pagination-controls';
 import { toast } from 'sonner';
-import { getApiError } from '@/lib/utils';
+import { getApiError, formatStatus } from '@/lib/utils';
 import { Plus, Package, Boxes, Tag, Trash2, ImageIcon, Pencil, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import type { Product, PriceDetail } from '@/types';
@@ -306,11 +306,17 @@ export default function DashboardProductsPage() {
                     : <span className="text-muted-foreground">Select…</span>}
                 </SelectTrigger>
                 <SelectContent>
-                  {categories?.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
+                  {categories?.length ? (
+                    categories.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                      No categories yet — add one in Admin → Categories
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             )}
@@ -385,7 +391,9 @@ export default function DashboardProductsPage() {
           control={ctrl}
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue>{field.value ? formatStatus(field.value) : undefined}</SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="IN_STOCK">In Stock</SelectItem>
                 <SelectItem value="LOW_STOCK">Low Stock</SelectItem>
@@ -882,7 +890,11 @@ export default function DashboardProductsPage() {
                       control={controlPrice}
                       render={({ field }) => (
                         <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectTrigger>
+                            <SelectValue>
+                              {{ NGN: 'NGN ₦', USD: 'USD $' }[field.value as string] ?? field.value}
+                            </SelectValue>
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="NGN">NGN ₦</SelectItem>
                             <SelectItem value="USD">USD $</SelectItem>

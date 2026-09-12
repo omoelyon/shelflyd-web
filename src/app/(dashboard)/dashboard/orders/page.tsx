@@ -121,13 +121,16 @@ export default function DashboardOrdersPage() {
 
                       {actions.length > 0 && (
                         <Select
+                          value=""
                           disabled={isUpdating}
                           onValueChange={(status) =>
                             updateStatusMutation.mutate({ id: order.id, status: status as OrderStatus })
                           }
                         >
                           <SelectTrigger className="h-8 text-xs w-40 border-[rgba(9,20,38,0.12)] bg-white">
-                            <SelectValue placeholder={isUpdating ? 'Updating…' : 'Update status'} />
+                            <SelectValue placeholder={isUpdating ? 'Updating…' : 'Update status'}>
+                              {undefined}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             {actions.map((s) => (
