@@ -16,12 +16,12 @@ import { getApiError } from '@/lib/utils';
 import { Truck, Store, MapPin } from 'lucide-react';
 
 interface Props {
-  params: Promise<{ businessId: string }>;
+  params: Promise<{ cartId: string }>;
 }
 
 export default function CheckoutPage({ params }: Props) {
-  const { businessId } = use(params);
-  const cartId = Number(businessId);
+  const { cartId: cartIdParam } = use(params);
+  const cartId = Number(cartIdParam);
 
   const { data: carts, isLoading: cartLoading } = useQuery({
     queryKey: ['carts'],
