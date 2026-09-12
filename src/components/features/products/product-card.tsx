@@ -23,7 +23,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const status = statusConfig[product.status] ?? { label: formatStatus(product.status), className: 'bg-gray-100 text-gray-500' };
 
   return (
-    <Link href={`/products/${product.id}`} className="block group">
+    <Link href={`/products/${product.uuid}`} className="block group">
       <div className="bg-card rounded-2xl border border-border h-full flex flex-col overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:border-border/80">
         {/* Image */}
         <div className="relative h-48 bg-muted overflow-hidden">

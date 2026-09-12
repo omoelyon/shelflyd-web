@@ -7,39 +7,48 @@ import { productsApi } from '@/lib/api/products';
 import { cartApi } from '@/lib/api/cart';
 import { useCartStore } from '@/stores/cart.store';
 import { useAuthStore } from '@/stores/auth.store';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { cn, formatStatus } from '@/lib/utils';
+import { useGuestCartStore } from '@/stores/guest-cart.store';
+import { Button } from '@/components/ui/button';
+import { formatStatus } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
 import { ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
-  params: Promise<{ id: string }>;
+  params: Promise<{ uuid: string }>;
 }
 
 export default function ProductDetailPage({ params }: Props) {
-  const { id } = use(params);
-  const productId = Number(id);
+  const { uuid } = use(params);
   const { isAuthenticated } = useAuthStore();
   const updateCart = useCartStore((s) => s.updateCart);
+  const addGuestItem = useGuestCartStore((s) => s.addItem);
   const [selectedUnitId, setSelectedUnitId] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
+  const [note, setNote] = useState('');
 
   const { data: product, isLoading, isError } = useQuery({
-    queryKey: ['product', productId],
-    queryFn: () => productsApi.getById(productId),
+    queryKey: ['product', uuid],
+    queryFn: () => productsApi.getByUuid(uuid),
   });
 
   const addToCart = useMutation({
     mutationFn: () =>
-      cartApi.add({ productId, unitId: Number(selectedUnitId), quantity }),
+      cartApi.add({
+        productId: product!.id,
+        unitId: Number(selectedUnitId),
+        quantity,
+        note: note.trim() || undefined,
+      }),
     onSuccess: (cart) => {
       updateCart(cart);
       toast.success('Added to cart!');
+      setNote('');
     },
     onError: (error) => toast.error(getApiError(error, 'Failed to add to cart.')),
   });
@@ -63,6 +72,27 @@ export default function ProductDetailPage({ params }: Props) {
   }
 
   const selectedPrice = product.prices?.find((p) => p.unit === Number(selectedUnitId));
+
+  const handleAddToCart = () => {
+    if (isAuthenticated) {
+      addToCart.mutate();
+      return;
+    }
+    if (!selectedPrice) return;
+    addGuestItem(product.businessId, {
+      productId: product.id,
+      unitId: Number(selectedUnitId),
+      quantity,
+      name: product.name,
+      type: product.type,
+      image: product.image,
+      unit: selectedPrice.unitName,
+      unitPrice: selectedPrice.price,
+      note: note.trim() || undefined,
+    });
+    toast.success('Added to cart!');
+    setNote('');
+  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-10">
@@ -139,22 +169,28 @@ export default function ProductDetailPage({ params }: Props) {
           </div>
         </div>
 
+        {/* Note */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">Note (optional)</label>
+          <Textarea
+            placeholder="Ripeness preference, delivery instructions for this item…"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={500}
+            rows={2}
+          />
+        </div>
+
         {/* Add to cart */}
-        {isAuthenticated ? (
-          <Button
-            className="w-full bg-primary text-primary-foreground hover:opacity-90"
-            size="lg"
-            disabled={!selectedUnitId || (product.status !== 'IN_STOCK' && product.status !== 'LOW_STOCK') || addToCart.isPending}
-            onClick={() => addToCart.mutate()}
-          >
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            {addToCart.isPending ? 'Adding...' : 'Add to Cart'}
-          </Button>
-        ) : (
-          <a href="/auth/login" className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'w-full')}>
-            Login to Add to Cart
-          </a>
-        )}
+        <Button
+          className="w-full bg-primary text-primary-foreground hover:opacity-90"
+          size="lg"
+          disabled={!selectedUnitId || (product.status !== 'IN_STOCK' && product.status !== 'LOW_STOCK') || addToCart.isPending}
+          onClick={handleAddToCart}
+        >
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          {addToCart.isPending ? 'Adding...' : 'Add to Cart'}
+        </Button>
       </div>
     </div>
   );

@@ -9,8 +9,8 @@ export const productsApi = {
     return res.data;
   },
 
-  getById: async (id: number): Promise<Product> => {
-    const res = await apiClient.get(`/products/${id}`);
+  getByUuid: async (uuid: string): Promise<Product> => {
+    const res = await apiClient.get(`/products/${uuid}`);
     return res.data;
   },
 
