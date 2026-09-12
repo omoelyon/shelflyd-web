@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cn, getApiError } from '@/lib/utils';
 import type { Business } from '@/types';
+import BusinessAvatar from '@/components/layout/business-avatar';
 
 const PRESET_COLORS = [
   { hex: '#16a34a', name: 'Green' },
@@ -127,12 +128,11 @@ export default function ThemeColorPicker({ business }: Props) {
           className="rounded-xl p-5 flex items-center gap-4"
           style={{ backgroundColor: `${previewColor}20` }}
         >
-          <div
-            className="h-14 w-14 rounded-xl flex items-center justify-center text-white text-xl font-bold"
-            style={{ backgroundColor: previewColor }}
-          >
-            {business.name.charAt(0).toUpperCase()}
-          </div>
+          <BusinessAvatar
+            business={{ name: business.name, logo: business.logo, themeColor: previewColor }}
+            size={56}
+            className="rounded-xl"
+          />
           <div>
             <p className="font-bold text-lg">{business.name}</p>
             <p className="text-sm text-muted-foreground">
