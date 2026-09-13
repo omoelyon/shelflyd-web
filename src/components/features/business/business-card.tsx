@@ -9,7 +9,7 @@ interface BusinessCardProps {
 
 export default function BusinessCard({ business }: BusinessCardProps) {
   return (
-    <Link href={`/businesses/${business.id}`} className="block group">
+    <Link href={`/businesses/${business.uuid}`} className="block group">
       <div className="bg-card rounded-2xl border border-border p-5 flex gap-4 items-start h-full transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:border-border/80">
         <BusinessAvatar
           business={business}

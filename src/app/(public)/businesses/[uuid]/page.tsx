@@ -13,12 +13,11 @@ import { MapPin } from 'lucide-react';
 import { formatStatus } from '@/lib/utils';
 
 interface Props {
-  params: Promise<{ id: string }>;
+  params: Promise<{ uuid: string }>;
 }
 
 export default function BusinessStorefrontPage({ params }: Props) {
-  const { id } = use(params);
-  const businessId = Number(id);
+  const { uuid } = use(params);
   const loadFromBusiness = useThemeStore((s) => s.loadFromBusiness);
 
   const { data: businesses, isLoading: bizLoading } = useQuery({
@@ -26,12 +25,12 @@ export default function BusinessStorefrontPage({ params }: Props) {
     queryFn: businessesApi.listAll,
   });
 
-  const business = businesses?.find((b) => b.id === businessId);
+  const business = businesses?.find((b) => b.uuid === uuid);
 
   const { data: productsPage, isLoading: prodLoading } = useQuery({
-    queryKey: ['products', 'business', businessId],
-    queryFn: () => productsApi.listByBusiness(businessId),
-    enabled: !!businessId,
+    queryKey: ['products', 'business', business?.id],
+    queryFn: () => productsApi.listByBusiness(business!.id),
+    enabled: !!business,
   });
 
   useEffect(() => {

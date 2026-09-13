@@ -9,6 +9,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { paymentsApi } from '@/lib/api/payments';
+import { businessesApi } from '@/lib/api/businesses';
 
 function SuccessContent() {
   const params = useSearchParams();
@@ -21,7 +22,14 @@ function SuccessContent() {
     retry: false,
   });
 
-  const continueShoppingHref = payment ? `/businesses/${payment.businessId}` : '/products';
+  const { data: business } = useQuery({
+    queryKey: ['business', payment?.businessId],
+    queryFn: () => businessesApi.getById(payment!.businessId),
+    enabled: !!payment,
+    retry: false,
+  });
+
+  const continueShoppingHref = business ? `/businesses/${business.uuid}` : '/products';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
