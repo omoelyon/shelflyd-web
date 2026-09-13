@@ -15,23 +15,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
-import { Store, Eye, EyeOff, ShoppingBag, Users, MapPin } from 'lucide-react';
+import { Store, Eye, EyeOff, Package, ShoppingBag, BarChart3 } from 'lucide-react';
 
 const features = [
-  { icon: ShoppingBag, text: 'Shop from thousands of African businesses' },
-  { icon: Users, text: 'Connect with sellers across Africa' },
-  { icon: MapPin, text: 'Track every order, from checkout to delivery' },
+  { icon: Package, text: 'Manage your products and inventory' },
+  { icon: ShoppingBag, text: 'Fulfil orders from checkout to delivery' },
+  { icon: BarChart3, text: 'Track revenue and store performance' },
 ];
 
-export default function LoginPage() {
+export default function DashboardLoginPage() {
   return (
     <Suspense>
-      <LoginForm />
+      <DashboardLoginForm />
     </Suspense>
   );
 }
 
-function LoginForm() {
+function DashboardLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from');
@@ -57,7 +57,7 @@ function LoginForm() {
       });
       await mergeGuestCartIntoServer();
       toast.success('Welcome back!');
-      router.push(from || '/');
+      router.push(from || '/dashboard');
     },
     onError: (error) => toast.error(getApiError(error, 'Invalid email or password.')),
   });
@@ -80,10 +80,10 @@ function LoginForm() {
 
         <div className="mt-16 relative z-10">
           <h2 className="text-3xl font-bold leading-tight mb-3">
-            Africa&apos;s marketplace<br />for buyers
+            Run your business<br />on Shelflyd
           </h2>
           <p className="text-white/70 text-base mb-10">
-            Sign in to shop and track your orders.
+            Sign in to manage your storefront, products, and orders.
           </p>
 
           <ul className="space-y-4">
@@ -117,8 +117,10 @@ function LoginForm() {
           </div>
 
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
-            <p className="text-muted-foreground text-sm mt-1">Sign in to your account to continue.</p>
+            <h1 className="text-2xl font-bold text-foreground">Dashboard sign in</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              For business owners and team members.
+            </p>
           </div>
 
           <form onSubmit={handleSubmit((d) => mutate(d))} className="space-y-4">
@@ -175,18 +177,15 @@ function LoginForm() {
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
-            Don&apos;t have an account?{' '}
-            <Link
-              href={`/auth/register${from ? `?from=${encodeURIComponent(from)}` : ''}`}
-              className="text-primary font-medium hover:underline"
-            >
-              Create one
+            New to Shelflyd?{' '}
+            <Link href="/auth/register" className="text-primary font-medium hover:underline">
+              Create an account
             </Link>
           </p>
           <p className="text-center text-xs text-muted-foreground mt-3">
-            Business owner or team member?{' '}
-            <Link href="/dashboard/login" className="text-primary font-medium hover:underline">
-              Sign in to your dashboard
+            Here to shop instead?{' '}
+            <Link href="/auth/login" className="text-primary font-medium hover:underline">
+              Sign in as a buyer
             </Link>
           </p>
         </div>

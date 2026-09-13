@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PROTECTED_PATHS = ['/dashboard', '/checkout', '/account', '/invites'];
+const DASHBOARD_PATHS = ['/dashboard'];
+const PROTECTED_PATHS = ['/checkout', '/account', '/invites'];
 const ADMIN_PATHS = ['/admin'];
 const RESERVED_SUBDOMAINS = ['www', 'api'];
 
@@ -41,7 +42,7 @@ function extractStoreSlug(hostname: string): string | null {
   return null;
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip Next.js internals and static assets
@@ -78,6 +79,14 @@ export function middleware(request: NextRequest) {
     if (!token) {
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
+  }
+
+  // Dashboard routes → /dashboard/login if not authenticated
+  const isDashboardPath = DASHBOARD_PATHS.some((p) => pathname.startsWith(p));
+  if (isDashboardPath && pathname !== '/dashboard/login' && !token) {
+    const loginUrl = new URL('/dashboard/login', request.url);
+    loginUrl.searchParams.set('from', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   // Protected routes → /auth/login if not authenticated

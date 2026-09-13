@@ -1,8 +1,17 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
 import DashboardSidebar from '@/components/layout/dashboard-sidebar';
 import DashboardMobileNav from '@/components/layout/dashboard-mobile-nav';
 import DashboardHeader from '@/components/layout/dashboard-header';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
+  if (pathname === '/dashboard/login') {
+    return <>{children}</>;
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       <DashboardSidebar />
