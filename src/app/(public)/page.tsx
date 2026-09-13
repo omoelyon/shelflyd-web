@@ -7,6 +7,8 @@ import StatCard from '@/components/ui/stat-card';
 import { useQuery } from '@tanstack/react-query';
 import { categoriesApi } from '@/lib/api/categories';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuthStore } from '@/stores/auth.store';
+import { useMyBusiness } from '@/hooks/use-my-business';
 
 const platformStats = [
   { icon: Store,    label: 'Active Businesses', value: '500+',    accent: '#0058be', bg: '#eff4ff' },
@@ -44,6 +46,19 @@ export default function LandingPage() {
     queryKey: ['categories'],
     queryFn: categoriesApi.list,
   });
+
+  const { isAuthenticated } = useAuthStore();
+  const { hasBusiness } = useMyBusiness();
+
+  // "Start selling" only means "go create an account" for a visitor who isn't
+  // signed in yet — a logged-in user either already has a business (send them
+  // to it) or just needs to register one (skip straight to that, not signup).
+  const sellHref = !isAuthenticated
+    ? '/auth/register'
+    : hasBusiness
+      ? '/dashboard'
+      : '/dashboard/register-business';
+  const sellLabel = isAuthenticated && hasBusiness ? 'Go to Dashboard' : 'Start Selling Free';
 
   return (
     <div className="flex flex-col">
@@ -87,10 +102,10 @@ export default function LandingPage() {
               Browse Businesses <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/auth/register"
+              href={sellHref}
               className="inline-flex items-center justify-center h-12 px-8 rounded-lg font-semibold text-base bg-white/10 text-white border border-white/20 hover:bg-white/15 backdrop-blur-sm transition-all"
             >
-              Start Selling Free
+              {sellLabel}
             </Link>
           </div>
 
@@ -190,16 +205,20 @@ export default function LandingPage() {
                   For Sellers
                 </p>
                 <h2 className="text-3xl md:text-4xl font-bold leading-tight font-heading">
-                  Ready to grow your business on Shelflyd?
+                  {isAuthenticated && hasBusiness
+                    ? 'Ready to check in on your business?'
+                    : 'Ready to grow your business on Shelflyd?'}
                 </h2>
                 <p className="text-white/65 text-base leading-relaxed">
-                  Get your own branded storefront and start selling to customers across Africa today.
+                  {isAuthenticated && hasBusiness
+                    ? 'Jump into your seller dashboard to manage products, orders, and payments.'
+                    : 'Get your own branded storefront and start selling to customers across Africa today.'}
                 </p>
                 <Link
-                  href="/auth/register"
+                  href={sellHref}
                   className="inline-flex items-center justify-center gap-2 rounded-lg font-semibold bg-white text-[#091426] hover:bg-white/90 h-12 px-7 text-base shadow-lg transition-all"
                 >
-                  Get Started Free <ArrowRight className="h-4 w-4" />
+                  {isAuthenticated && hasBusiness ? 'Go to Dashboard' : 'Get Started Free'} <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
 
