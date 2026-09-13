@@ -3,14 +3,25 @@
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { CheckCircle } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import { paymentsApi } from '@/lib/api/payments';
 
 function SuccessContent() {
   const params = useSearchParams();
   const ref = params.get('ref') ?? params.get('reference') ?? '—';
+
+  const { data: payment } = useQuery({
+    queryKey: ['payment-reference', ref],
+    queryFn: () => paymentsApi.getByReference(ref),
+    enabled: ref !== '—',
+    retry: false,
+  });
+
+  const continueShoppingHref = payment ? `/businesses/${payment.businessId}` : '/products';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
@@ -31,7 +42,7 @@ function SuccessContent() {
             Reference: {ref}
           </div>
           <div className="flex flex-col gap-3 pt-2">
-            <Link href="/products" className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}>
+            <Link href={continueShoppingHref} className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}>
               Continue Shopping
             </Link>
             <Link href="/" className={cn(buttonVariants({ variant: 'outline' }))}>
