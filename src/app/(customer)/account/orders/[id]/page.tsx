@@ -8,9 +8,11 @@ import { ordersApi } from '@/lib/api/orders';
 import { deliveryApi } from '@/lib/api/delivery';
 import { businessesApi } from '@/lib/api/businesses';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronLeft, ChevronRight, Package, MapPin, Store } from 'lucide-react';
+import { useReorder } from '@/hooks/use-reorder';
+import { ChevronLeft, ChevronRight, Package, MapPin, Store, RotateCcw } from 'lucide-react';
 import type { OrderStatus } from '@/types';
 
 const statusColor: Record<OrderStatus | string, string> = {
@@ -32,6 +34,7 @@ interface Props {
 export default function OrderDetailPage({ params }: Props) {
   const { id } = use(params);
   const orderId = Number(id);
+  const reorder = useReorder();
 
   const { data: order, isLoading: orderLoading, isError } = useQuery({
     queryKey: ['my-order', orderId],
@@ -91,15 +94,27 @@ export default function OrderDetailPage({ params }: Props) {
             {order.status.replace(/_/g, ' ')}
           </Badge>
         </div>
-        {business && (
-          <Link
-            href={`/storefront/${business.slug}`}
-            className="flex items-center gap-1 text-sm text-primary hover:underline shrink-0"
+        <div className="flex items-center gap-3 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs"
+            disabled={reorder.isPending}
+            onClick={() => reorder.mutate(orderId)}
           >
-            <Store className="h-4 w-4" />
-            Visit store
-          </Link>
-        )}
+            <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+            {reorder.isPending ? 'Adding…' : 'Reorder'}
+          </Button>
+          {business && (
+            <Link
+              href={`/storefront/${business.slug}`}
+              className="flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              <Store className="h-4 w-4" />
+              Visit store
+            </Link>
+          )}
+        </div>
       </div>
 
       <Card>

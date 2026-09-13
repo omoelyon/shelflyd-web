@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ShoppingCart, Store, LogOut, ChevronDown, Menu, LayoutDashboard, UserCircle, Mail } from 'lucide-react';
+import { ShoppingCart, Store, LogOut, ChevronDown, Menu, LayoutDashboard, UserCircle, Mail, Sparkles } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,6 +17,7 @@ import { useGuestCartStore } from '@/stores/guest-cart.store';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useMyBusiness } from '@/hooks/use-my-business';
 
 const navLinks = [
   { href: '/businesses', label: 'Businesses' },
@@ -27,6 +28,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, user, logout } = useAuthStore();
+  const { hasBusiness } = useMyBusiness();
   const serverTotalItems = useCartStore((s) => s.getTotalItems());
   const guestTotalItems = useGuestCartStore((s) => s.getTotalItems());
   const totalItems = isAuthenticated ? serverTotalItems : guestTotalItems;
@@ -114,10 +116,17 @@ export default function Navbar() {
                   <UserCircle className="h-4 w-4 mr-2 text-muted-foreground" />
                   Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/dashboard')}>
-                  <LayoutDashboard className="h-4 w-4 mr-2 text-muted-foreground" />
-                  Dashboard
-                </DropdownMenuItem>
+                {hasBusiness ? (
+                  <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                    <LayoutDashboard className="h-4 w-4 mr-2 text-muted-foreground" />
+                    Dashboard
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={() => router.push('/dashboard/register-business')}>
+                    <Sparkles className="h-4 w-4 mr-2 text-muted-foreground" />
+                    Start Selling
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => router.push('/invites')}>
                   <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
                   Invites

@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { Order, OrderItem, OrderStatus, PagedOrders } from '@/types';
+import type { CartResponse, Order, OrderItem, OrderStatus, PagedOrders, PatronizedBusiness } from '@/types';
 
 export const ordersApi = {
   /** Business owner: orders for my business */
@@ -23,6 +23,18 @@ export const ordersApi = {
   /** Customer: line items for an order I placed */
   getMyOrderItems: async (id: number): Promise<OrderItem[]> => {
     const res = await apiClient.get(`/orders/${id}/items`);
+    return res.data;
+  },
+
+  /** Customer: re-add every item from a past order into that business's cart */
+  reorder: async (id: number): Promise<CartResponse> => {
+    const res = await apiClient.post(`/orders/${id}/reorder`);
+    return res.data;
+  },
+
+  /** Customer: every business I've ordered from at least once, most recent first */
+  getMyPatronizedBusinesses: async (): Promise<PatronizedBusiness[]> => {
+    const res = await apiClient.get('/orders/my-orders/businesses');
     return res.data;
   },
 

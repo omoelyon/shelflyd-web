@@ -240,6 +240,12 @@ export interface Order extends BaseEntity {
   deliveryLocationId: number | null;
 }
 
+export interface PatronizedBusiness {
+  business: Business;
+  orderCount: number;
+  lastOrderAt: string;
+}
+
 // ─── Payments ─────────────────────────────────────────────────────────────────
 
 export type PaymentStatus = 'pending' | 'paid';

@@ -61,9 +61,11 @@ export default function DashboardPage() {
   return (
     <div className="space-y-5">
       {/* ── Business profile banner ── */}
-      {bizLoading ? (
+      {/* The dashboard layout only renders this page once it's confirmed the
+          user has a business, so `business` is always present once loaded. */}
+      {bizLoading || !business ? (
         <Skeleton className="h-20 rounded-2xl" />
-      ) : business ? (
+      ) : (
         <div className="flex items-center gap-4 p-5 bg-white rounded-2xl shadow-card-md">
           <div
             className="h-12 w-12 rounded-xl flex items-center justify-center text-white font-bold text-lg shrink-0"
@@ -112,19 +114,6 @@ export default function DashboardPage() {
               Settings
             </Link>
           </div>
-        </div>
-      ) : (
-        <div className="p-8 bg-white rounded-2xl shadow-card-md text-center">
-          <div className="h-12 w-12 rounded-xl bg-[#eff4ff] flex items-center justify-center mx-auto mb-3">
-            <Store className="h-6 w-6 text-[#0058be]" />
-          </div>
-          <p className="text-[#64748b] mb-4 text-sm">You haven&apos;t registered a business yet.</p>
-          <Link
-            href="/dashboard/register-business"
-            className="inline-flex items-center justify-center h-9 px-5 rounded-lg text-sm font-semibold bg-[#091426] text-white hover:bg-[#091426]/90 transition-colors"
-          >
-            Register Business
-          </Link>
         </div>
       )}
 

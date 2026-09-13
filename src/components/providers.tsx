@@ -13,7 +13,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     () =>
       new QueryClient({
         queryCache: new QueryCache({
-          onError: (error) => {
+          onError: (error, query) => {
+            if (query.meta?.silentError) return;
             toast.error(getApiError(error, 'Something went wrong.'));
           },
         }),

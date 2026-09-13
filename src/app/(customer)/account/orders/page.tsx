@@ -6,9 +6,11 @@ import { ordersApi } from '@/lib/api/orders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
+import BusinessAvatar from '@/components/layout/business-avatar';
+import { useReorder } from '@/hooks/use-reorder';
+import { ShoppingBag, ChevronLeft, ChevronRight, Store, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
-import type { OrderStatus } from '@/types';
+import type { Business, OrderStatus } from '@/types';
 
 const statusColor: Record<OrderStatus | string, string> = {
   CREATED:   'bg-slate-100 text-slate-700',
@@ -22,11 +24,19 @@ const statusColor: Record<OrderStatus | string, string> = {
 export default function MyOrdersPage() {
   const [page, setPage] = useState(0);
   const size = 15;
+  const reorder = useReorder();
 
   const { data, isLoading } = useQuery({
     queryKey: ['my-customer-orders', page],
     queryFn: () => ordersApi.getMyCustomerOrders(page, size),
   });
+
+  const { data: patronized } = useQuery({
+    queryKey: ['my-patronized-businesses'],
+    queryFn: ordersApi.getMyPatronizedBusinesses,
+  });
+
+  const businessMap = new Map<number, Business>((patronized ?? []).map((p) => [p.business.id, p.business]));
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
@@ -40,7 +50,7 @@ export default function MyOrdersPage() {
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-16" />
+            <Skeleton key={i} className="h-24 rounded-xl" />
           ))}
         </div>
       ) : !data?.content?.length ? (
@@ -54,27 +64,57 @@ export default function MyOrdersPage() {
         </div>
       ) : (
         <>
-          <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
-            {data.content.map((order) => (
-              <Link
-                key={order.id}
-                href={`/account/orders/${order.id}`}
-                className="flex items-center justify-between px-4 py-4 bg-white hover:bg-slate-50 transition-colors"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-[#091426]">Order #{order.id}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {order.orderType ?? 'Standard order'}
-                    {order.deliveryLocationId ? ' · Delivery' : ''}
-                  </p>
+          <div className="space-y-3">
+            {data.content.map((order) => {
+              const business = businessMap.get(order.businessId);
+              const isReordering = reorder.isPending && reorder.variables === order.id;
+              return (
+                <div key={order.id} className="p-4 rounded-xl border border-border bg-white">
+                  <div className="flex items-center gap-3">
+                    {business ? (
+                      <BusinessAvatar business={business} size={40} className="rounded-lg shrink-0" />
+                    ) : (
+                      <div className="h-10 w-10 rounded-lg bg-muted shrink-0" />
+                    )}
+                    <Link href={`/account/orders/${order.id}`} className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[#091426] truncate">
+                        {business?.name ?? `Order #${order.id}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Order #{order.id} · {order.orderType ?? 'Standard order'}
+                        {order.deliveryLocationId ? ' · Delivery' : ''}
+                      </p>
+                    </Link>
+                    <Badge
+                      className={`text-xs font-medium border-0 shrink-0 ${statusColor[order.status] ?? 'bg-slate-100 text-slate-700'}`}
+                    >
+                      {order.status.replace('_', ' ')}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 mt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs flex-1"
+                      disabled={isReordering}
+                      onClick={() => reorder.mutate(order.id)}
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1.5" />
+                      {isReordering ? 'Adding…' : 'Reorder'}
+                    </Button>
+                    {business && (
+                      <Link
+                        href={`/storefront/${business.slug}`}
+                        className="inline-flex items-center justify-center gap-1.5 h-7 px-3 text-xs font-medium rounded-md border border-input hover:bg-accent transition-colors flex-1"
+                      >
+                        <Store className="h-3 w-3" />
+                        Visit store
+                      </Link>
+                    )}
+                  </div>
                 </div>
-                <Badge
-                  className={`text-xs font-medium border-0 ${statusColor[order.status] ?? 'bg-slate-100 text-slate-700'}`}
-                >
-                  {order.status.replace('_', ' ')}
-                </Badge>
-              </Link>
-            ))}
+              );
+            })}
           </div>
 
           {/* Pagination */}
