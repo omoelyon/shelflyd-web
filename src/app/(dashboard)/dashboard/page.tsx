@@ -97,6 +97,8 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2 shrink-0">
             <Link
               href={`/storefront/${business.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-xs font-medium text-[#0058be] hover:text-[#091426] transition-colors"
             >
               <Store className="h-3.5 w-3.5" />
