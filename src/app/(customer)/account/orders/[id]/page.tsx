@@ -12,8 +12,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useReorder } from '@/hooks/use-reorder';
-import { ChevronLeft, ChevronRight, Package, MapPin, Store, RotateCcw } from 'lucide-react';
-import type { OrderStatus } from '@/types';
+import { ChevronLeft, ChevronRight, Package, MapPin, Store, RotateCcw, Truck, ExternalLink } from 'lucide-react';
+import type { OrderStatus, ShipmentStatus } from '@/types';
+
+const shipmentStatusLabel: Record<ShipmentStatus, string> = {
+  PENDING: 'Booked',
+  CONFIRMED: 'Confirmed with courier',
+  PICKED_UP: 'Picked up by courier',
+  IN_TRANSIT: 'In transit',
+  DELIVERED: 'Delivered',
+  CANCELLED: 'Cancelled',
+};
 
 const statusColor: Record<OrderStatus | string, string> = {
   CREATED: 'bg-slate-100 text-slate-700',
@@ -57,6 +66,12 @@ export default function OrderDetailPage({ params }: Props) {
     queryKey: ['business', order?.businessId],
     queryFn: () => businessesApi.getById(order!.businessId),
     enabled: !!order?.businessId,
+  });
+
+  const { data: shipment } = useQuery({
+    queryKey: ['my-order-shipment', orderId],
+    queryFn: () => ordersApi.getMyOrderShipment(orderId),
+    enabled: !!order,
   });
 
   const total = items?.reduce((acc, item) => acc + item.totalPrice, 0) ?? 0;
@@ -134,6 +149,33 @@ export default function OrderDetailPage({ params }: Props) {
           )}
         </CardContent>
       </Card>
+
+      {shipment && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Truck className="h-4 w-4" />
+              Courier Tracking
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">{shipment.courierName ?? 'Courier'}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{shipmentStatusLabel[shipment.status]}</p>
+            </div>
+            {shipment.trackingUrl && (
+              <a
+                href={shipment.trackingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-primary hover:underline shrink-0"
+              >
+                Track package <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader className="pb-3">

@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
@@ -11,12 +11,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { checkoutSchema, type CheckoutFormValues } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
 import { Truck, Store, MapPin, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import DeliveryMethodPicker, { type DeliveryMethodValue } from '@/components/features/checkout/delivery-method-picker';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -43,20 +43,23 @@ function StorefrontCheckoutContent({ slug }: { slug: string }) {
     control,
     handleSubmit,
     watch,
-    formState: { errors },
   } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: { orderType: 'PICKUP' },
   });
 
   const orderType = watch('orderType');
+  const [delivery, setDelivery] = useState<DeliveryMethodValue>({ mode: 'flat' });
 
   const checkoutMutation = useMutation({
     mutationFn: (data: CheckoutFormValues) =>
       cartApi.checkout({
         cartId,
         orderType: data.orderType,
-        locationId: data.orderType === 'DELIVERY' ? data.locationId : undefined,
+        locationId: data.orderType === 'DELIVERY' && delivery.mode === 'flat' ? delivery.locationId : undefined,
+        courierRequestToken: data.orderType === 'DELIVERY' && delivery.mode === 'courier' ? delivery.courierRequestToken : undefined,
+        courierServiceCode: data.orderType === 'DELIVERY' && delivery.mode === 'courier' ? delivery.courierServiceCode : undefined,
+        courierId: data.orderType === 'DELIVERY' && delivery.mode === 'courier' ? delivery.courierId : undefined,
       }),
     onSuccess: (result) => {
       toast.success('Redirecting to payment...');
@@ -143,45 +146,22 @@ function StorefrontCheckoutContent({ slug }: { slug: string }) {
           </CardContent>
         </Card>
 
-        {/* Delivery location */}
+        {/* Delivery method */}
         {orderType === 'DELIVERY' && (
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Delivery Location
+                Delivery
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Controller
-                name="locationId"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(v) => field.onChange(Number(v))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a delivery location...">
-                        {(() => {
-                          const loc = locations?.find((l) => l.id === field.value);
-                          return loc ? `${loc.location} — ₦${loc.amount.toLocaleString()}` : undefined;
-                        })()}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations?.map((loc) => (
-                        <SelectItem key={loc.id} value={String(loc.id)}>
-                          {loc.location} — ₦{loc.amount.toLocaleString()}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+              <DeliveryMethodPicker
+                cartId={cartId}
+                locations={locations}
+                value={delivery}
+                onChange={setDelivery}
               />
-              {errors.locationId && (
-                <p className="text-xs text-destructive mt-1">{errors.locationId.message}</p>
-              )}
             </CardContent>
           </Card>
         )}

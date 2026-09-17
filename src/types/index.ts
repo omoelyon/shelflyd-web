@@ -54,6 +54,11 @@ export interface Business extends BaseEntity {
   ownerId: number;
   status: BusinessStatus;
   themeColor: string | null;
+  pickupAddressLine: string | null;
+  pickupCity: string | null;
+  pickupState: string | null;
+  pickupPhone: string | null;
+  pickupAddressCode: string | null;
 }
 
 export interface RegisterBusinessRequest {
@@ -194,6 +199,50 @@ export interface CheckoutRequest {
   cartId: number;
   orderType: OrderType;
   locationId?: number;
+  // Courier delivery — set together, instead of locationId, when the buyer chose a
+  // real courier quote from POST /carts/{cartId}/delivery-quotes.
+  courierRequestToken?: string;
+  courierServiceCode?: string;
+  courierId?: number;
+}
+
+// ─── Courier delivery (Shipbubble) ────────────────────────────────────────────
+
+export interface DeliveryAddress {
+  name: string;
+  phone: string;
+  addressLine: string;
+  city: string;
+  state: string;
+}
+
+export interface DeliveryRateOption {
+  courierId: number;
+  courierName: string;
+  serviceCode: string;
+  amount: number;
+  currency: string;
+  pickupEta: string | null;
+  deliveryEta: string | null;
+}
+
+export interface DeliveryQuoteResponse {
+  requestToken: string;
+  options: DeliveryRateOption[];
+}
+
+export type ShipmentStatus = 'PENDING' | 'CONFIRMED' | 'PICKED_UP' | 'IN_TRANSIT' | 'DELIVERED' | 'CANCELLED';
+
+export interface Shipment extends BaseEntity {
+  orderId: number;
+  provider: string;
+  externalOrderId: string;
+  courierName: string | null;
+  serviceCode: string;
+  cost: number | null;
+  currency: string;
+  trackingUrl: string | null;
+  status: ShipmentStatus;
 }
 
 export type PaymentType = 'paystack' | 'flutterwave' | 'stripe';

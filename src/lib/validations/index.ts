@@ -84,6 +84,9 @@ export const deliveryLocationSchema = z.object({
 export const checkoutSchema = z.object({
   orderType: z.enum(['PICKUP', 'DELIVERY']),
   locationId: z.number().optional(),
+  courierRequestToken: z.string().optional(),
+  courierServiceCode: z.string().optional(),
+  courierId: z.number().optional(),
 });
 
 export const forgotPasswordSchema = z.object({

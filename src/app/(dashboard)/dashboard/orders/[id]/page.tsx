@@ -9,7 +9,7 @@ import PageHeader from '@/components/ui/page-header';
 import StatusBadge from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Package, MapPin, Calendar, Hash, Truck } from 'lucide-react';
+import { ArrowLeft, Package, MapPin, Calendar, Hash, Truck, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
@@ -60,6 +60,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const { data: orderItems } = useQuery({
     queryKey: ['order-items', orderId],
     queryFn: () => ordersApi.getItems(orderId),
+    enabled: !!order,
+  });
+
+  const { data: shipment } = useQuery({
+    queryKey: ['order-shipment', orderId],
+    queryFn: () => ordersApi.getShipment(orderId),
     enabled: !!order,
   });
 
@@ -180,6 +186,31 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           )}
         </div>
       </div>
+
+      {/* Courier tracking */}
+      {shipment && (
+        <div className="bg-white rounded-2xl shadow-card-md p-5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-[#eff4ff] flex items-center justify-center shrink-0">
+              <Truck className="h-4 w-4 text-[#0058be]" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[#091426]">{shipment.courierName ?? 'Courier'}</p>
+              <p className="text-xs text-[#64748b]">{shipment.status.replace(/_/g, ' ')}</p>
+            </div>
+          </div>
+          {shipment.trackingUrl && (
+            <a
+              href={shipment.trackingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-[#0058be] hover:text-[#091426] transition-colors shrink-0"
+            >
+              Track package <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Order items */}
       <div className="bg-white rounded-2xl shadow-card-md overflow-hidden">

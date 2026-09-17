@@ -1,9 +1,14 @@
 import apiClient from './client';
-import type { Business, UpdateSettingsRequest } from '@/types';
+import type { Business, DeliveryAddress, UpdateSettingsRequest } from '@/types';
 
 export const settingsApi = {
   getSettings: async (): Promise<Business> => {
     const res = await apiClient.get('/business/settings');
+    return res.data;
+  },
+
+  setPickupAddress: async (address: DeliveryAddress): Promise<Business> => {
+    const res = await apiClient.patch('/business/settings/pickup-address', address);
     return res.data;
   },
 

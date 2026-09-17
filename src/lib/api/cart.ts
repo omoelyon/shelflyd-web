@@ -1,7 +1,12 @@
 import apiClient from './client';
-import type { CartResponse, CartUpdateRequest, CheckoutRequest, CheckoutResponse } from '@/types';
+import type { CartResponse, CartUpdateRequest, CheckoutRequest, CheckoutResponse, DeliveryAddress, DeliveryQuoteResponse } from '@/types';
 
 export const cartApi = {
+  getDeliveryQuotes: async (cartId: number, dropoffAddress: DeliveryAddress): Promise<DeliveryQuoteResponse> => {
+    const res = await apiClient.post(`/carts/${cartId}/delivery-quotes`, dropoffAddress);
+    return res.data;
+  },
+
   getAll: async (): Promise<CartResponse[]> => {
     const res = await apiClient.get('/carts');
     return res.data;

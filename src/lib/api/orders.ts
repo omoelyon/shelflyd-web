@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { CartResponse, Order, OrderItem, OrderStatus, PagedOrders, PatronizedBusiness } from '@/types';
+import type { CartResponse, Order, OrderItem, OrderStatus, PagedOrders, PatronizedBusiness, Shipment } from '@/types';
 
 export const ordersApi = {
   /** Business owner: orders for my business */
@@ -23,6 +23,12 @@ export const ordersApi = {
   /** Customer: line items for an order I placed */
   getMyOrderItems: async (id: number): Promise<OrderItem[]> => {
     const res = await apiClient.get(`/orders/${id}/items`);
+    return res.data;
+  },
+
+  /** Customer: courier shipment (if any) for an order I placed */
+  getMyOrderShipment: async (id: number): Promise<Shipment | null> => {
+    const res = await apiClient.get(`/orders/${id}/shipment`);
     return res.data;
   },
 
@@ -50,6 +56,12 @@ export const ordersApi = {
 
   getItems: async (orderId: number): Promise<OrderItem[]> => {
     const res = await apiClient.get(`/business/orders/${orderId}/items`);
+    return res.data;
+  },
+
+  /** Business owner: courier shipment (if any) for an order on my business */
+  getShipment: async (orderId: number): Promise<Shipment | null> => {
+    const res = await apiClient.get(`/business/orders/${orderId}/shipment`);
     return res.data;
   },
 

@@ -9,12 +9,15 @@ import { useAuthStore } from '@/stores/auth.store';
  * this never retries.
  */
 export function useMyBusiness() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, hasHydrated } = useAuthStore();
 
   const query = useQuery({
     queryKey: ['business-profile'],
+    // Wait for the persisted auth state to load before deciding whether to fetch —
+    // otherwise a hard reload briefly sees isAuthenticated's default (false) and
+    // concludes "no business" before the real token is even read from storage.
     queryFn: businessesApi.getProfile,
-    enabled: isAuthenticated,
+    enabled: hasHydrated && isAuthenticated,
     retry: false,
     // A 404 here just means "this user has no business" — an expected, common
     // outcome for buyers, not a failure worth surfacing as an error toast.
@@ -24,6 +27,6 @@ export function useMyBusiness() {
   return {
     business: query.data,
     hasBusiness: !!query.data,
-    isChecking: isAuthenticated && query.isLoading,
+    isChecking: !hasHydrated || (isAuthenticated && query.isLoading),
   };
 }

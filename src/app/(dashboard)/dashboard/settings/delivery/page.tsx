@@ -1,20 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { deliveryApi } from '@/lib/api/delivery';
 import { businessesApi } from '@/lib/api/businesses';
+import { settingsApi } from '@/lib/api/settings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import PageHeader from '@/components/ui/page-header';
 import EmptyState from '@/components/ui/empty-state';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
-import { Plus, MapPin, Pencil, Trash2 } from 'lucide-react';
-import type { DeliveryLocation } from '@/types';
+import { Plus, MapPin, Pencil, Trash2, Truck, CheckCircle2 } from 'lucide-react';
+import type { DeliveryAddress, DeliveryLocation } from '@/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -24,6 +27,15 @@ const schema = z.object({
   amount: z.number().min(0, 'Amount cannot be negative'),
 });
 type FormValues = z.infer<typeof schema>;
+
+const pickupAddressSchema = z.object({
+  name: z.string().min(2, 'Business contact name is required'),
+  phone: z.string().min(7, 'Phone number is required'),
+  addressLine: z.string().min(3, 'Street address is required'),
+  city: z.string().min(2, 'City is required'),
+  state: z.string().min(2, 'State is required'),
+});
+type PickupAddressValues = z.infer<typeof pickupAddressSchema>;
 
 export default function DeliveryLocationsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -43,6 +55,34 @@ export default function DeliveryLocationsPage() {
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
+  });
+
+  const {
+    register: registerPickup,
+    handleSubmit: handlePickupSubmit,
+    reset: resetPickup,
+    formState: { errors: pickupErrors },
+  } = useForm<PickupAddressValues>({ resolver: zodResolver(pickupAddressSchema) });
+
+  useEffect(() => {
+    if (business) {
+      resetPickup({
+        name: business.name,
+        phone: business.pickupPhone ?? '',
+        addressLine: business.pickupAddressLine ?? '',
+        city: business.pickupCity ?? '',
+        state: business.pickupState ?? '',
+      });
+    }
+  }, [business, resetPickup]);
+
+  const pickupAddressMutation = useMutation({
+    mutationFn: (values: DeliveryAddress) => settingsApi.setPickupAddress(values),
+    onSuccess: () => {
+      toast.success('Pickup address saved — courier delivery is ready.');
+      qc.invalidateQueries({ queryKey: ['business-profile'] });
+    },
+    onError: (err) => toast.error(getApiError(err, 'Failed to save pickup address.')),
   });
 
   const openCreate = () => {
@@ -84,6 +124,63 @@ export default function DeliveryLocationsPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Truck className="h-4 w-4" />
+            Courier Pickup Address
+            {business?.pickupAddressCode && (
+              <Badge className="bg-green-100 text-green-700 border-0 text-xs font-medium ml-1">
+                <CheckCircle2 className="h-3 w-3 mr-1" />
+                Courier delivery enabled
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-[#64748b] mb-4">
+            Set the address couriers will collect orders from. Required once before customers
+            can choose real courier delivery at checkout, alongside your flat-rate zones below.
+          </p>
+          <form onSubmit={handlePickupSubmit((v) => pickupAddressMutation.mutate(v))} className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5 col-span-2">
+              <Label className="text-sm font-medium text-[#091426]">Contact name</Label>
+              <Input placeholder="e.g. Beans Bazaar" {...registerPickup('name')} />
+              {pickupErrors.name && <p className="text-xs text-destructive">{pickupErrors.name.message}</p>}
+            </div>
+            <div className="space-y-1.5 col-span-2">
+              <Label className="text-sm font-medium text-[#091426]">Phone number</Label>
+              <Input placeholder="080..." {...registerPickup('phone')} />
+              {pickupErrors.phone && <p className="text-xs text-destructive">{pickupErrors.phone.message}</p>}
+            </div>
+            <div className="space-y-1.5 col-span-2">
+              <Label className="text-sm font-medium text-[#091426]">Street address</Label>
+              <Input placeholder="12 Allen Avenue" {...registerPickup('addressLine')} />
+              {pickupErrors.addressLine && <p className="text-xs text-destructive">{pickupErrors.addressLine.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-[#091426]">City</Label>
+              <Input placeholder="Ikeja" {...registerPickup('city')} />
+              {pickupErrors.city && <p className="text-xs text-destructive">{pickupErrors.city.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-[#091426]">State</Label>
+              <Input placeholder="Lagos" {...registerPickup('state')} />
+              {pickupErrors.state && <p className="text-xs text-destructive">{pickupErrors.state.message}</p>}
+            </div>
+            <div className="col-span-2">
+              <Button
+                type="submit"
+                className="bg-[#091426] text-white hover:bg-[#091426]/90"
+                disabled={pickupAddressMutation.isPending}
+              >
+                {pickupAddressMutation.isPending ? 'Saving…' : 'Save Pickup Address'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
       <PageHeader
         title="Delivery Locations"
         subtitle="Configure zones where your business delivers and the applicable fees."
