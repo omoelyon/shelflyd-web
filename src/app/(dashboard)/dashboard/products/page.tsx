@@ -71,6 +71,10 @@ export default function DashboardProductsPage() {
   const [pricingProduct, setPricingProduct] = useState<Product | null>(null);
   const [conversionDirection, setConversionDirection] = useState<'new-per-base' | 'base-per-new'>('new-per-base');
 
+  // New-category dialog — usable from either the create or edit product form
+  const [categoryDialogTarget, setCategoryDialogTarget] = useState<'create' | 'edit' | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -225,6 +229,19 @@ export default function DashboardProductsPage() {
     onError: (error) => toast.error(getApiError(error, 'Failed to delete price.')),
   });
 
+  const createCategoryMutation = useMutation({
+    mutationFn: (name: string) => categoriesApi.createForBusiness({ name }),
+    onSuccess: (category) => {
+      qc.invalidateQueries({ queryKey: ['categories'] });
+      if (categoryDialogTarget === 'create') setValue('category', category.id);
+      else if (categoryDialogTarget === 'edit') setEditValue('category', category.id);
+      toast.success(`Category "${category.name}" added.`);
+      setCategoryDialogTarget(null);
+      setNewCategoryName('');
+    },
+    onError: (error) => toast.error(getApiError(error, 'Failed to add category.')),
+  });
+
   // ── Image upload helpers ─────────────────────────────────────────────────────
 
   const handleImageFile = async (file: File, forEdit = false) => {
@@ -270,6 +287,7 @@ export default function DashboardProductsPage() {
     inputRef,
     onFileChange,
     onRemoveImage,
+    onNewCategory,
   }: {
     reg: typeof register;
     ctrl: typeof control;
@@ -279,6 +297,7 @@ export default function DashboardProductsPage() {
     inputRef: React.RefObject<HTMLInputElement | null>;
     onFileChange: (file: File) => void;
     onRemoveImage: () => void;
+    onNewCategory: () => void;
   }) => (
     <>
       <div className="space-y-1.5">
@@ -293,7 +312,16 @@ export default function DashboardProductsPage() {
           <Input placeholder="Vegetable" {...reg('type')} />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-sm font-medium text-[#091426]">Category</Label>
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium text-[#091426]">Category</Label>
+            <button
+              type="button"
+              onClick={onNewCategory}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              + New
+            </button>
+          </div>
           <Controller
             name="category"
             control={ctrl}
@@ -316,7 +344,7 @@ export default function DashboardProductsPage() {
                     ))
                   ) : (
                     <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                      No categories yet — add one in Admin → Categories
+                      No categories yet — use &quot;+ New&quot; above to add one
                     </div>
                   )}
                 </SelectContent>
@@ -580,6 +608,7 @@ export default function DashboardProductsPage() {
                 setValue('image', '');
                 if (fileInputRef.current) fileInputRef.current.value = '';
               }}
+              onNewCategory={() => setCategoryDialogTarget('create')}
             />
             <div className="flex justify-end gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
@@ -628,6 +657,7 @@ export default function DashboardProductsPage() {
                 setEditValue('image', '');
                 if (editFileInputRef.current) editFileInputRef.current.value = '';
               }}
+              onNewCategory={() => setCategoryDialogTarget('edit')}
             />
             <div className="flex justify-end gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => setEditProduct(null)}>
@@ -935,6 +965,50 @@ export default function DashboardProductsPage() {
               </form>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── New category dialog ───────────────────────────────────────────────── */}
+      <Dialog
+        open={categoryDialogTarget !== null}
+        onOpenChange={(open) => { if (!open) { setCategoryDialogTarget(null); setNewCategoryName(''); } }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>New Category</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (newCategoryName.trim()) createCategoryMutation.mutate(newCategoryName.trim());
+            }}
+            className="space-y-4 mt-2"
+          >
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-[#091426]">Name *</Label>
+              <Input
+                placeholder="e.g. Fresh Produce"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">
+                Categories are shared across the marketplace — if one with this name already exists, it&apos;ll be reused.
+              </p>
+            </div>
+            <div className="flex justify-end gap-3 pt-1">
+              <Button type="button" variant="outline" onClick={() => setCategoryDialogTarget(null)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-[#091426] text-white hover:bg-[#091426]/90"
+                disabled={!newCategoryName.trim() || createCategoryMutation.isPending}
+              >
+                {createCategoryMutation.isPending ? 'Adding…' : 'Add Category'}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

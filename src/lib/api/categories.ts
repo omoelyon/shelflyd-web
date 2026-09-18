@@ -12,6 +12,12 @@ export const categoriesApi = {
     return res.data;
   },
 
+  /** Business owner/team member: add a category (reuses an existing one with the same name). */
+  createForBusiness: async (data: CreateCategoryRequest): Promise<Category> => {
+    const res = await apiClient.post('/business/categories', data);
+    return res.data;
+  },
+
   update: async (id: number, data: CreateCategoryRequest): Promise<Category> => {
     const res = await apiClient.put(`/admin/categories/${id}`, data);
     return res.data;
