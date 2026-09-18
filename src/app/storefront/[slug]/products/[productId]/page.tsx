@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
 import { ShoppingCart, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Props {
   params: Promise<{ slug: string; productId: string }>;
@@ -26,6 +27,7 @@ interface Props {
 export default function StorefrontProductPage({ params }: Props) {
   const { slug, productId } = use(params);
   const id = Number(productId);
+  const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const updateCart = useCartStore((s) => s.updateCart);
   const addGuestItem = useGuestCartStore((s) => s.addItem);
@@ -53,7 +55,7 @@ export default function StorefrontProductPage({ params }: Props) {
       }),
     onSuccess: (cart) => {
       updateCart(cart);
-      toast.success('Added to cart!');
+      toast.success('Added to cart!', { action: { label: 'View Cart', onClick: () => router.push(`/storefront/${slug}/cart`) } });
       setNote('');
     },
     onError: (error) => toast.error(getApiError(error, 'Failed to add to cart.')),
@@ -78,7 +80,7 @@ export default function StorefrontProductPage({ params }: Props) {
       unitPrice: selectedPrice.price,
       note: note.trim() || undefined,
     });
-    toast.success('Added to cart!');
+    toast.success('Added to cart!', { action: { label: 'View Cart', onClick: () => router.push(`/storefront/${slug}/cart`) } });
     setNote('');
   };
 

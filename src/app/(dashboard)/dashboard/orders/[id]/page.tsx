@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ordersApi } from '@/lib/api/orders';
 import { deliveryApi } from '@/lib/api/delivery';
@@ -44,6 +44,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const orderId = Number(id);
   const router = useRouter();
   const qc = useQueryClient();
+  // Base UI's Select only reliably renders its dropdown content on its first open —
+  // reopening the same mounted instance (confirmed live: works once, then opens empty
+  // every time after, with no page reload) silently shows nothing. Forcing a remount
+  // on every close guarantees the next open is always a fresh instance.
+  const [statusSelectKey, setStatusSelectKey] = useState(0);
 
   const { data: order, isLoading, isError } = useQuery({
     queryKey: ['order-detail', orderId],
@@ -134,9 +139,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <div className="flex items-center gap-3">
             <p className="text-xs text-[#64748b]">Advance to:</p>
             <Select
+              key={statusSelectKey}
               value=""
               disabled={updateStatusMutation.isPending}
               onValueChange={(s) => updateStatusMutation.mutate(s as OrderStatus)}
+              onOpenChange={(open) => { if (!open) setStatusSelectKey((k) => k + 1); }}
             >
               <SelectTrigger className="h-8 text-xs w-52 border-[rgba(9,20,38,0.12)]">
                 <SelectValue placeholder={updateStatusMutation.isPending ? 'Updating…' : 'Select next status'}>

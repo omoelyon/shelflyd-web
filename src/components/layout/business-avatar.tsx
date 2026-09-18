@@ -18,7 +18,13 @@ function buildFallbackUrl(name: string, themeColor: string | null): string {
 
 export default function BusinessAvatar({ business, size = 40, className = '' }: BusinessAvatarProps) {
   const fallback = buildFallbackUrl(business.name, business.themeColor);
-  const [src, setSrc] = useState<string>(business.logo ?? fallback);
+  const intended = business.logo ?? fallback;
+  // Tracks which URL has already failed to load, rather than caching the resolved
+  // src itself — that way a new `business.logo` (e.g. right after an upload) is
+  // picked up on the next render instead of staying frozen at whatever URL this
+  // component first mounted with.
+  const [erroredSrc, setErroredSrc] = useState<string | null>(null);
+  const src = erroredSrc === intended ? fallback : intended;
 
   return (
     <Image
@@ -27,7 +33,7 @@ export default function BusinessAvatar({ business, size = 40, className = '' }: 
       width={size}
       height={size}
       className={`object-cover rounded-lg ${className}`}
-      onError={() => setSrc(fallback)}
+      onError={() => setErroredSrc(intended)}
       unoptimized
     />
   );

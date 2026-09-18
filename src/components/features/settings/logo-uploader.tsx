@@ -40,6 +40,7 @@ export default function LogoUploader({ business }: Props) {
     mutationFn: settingsApi.generateLogo,
     onSuccess: (updated) => {
       qc.setQueryData(['business-settings'], updated);
+      qc.setQueryData(['business-profile'], updated);
       setLogoSrc(updated.logo ?? fallback);
       toast.success('Logo generated!');
     },
@@ -50,6 +51,7 @@ export default function LogoUploader({ business }: Props) {
     mutationFn: settingsApi.removeLogo,
     onSuccess: (updated) => {
       qc.setQueryData(['business-settings'], updated);
+      qc.setQueryData(['business-profile'], updated);
       setLogoSrc(fallback);
       toast.success('Logo removed.');
     },
@@ -91,6 +93,7 @@ export default function LogoUploader({ business }: Props) {
       });
       const updated = await settingsApi.setLogoUrl(publicUrl);
       qc.setQueryData(['business-settings'], updated);
+      qc.setQueryData(['business-profile'], updated);
       setLogoSrc(updated.logo ?? fallback);
       toast.success('Logo uploaded!');
     } catch {

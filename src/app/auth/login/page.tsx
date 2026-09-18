@@ -57,7 +57,7 @@ function LoginForm() {
       });
       await mergeGuestCartIntoServer();
       toast.success('Welcome back!');
-      router.push(from || '/');
+      router.push(from || '/dashboard');
     },
     onError: (error) => toast.error(getApiError(error, 'Invalid email or password.')),
   });

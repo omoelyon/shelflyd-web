@@ -16,8 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface Props {
   params: Promise<{ uuid: string }>;
@@ -25,6 +27,7 @@ interface Props {
 
 export default function ProductDetailPage({ params }: Props) {
   const { uuid } = use(params);
+  const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const updateCart = useCartStore((s) => s.updateCart);
   const addGuestItem = useGuestCartStore((s) => s.addItem);
@@ -47,7 +50,7 @@ export default function ProductDetailPage({ params }: Props) {
       }),
     onSuccess: (cart) => {
       updateCart(cart);
-      toast.success('Added to cart!');
+      toast.success('Added to cart!', { action: { label: 'View Cart', onClick: () => router.push('/cart') } });
       setNote('');
     },
     onError: (error) => toast.error(getApiError(error, 'Failed to add to cart.')),
@@ -90,12 +93,21 @@ export default function ProductDetailPage({ params }: Props) {
       unitPrice: selectedPrice.price,
       note: note.trim() || undefined,
     });
-    toast.success('Added to cart!');
+    toast.success('Added to cart!', { action: { label: 'View Cart', onClick: () => router.push('/cart') } });
     setNote('');
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-10">
+    <div className="max-w-5xl mx-auto px-4 py-10">
+      <Link
+        href="/products"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to products
+      </Link>
+
+      <div className="grid md:grid-cols-2 gap-10">
       {/* Image */}
       <div className="relative h-80 md:h-full min-h-80 bg-muted rounded-2xl overflow-hidden">
         {product.image ? (
@@ -193,6 +205,7 @@ export default function ProductDetailPage({ params }: Props) {
           <ShoppingCart className="mr-2 h-4 w-4" />
           {addToCart.isPending ? 'Adding...' : 'Add to Cart'}
         </Button>
+      </div>
       </div>
     </div>
   );

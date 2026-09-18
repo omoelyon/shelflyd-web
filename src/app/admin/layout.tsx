@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Store, Building2, Package, ShieldCheck, LayoutDashboard, Users, ShoppingBag, Tag, CreditCard } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Store, Building2, Package, ShieldCheck, LayoutDashboard, Users, ShoppingBag, Tag, CreditCard, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/stores/auth.store';
 
 const adminNav = [
   { href: '/admin',             label: 'Overview',   icon: LayoutDashboard },
@@ -16,11 +18,19 @@ const adminNav = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useAuthStore();
 
   // Login page renders without the sidebar chrome
   if (pathname === '/admin/login') {
     return <>{children}</>;
   }
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/clear-cookie', { method: 'POST' });
+    logout();
+    router.push('/admin/login');
+  };
 
   return (
     <div className="min-h-screen flex bg-[#f8f9ff]">
@@ -80,10 +90,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-14 bg-white border-b border-[#e2e8f0] flex items-center px-6 shrink-0 shadow-[0_1px_3px_rgba(9,20,38,0.04)]">
+        <header className="h-14 bg-white border-b border-[#e2e8f0] flex items-center justify-between px-6 shrink-0 shadow-[0_1px_3px_rgba(9,20,38,0.04)]">
           <h1 className="text-sm font-semibold text-[#0b1c30]" style={{ fontFamily: 'var(--font-manrope)' }}>
             Admin Dashboard
           </h1>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="text-[#64748b] hover:text-red-600 hover:bg-red-50"
+          >
+            <LogOut className="h-3.5 w-3.5 mr-1.5" />
+            Sign out
+          </Button>
         </header>
         <main className="flex-1 p-6 overflow-auto">{children}</main>
       </div>

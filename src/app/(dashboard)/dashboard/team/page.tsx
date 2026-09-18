@@ -17,7 +17,7 @@ import EmptyState from '@/components/ui/empty-state';
 import StatusBadge from '@/components/ui/status-badge';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
-import { UserPlus, Users, X, Mail } from 'lucide-react';
+import { UserPlus, Users, X, Mail, Copy } from 'lucide-react';
 
 export default function DashboardTeamPage() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -40,11 +40,11 @@ export default function DashboardTeamPage() {
 
   const inviteMutation = useMutation({
     mutationFn: teamsApi.invite,
-    onSuccess: () => {
-      toast.success('Invite sent!');
+    onSuccess: (invite) => {
       qc.invalidateQueries({ queryKey: ['team-invites'] });
       setInviteDialogOpen(false);
       reset();
+      copyInviteLink(invite.token, 'Invite sent — link also copied, in case the email doesn\'t arrive.');
     },
     onError: (error) => toast.error(getApiError(error, 'Failed to send invite.')),
   });
@@ -68,6 +68,12 @@ export default function DashboardTeamPage() {
   });
 
   const pendingInvites = invites?.filter((i) => i.status === 'PENDING') ?? [];
+
+  const copyInviteLink = (token: string, message = 'Invite link copied to clipboard.') => {
+    const link = `${window.location.origin}/invites?token=${token}`;
+    navigator.clipboard.writeText(link);
+    toast.success(message);
+  };
 
   return (
     <div className="space-y-6">
@@ -173,14 +179,25 @@ export default function DashboardTeamPage() {
                       <StatusBadge status={invite.role} type="role" raw />
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                    onClick={() => cancelInviteMutation.mutate(invite.uuid)}
-                  >
-                    Cancel
-                  </Button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-[#64748b] hover:text-[#091426]"
+                      onClick={() => copyInviteLink(invite.token, 'Invite link copied to clipboard.')}
+                    >
+                      <Copy className="h-3.5 w-3.5 mr-1.5" />
+                      Copy Link
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                      onClick={() => cancelInviteMutation.mutate(invite.uuid)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -1,5 +1,7 @@
 'use client';
 
+import { Suspense, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { teamsApi } from '@/lib/api/teams';
 import { useForm } from 'react-hook-form';
@@ -16,7 +18,17 @@ import { getApiError } from '@/lib/utils';
 import { Mail, Users, CheckCircle } from 'lucide-react';
 
 export default function InvitesPage() {
+  return (
+    <Suspense>
+      <InvitesPageContent />
+    </Suspense>
+  );
+}
+
+function InvitesPageContent() {
   const qc = useQueryClient();
+  const searchParams = useSearchParams();
+  const tokenFromLink = searchParams.get('token');
 
   const { data: pendingInvites, isLoading: invLoading } = useQuery({
     queryKey: ['my-invites'],
@@ -28,9 +40,13 @@ export default function InvitesPage() {
     queryFn: teamsApi.myTeams,
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<AcceptInviteFormValues>({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<AcceptInviteFormValues>({
     resolver: zodResolver(acceptInviteSchema),
   });
+
+  useEffect(() => {
+    if (tokenFromLink) setValue('token', tokenFromLink);
+  }, [tokenFromLink, setValue]);
 
   const acceptMutation = useMutation({
     mutationFn: teamsApi.acceptInvite,

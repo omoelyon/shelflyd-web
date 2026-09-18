@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
 import { Store } from 'lucide-react';
+import Link from 'next/link';
 
 export default function RegisterBusinessPage() {
   const router = useRouter();
@@ -103,6 +104,13 @@ export default function RegisterBusinessPage() {
           </form>
         </CardContent>
       </Card>
+
+      <p className="text-center text-sm text-muted-foreground mt-6">
+        Just here to shop?{' '}
+        <Link href="/" className="text-primary font-medium hover:underline">
+          Browse the marketplace instead
+        </Link>
+      </p>
     </div>
   );
 }
