@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle } from 'lucide-react';
@@ -14,6 +14,16 @@ import { businessesApi } from '@/lib/api/businesses';
 function SuccessContent() {
   const params = useSearchParams();
   const ref = params.get('ref') ?? params.get('reference') ?? '—';
+
+  // Landing here only means Paystack redirected the browser back — it does not confirm the
+  // webhook that actually advances the order (CREATED -> PAID) has run. That webhook can lag
+  // or fail entirely, silently leaving a paid order stuck as CREATED. Re-checking with the
+  // gateway here closes that gap; it's a no-op if the webhook already did its job.
+  useEffect(() => {
+    if (ref !== '—') {
+      paymentsApi.resync(ref).catch(() => {});
+    }
+  }, [ref]);
 
   const { data: payment } = useQuery({
     queryKey: ['payment-reference', ref],
