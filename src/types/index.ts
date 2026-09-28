@@ -87,6 +87,14 @@ export interface BusinessStats {
   totalRevenue: number;
 }
 
+/** Paid vs. still-pending payment attempts — total can exceed the order count since a
+ * retried or abandoned checkout attempt leaves behind a pending row alongside the one order. */
+export interface PaymentSummary {
+  total: number;
+  paid: number;
+  pending: number;
+}
+
 // ─── Storefront ──────────────────────────────────────────────────────────────
 
 export interface StorefrontInfo {

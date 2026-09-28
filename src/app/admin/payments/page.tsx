@@ -17,11 +17,20 @@ export default function AdminPaymentsPage() {
     queryFn: () => paymentsApi.adminList(page, 20),
   });
 
+  const { data: summary } = useQuery({
+    queryKey: ['admin-payments-summary'],
+    queryFn: () => paymentsApi.adminSummary(),
+  });
+
   return (
     <div className="space-y-6 max-w-4xl">
       <PageHeader
         title="Payments"
-        subtitle={`${data?.totalElements ?? 0} total transactions across all businesses`}
+        subtitle={
+          summary
+            ? `${summary.paid} paid${summary.pending > 0 ? ` · ${summary.pending} pending/abandoned attempt${summary.pending === 1 ? '' : 's'}` : ''} across all businesses`
+            : `${data?.totalElements ?? 0} total transactions across all businesses`
+        }
       />
 
       <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(9,20,38,0.06)] overflow-hidden">

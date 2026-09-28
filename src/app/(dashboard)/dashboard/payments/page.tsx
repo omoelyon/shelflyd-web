@@ -19,11 +19,20 @@ export default function DashboardPaymentsPage() {
     queryFn: () => businessesApi.getPayments(page, 15),
   });
 
+  const { data: summary } = useQuery({
+    queryKey: ['business-payments-summary'],
+    queryFn: () => businessesApi.getPaymentsSummary(),
+  });
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Payments"
-        subtitle={`${data?.totalElements ?? 0} total transactions`}
+        subtitle={
+          summary
+            ? `${summary.paid} paid${summary.pending > 0 ? ` · ${summary.pending} pending/abandoned attempt${summary.pending === 1 ? '' : 's'}` : ''}`
+            : `${data?.totalElements ?? 0} total transactions`
+        }
       />
 
       {/* Payments card */}

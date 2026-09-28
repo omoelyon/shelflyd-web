@@ -7,6 +7,7 @@ import type {
   PagedProducts,
   PagedOrders,
   PagedPayments,
+  PaymentSummary,
   RevenueDataPoint,
 } from '@/types';
 
@@ -45,6 +46,11 @@ export const businessesApi = {
 
   getPayments: async (page = 0, size = 15): Promise<PagedPayments> => {
     const res = await apiClient.get('/business/payments', { params: { page, size } });
+    return res.data;
+  },
+
+  getPaymentsSummary: async (): Promise<PaymentSummary> => {
+    const res = await apiClient.get('/business/payments/summary');
     return res.data;
   },
 
