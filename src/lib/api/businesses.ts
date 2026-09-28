@@ -54,6 +54,13 @@ export const businessesApi = {
     return res.data;
   },
 
+  /** Re-checks a payment directly with its gateway — recovers a stuck payment even if the
+   * buyer never revisits the success page themselves. */
+  resyncPayment: async (reference: string): Promise<{ status: string; paid: boolean }> => {
+    const res = await apiClient.post(`/business/payments/${reference}/resync`);
+    return res.data;
+  },
+
   getStats: async (): Promise<BusinessStats> => {
     const res = await apiClient.get('/business/stats');
     return res.data;

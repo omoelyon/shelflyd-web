@@ -70,6 +70,7 @@ export default function AdminPaymentsPage() {
                   </p>
                   <p className="text-[11px] text-[#94a3b8] mt-0.5">
                     {payment.createdAt ? format(new Date(payment.createdAt), 'dd MMM yyyy, HH:mm') : '—'}
+                    {payment.orderId && <span className="ml-2 text-[#64748b]">· Order #{payment.orderId}</span>}
                   </p>
                 </div>
                 <p className="hidden sm:block text-[12px] text-[#64748b] bg-[#f1f5f9] rounded-md px-2 py-0.5 font-medium uppercase">

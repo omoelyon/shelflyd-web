@@ -315,6 +315,8 @@ export interface Payment extends BaseEntity {
   status: PaymentStatus;
   amount: number;
   cartId: number;
+  /** Absent on payment rows created before this field existed. */
+  orderId?: number;
   businessId: number;
 }
 

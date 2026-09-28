@@ -1,18 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { businessesApi } from '@/lib/api/businesses';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/page-header';
 import EmptyState from '@/components/ui/empty-state';
 import StatusBadge from '@/components/ui/status-badge';
 import PaginationControls from '@/components/ui/pagination-controls';
-import { CreditCard } from 'lucide-react';
+import { CreditCard, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
+import { getApiError } from '@/lib/utils';
 
 export default function DashboardPaymentsPage() {
   const [page, setPage] = useState(0);
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['business-payments', page],
@@ -22,6 +27,16 @@ export default function DashboardPaymentsPage() {
   const { data: summary } = useQuery({
     queryKey: ['business-payments-summary'],
     queryFn: () => businessesApi.getPaymentsSummary(),
+  });
+
+  const resyncMutation = useMutation({
+    mutationFn: (reference: string) => businessesApi.resyncPayment(reference),
+    onSuccess: () => {
+      toast.success('Payment confirmed with the gateway — order updated.');
+      queryClient.invalidateQueries({ queryKey: ['business-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['business-payments-summary'] });
+    },
+    onError: (error) => toast.error(getApiError(error, 'The gateway has not confirmed this payment yet.')),
   });
 
   return (
@@ -71,6 +86,14 @@ export default function DashboardPaymentsPage() {
                         type="gateway"
                         raw
                       />
+                      {payment.orderId && (
+                        <Link
+                          href={`/dashboard/orders/${payment.orderId}`}
+                          className="text-xs font-medium text-[#0058be] hover:underline"
+                        >
+                          Order #{payment.orderId}
+                        </Link>
+                      )}
                       <span className="text-xs text-[#64748b]">
                         {payment.createdAt
                           ? format(new Date(payment.createdAt.replace(' ', 'T')), 'dd MMM yyyy, HH:mm')
@@ -79,11 +102,24 @@ export default function DashboardPaymentsPage() {
                     </div>
                   </div>
 
-                  <div className="text-right shrink-0 ml-4">
+                  <div className="text-right shrink-0 ml-4 space-y-1">
                     <p className="font-bold text-[#091426] font-heading text-sm">
                       {payment.currency} {payment.amount.toLocaleString()}
                     </p>
-                    <StatusBadge status={payment.status} type="payment" />
+                    <div className="flex items-center justify-end gap-2">
+                      <StatusBadge status={payment.status} type="payment" />
+                      {payment.status !== 'paid' && (
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          title="Recheck with the payment gateway"
+                          disabled={resyncMutation.isPending}
+                          onClick={() => resyncMutation.mutate(payment.reference)}
+                        >
+                          <RefreshCw className={`h-3.5 w-3.5 ${resyncMutation.isPending && resyncMutation.variables === payment.reference ? 'animate-spin' : ''}`} />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
