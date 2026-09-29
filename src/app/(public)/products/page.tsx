@@ -59,7 +59,7 @@ function ProductsContent() {
         </h1>
         <p className="text-[#64748b] text-sm">
           Browse products from all businesses
-          {data && ` · ${data.totalElements} results`}
+          {data && ` · ${search ? filtered?.length ?? 0 : data.totalElements} results`}
         </p>
       </div>
 
