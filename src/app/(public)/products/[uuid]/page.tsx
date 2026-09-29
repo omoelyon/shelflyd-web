@@ -205,6 +205,11 @@ export default function ProductDetailPage({ params }: Props) {
           <ShoppingCart className="mr-2 h-4 w-4" />
           {addToCart.isPending ? 'Adding...' : 'Add to Cart'}
         </Button>
+        {!product.prices?.length && (
+          <p className="text-xs text-center text-muted-foreground">
+            This item isn&apos;t available for purchase yet — the seller hasn&apos;t set a price.
+          </p>
+        )}
       </div>
       </div>
     </div>
