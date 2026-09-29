@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Store, Building2, Package, ShieldCheck, LayoutDashboard, Users, ShoppingBag, Tag, CreditCard, LogOut, Menu } from 'lucide-react';
+import { Store, Building2, Package, ShieldCheck, LayoutDashboard, Users, ShoppingBag, Tag, CreditCard, LogOut, Menu, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { useAuthStore } from '@/stores/auth.store';
@@ -81,7 +81,7 @@ function AdminSidebarContent({ pathname, onNavigate }: { pathname: string; onNav
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useAuthStore();
+  const { logout, isAuthenticated, hasHydrated, user } = useAuthStore();
   const [navOpen, setNavOpen] = useState(false);
 
   // Close the mobile nav sheet whenever the route changes
@@ -89,9 +89,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setNavOpen(false);
   }, [pathname]);
 
+  const isBarePath = pathname === '/admin/login';
+  // user is null until AuthHydrator's profile fetch resolves, even once the token itself
+  // is known — so "not admin yet" and "still finding out" must stay distinct (SHF-05: the
+  // dashboard shell used to render for any logged-in user while only its data calls were
+  // actually blocked, leaking the existence of the admin interface to non-admins).
+  const isChecking = !isBarePath && (!hasHydrated || (isAuthenticated && !user));
+  const isAdmin = !!user?.admin;
+
+  useEffect(() => {
+    if (isBarePath || isChecking) return;
+    if (!isAuthenticated || !isAdmin) {
+      router.replace('/');
+    }
+  }, [isBarePath, isChecking, isAuthenticated, isAdmin, router]);
+
   // Login page renders without the sidebar chrome
-  if (pathname === '/admin/login') {
+  if (isBarePath) {
     return <>{children}</>;
+  }
+
+  if (isChecking || !isAuthenticated || !isAdmin) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f8f9ff]">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   const handleLogout = async () => {
