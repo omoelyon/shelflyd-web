@@ -82,6 +82,9 @@ export interface BusinessStats {
   createdOrders: number;
   paidOrders: number;
   preparingOrders: number;
+  readyForPickupOrders: number;
+  readyForDeliveryOrders: number;
+  outForDeliveryOrders: number;
   deliveredOrders: number;
   pickedUpOrders: number;
   totalRevenue: number;
@@ -207,6 +210,13 @@ export interface CheckoutRequest {
   cartId: number;
   orderType: OrderType;
   locationId?: number;
+  // Required alongside locationId (flat-rate delivery only — the courier path's address
+  // was already collected at the quote step and doesn't need resending here).
+  contactName?: string;
+  contactPhone?: string;
+  addressLine?: string;
+  city?: string;
+  state?: string;
   // Courier delivery — set together, instead of locationId, when the buyer chose a
   // real courier quote from POST /carts/{cartId}/delivery-quotes.
   courierRequestToken?: string;
@@ -295,6 +305,11 @@ export interface Order extends BaseEntity {
   orderType: OrderType;
   status: OrderStatus;
   deliveryLocationId: number | null;
+  deliveryContactName: string | null;
+  deliveryContactPhone: string | null;
+  deliveryAddressLine: string | null;
+  deliveryCity: string | null;
+  deliveryState: string | null;
 }
 
 export interface PatronizedBusiness {

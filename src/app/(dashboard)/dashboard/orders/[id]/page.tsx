@@ -9,7 +9,7 @@ import PageHeader from '@/components/ui/page-header';
 import StatusBadge from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Package, MapPin, Calendar, Hash, Truck, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Package, MapPin, Calendar, Hash, Truck, ExternalLink, User, Phone } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
@@ -184,12 +184,25 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           {order.orderType === 'DELIVERY' && deliveryLocation && (
             <DetailRow
               icon={MapPin}
-              label="Delivery Location"
+              label="Delivery Zone"
               value={`${deliveryLocation.location} — ₦${deliveryLocation.amount.toLocaleString()}`}
             />
           )}
           {order.orderType === 'DELIVERY' && !deliveryLocation && order.deliveryLocationId && (
             <DetailRow icon={MapPin} label="Delivery Location ID" value={String(order.deliveryLocationId)} />
+          )}
+          {order.orderType === 'DELIVERY' && order.deliveryContactName && (
+            <DetailRow icon={User} label="Recipient" value={order.deliveryContactName} />
+          )}
+          {order.orderType === 'DELIVERY' && order.deliveryContactPhone && (
+            <DetailRow icon={Phone} label="Recipient Phone" value={order.deliveryContactPhone} />
+          )}
+          {order.orderType === 'DELIVERY' && order.deliveryAddressLine && (
+            <DetailRow
+              icon={MapPin}
+              label="Delivery Address"
+              value={[order.deliveryAddressLine, order.deliveryCity, order.deliveryState].filter(Boolean).join(', ')}
+            />
           )}
         </div>
       </div>
