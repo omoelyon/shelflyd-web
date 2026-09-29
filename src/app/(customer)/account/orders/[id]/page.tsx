@@ -74,7 +74,11 @@ export default function OrderDetailPage({ params }: Props) {
     enabled: !!order,
   });
 
-  const total = items?.reduce((acc, item) => acc + item.totalPrice, 0) ?? 0;
+  // SHF-14: this used to be shown as "Total" but never included the delivery fee for a
+  // DELIVERY order — it was really just the item subtotal, understating what was paid.
+  const subtotal = items?.reduce((acc, item) => acc + item.totalPrice, 0) ?? 0;
+  const deliveryFee = order?.orderType === 'DELIVERY' ? (deliveryLocation?.amount ?? shipment?.cost ?? 0) : 0;
+  const total = subtotal + deliveryFee;
 
   if (orderLoading) {
     return (
@@ -234,9 +238,21 @@ export default function OrderDetailPage({ params }: Props) {
       </Card>
 
       {!!items?.length && (
-        <div className="flex items-center justify-between px-1">
-          <p className="text-sm text-muted-foreground">Total</p>
-          <p className="text-xl font-bold text-primary">₦{total.toLocaleString()}</p>
+        <div className="space-y-1.5 px-1">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>Subtotal</span>
+            <span className="tabular-nums">₦{subtotal.toLocaleString()}</span>
+          </div>
+          {order.orderType === 'DELIVERY' && (
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>Delivery fee</span>
+              <span className="tabular-nums">₦{deliveryFee.toLocaleString()}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between pt-1">
+            <p className="text-sm font-medium">Total</p>
+            <p className="text-xl font-bold text-primary">₦{total.toLocaleString()}</p>
+          </div>
         </div>
       )}
     </div>

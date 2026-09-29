@@ -288,6 +288,34 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             ))
           )}
         </div>
+
+        {/* SHF-14: line items alone don't say what the order actually came to — a seller
+            or buyer had no way to see subtotal / delivery fee / grand total at a glance. */}
+        {orderItems && orderItems.length > 0 && (() => {
+          const subtotal = orderItems.reduce((sum, item) => sum + Number(item.totalPrice), 0);
+          const deliveryFee = order.orderType === 'DELIVERY'
+            ? (deliveryLocation?.amount ?? shipment?.cost ?? 0)
+            : 0;
+          const grandTotal = subtotal + deliveryFee;
+          return (
+            <div className="border-t border-[#f1f5f9] px-5 py-3 space-y-1.5">
+              <div className="flex items-center justify-between text-sm text-[#64748b]">
+                <span>Subtotal</span>
+                <span className="tabular-nums">₦{subtotal.toLocaleString()}</span>
+              </div>
+              {order.orderType === 'DELIVERY' && (
+                <div className="flex items-center justify-between text-sm text-[#64748b]">
+                  <span>Delivery fee</span>
+                  <span className="tabular-nums">₦{deliveryFee.toLocaleString()}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between text-sm font-semibold text-[#091426] pt-1.5 border-t border-[#f1f5f9]">
+                <span>Total</span>
+                <span className="tabular-nums">₦{grandTotal.toLocaleString()}</span>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
