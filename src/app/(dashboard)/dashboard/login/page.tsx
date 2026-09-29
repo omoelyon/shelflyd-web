@@ -7,6 +7,7 @@ import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authApi } from '@/lib/api/auth';
+import { usersApi } from '@/lib/api/users';
 import { useAuthStore } from '@/stores/auth.store';
 import { mergeGuestCartIntoServer } from '@/lib/guest-cart-merge';
 import { loginSchema, type LoginFormValues } from '@/lib/validations';
@@ -35,7 +36,7 @@ function DashboardLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from');
-  const { setToken } = useAuthStore();
+  const { setUser } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -49,12 +50,16 @@ function DashboardLoginForm() {
   const { mutate, isPending } = useMutation({
     mutationFn: authApi.login,
     onSuccess: async ({ token }) => {
-      setToken(token);
+      // SHF-15: the token only ever passes through here to establish the httpOnly cookie —
+      // it's never held in JS state or localStorage. Every request after this authenticates
+      // via that cookie alone.
       await fetch('/api/auth/set-cookie', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
       });
+      const profile = await usersApi.me();
+      setUser(profile);
       await mergeGuestCartIntoServer();
       toast.success('Welcome back!');
       router.push(from || '/dashboard');

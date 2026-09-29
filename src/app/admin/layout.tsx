@@ -81,7 +81,7 @@ function AdminSidebarContent({ pathname, onNavigate }: { pathname: string; onNav
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout, isAuthenticated, hasHydrated, user } = useAuthStore();
+  const { logout, isAuthenticated, authChecked, user } = useAuthStore();
   const [navOpen, setNavOpen] = useState(false);
 
   // Close the mobile nav sheet whenever the route changes
@@ -90,11 +90,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [pathname]);
 
   const isBarePath = pathname === '/admin/login';
-  // user is null until AuthHydrator's profile fetch resolves, even once the token itself
-  // is known — so "not admin yet" and "still finding out" must stay distinct (SHF-05: the
-  // dashboard shell used to render for any logged-in user while only its data calls were
-  // actually blocked, leaking the existence of the admin interface to non-admins).
-  const isChecking = !isBarePath && (!hasHydrated || (isAuthenticated && !user));
+  // "not admin yet" and "still finding out" must stay distinct (SHF-05: the dashboard
+  // shell used to render for any logged-in user while only its data calls were actually
+  // blocked, leaking the existence of the admin interface to non-admins) — authChecked is
+  // AuthHydrator's real, server-verified session check, not just local state being ready.
+  const isChecking = !isBarePath && !authChecked;
   const isAdmin = !!user?.admin;
 
   useEffect(() => {

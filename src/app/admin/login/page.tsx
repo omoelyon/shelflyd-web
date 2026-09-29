@@ -18,7 +18,7 @@ import Link from 'next/link';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { setToken } = useAuthStore();
+  const { setUser } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -32,24 +32,26 @@ export default function AdminLoginPage() {
   const { mutate, isPending } = useMutation({
     mutationFn: authApi.login,
     onSuccess: async ({ token }) => {
-      // Set token temporarily to make the profile call
-      localStorage.setItem('mm_token', token);
+      // SHF-15: no localStorage involved at all now — set the real cookie first (needed to
+      // make an authenticated profile call at all, since there's no other way to attach
+      // credentials), then verify admin privileges and immediately undo it if this account
+      // doesn't have them, rather than staging the token client-side before committing.
+      await fetch('/api/auth/set-cookie', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
       try {
         const profile = await usersApi.me();
         if (!profile.admin) {
-          localStorage.removeItem('mm_token');
+          await fetch('/api/auth/clear-cookie', { method: 'POST' });
           toast.error('Access denied. This account does not have admin privileges.');
           return;
         }
-        setToken(token);
-        await fetch('/api/auth/set-cookie', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token }),
-        });
+        setUser(profile);
         router.push('/admin');
       } catch {
-        localStorage.removeItem('mm_token');
+        await fetch('/api/auth/clear-cookie', { method: 'POST' });
         toast.error('Could not verify admin privileges. Please try again.');
       }
     },
