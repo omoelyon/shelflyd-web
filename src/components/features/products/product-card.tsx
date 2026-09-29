@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { useState } from 'react';
 import { Package } from 'lucide-react';
 import type { Product } from '@/types';
 import { formatStatus } from '@/lib/utils';
@@ -16,6 +17,10 @@ const statusConfig: Record<Product['status'], { label: string; className: string
 };
 
 export default function ProductCard({ product }: ProductCardProps) {
+  // SHF-16: a product's image field being non-empty doesn't mean the URL actually
+  // resolves (a dead/placeholder host, for one real example) — fall back to the same
+  // "No image" state on load failure instead of a broken-image icon.
+  const [imageFailed, setImageFailed] = useState(false);
   const lowestPrice = product.prices?.reduce(
     (min, p) => (p.price < min.price ? p : min),
     product.prices[0]
@@ -27,13 +32,14 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className="bg-card rounded-2xl border border-border h-full flex flex-col overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:border-border/80">
         {/* Image */}
         <div className="relative h-48 bg-muted overflow-hidden">
-          {product.image ? (
+          {product.image && !imageFailed ? (
             <Image
               src={product.image}
               alt={product.name}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               unoptimized
+              onError={() => setImageFailed(true)}
             />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground/50">

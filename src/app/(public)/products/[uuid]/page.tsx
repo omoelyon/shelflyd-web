@@ -34,6 +34,8 @@ export default function ProductDetailPage({ params }: Props) {
   const [selectedUnitId, setSelectedUnitId] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
+  // SHF-16: fall back gracefully if the product's image URL doesn't actually resolve.
+  const [imageFailed, setImageFailed] = useState(false);
 
   const { data: product, isLoading, isError } = useQuery({
     queryKey: ['product', uuid],
@@ -110,8 +112,15 @@ export default function ProductDetailPage({ params }: Props) {
       <div className="grid md:grid-cols-2 gap-10">
       {/* Image */}
       <div className="relative h-80 md:h-full min-h-80 bg-muted rounded-2xl overflow-hidden">
-        {product.image ? (
-          <Image src={product.image} alt={product.name} fill className="object-cover" unoptimized />
+        {product.image && !imageFailed ? (
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            className="object-cover"
+            unoptimized
+            onError={() => setImageFailed(true)}
+          />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
             No image
