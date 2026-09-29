@@ -49,12 +49,15 @@ export default function DashboardPage() {
 
   const statCards = stats
     ? [
-        { label: 'Total Orders',     value: stats.totalOrders,     icon: ShoppingBag, accent: '#0058be', bg: '#eff4ff' },
-        { label: 'Paid Orders',       value: stats.paidOrders,      icon: CreditCard,  accent: '#059669', bg: '#ecfdf5' },
-        { label: 'Preparing',         value: stats.preparingOrders, icon: Package,     accent: '#d97706', bg: '#fffbeb' },
-        { label: 'Delivered',         value: stats.deliveredOrders, icon: CheckCircle, accent: '#0058be', bg: '#eff4ff' },
-        { label: 'Pending',           value: stats.createdOrders,   icon: Clock,       accent: '#b45309', bg: '#fef3c7' },
-        { label: 'Out for Delivery',  value: stats.pickedUpOrders,  icon: Truck,       accent: '#0891b2', bg: '#ecfeff' },
+        { label: 'Total Orders',       value: stats.totalOrders,          icon: ShoppingBag, accent: '#0058be', bg: '#eff4ff' },
+        { label: 'Pending Payment',    value: stats.createdOrders,        icon: Clock,       accent: '#b45309', bg: '#fef3c7' },
+        { label: 'Paid',               value: stats.paidOrders,           icon: CreditCard,  accent: '#059669', bg: '#ecfdf5' },
+        { label: 'Preparing',          value: stats.preparingOrders,      icon: Package,     accent: '#d97706', bg: '#fffbeb' },
+        { label: 'Ready for Pickup',   value: stats.readyForPickupOrders, icon: Package,     accent: '#7c3aed', bg: '#f5f3ff' },
+        { label: 'Picked Up',          value: stats.pickedUpOrders,       icon: CheckCircle, accent: '#0058be', bg: '#eff4ff' },
+        { label: 'Ready for Delivery', value: stats.readyForDeliveryOrders, icon: Package,   accent: '#7c3aed', bg: '#f5f3ff' },
+        { label: 'Out for Delivery',   value: stats.outForDeliveryOrders, icon: Truck,       accent: '#0891b2', bg: '#ecfeff' },
+        { label: 'Delivered',          value: stats.deliveredOrders,      icon: CheckCircle, accent: '#0058be', bg: '#eff4ff' },
       ]
     : [];
 
@@ -157,7 +160,7 @@ export default function DashboardPage() {
       {/* ── KPI bento grid ── */}
       {statsLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 9 }).map((_, i) => (
             <Skeleton key={i} className="h-24 rounded-2xl" />
           ))}
         </div>
