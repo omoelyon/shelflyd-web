@@ -14,7 +14,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
-import { ShoppingCart, Trash2, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Trash2, ArrowLeft, Minus, Plus } from 'lucide-react';
+import type { CartProduct } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -28,6 +29,8 @@ export default function StorefrontCartPage({ params }: Props) {
   const { setCarts } = useCartStore();
   const { isAuthenticated } = useAuthStore();
   const removeGuestItem = useGuestCartStore((s) => s.removeItem);
+  const decrementGuestItem = useGuestCartStore((s) => s.decrementItem);
+  const addGuestItem = useGuestCartStore((s) => s.addItem);
   const qc = useQueryClient();
 
   const { data: info } = useQuery({
@@ -74,6 +77,45 @@ export default function StorefrontCartPage({ params }: Props) {
     } else if (info) {
       removeGuestItem(info.id, productId, unitId);
       toast.success('Item removed.');
+    }
+  };
+
+  // SHF-13: same delta-based stepper as the multi-business cart page.
+  const incrementMutation = useMutation({
+    mutationFn: (data: { productId: number; unitId: number }) => cartApi.add({ ...data, quantity: 1 }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['carts'] }),
+    onError: (error) => toast.error(getApiError(error, 'Could not update quantity.')),
+  });
+
+  const decrementMutation = useMutation({
+    mutationFn: (data: { productId: number; unitId: number }) => cartApi.remove({ ...data, quantity: 1 }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['carts'] }),
+    onError: (error) => toast.error(getApiError(error, 'Could not update quantity.')),
+  });
+
+  const handleIncrement = (product: CartProduct) => {
+    if (isAuthenticated) {
+      incrementMutation.mutate({ productId: product.productId, unitId: product.unitId });
+    } else if (info) {
+      addGuestItem(info.id, {
+        productId: product.productId,
+        unitId: product.unitId,
+        quantity: 1,
+        name: product.name,
+        type: product.type,
+        image: product.image,
+        unit: product.unit,
+        unitPrice: product.unitPrice,
+        note: product.note,
+      });
+    }
+  };
+
+  const handleDecrement = (productId: number, unitId: number) => {
+    if (isAuthenticated) {
+      decrementMutation.mutate({ productId, unitId });
+    } else if (info) {
+      decrementGuestItem(info.id, productId, unitId);
     }
   };
 
@@ -149,15 +191,36 @@ export default function StorefrontCartPage({ params }: Props) {
               </div>
               <div className="text-right shrink-0">
                 <p className="font-semibold text-primary">₦{product.totalPrice.toLocaleString()}</p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive hover:text-destructive mt-1"
-                  onClick={() => handleRemove(product.productId, product.unitId)}
-                  disabled={removeProductMutation.isPending}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                <div className="flex items-center gap-1 mt-1.5 justify-end">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => handleDecrement(product.productId, product.unitId)}
+                    disabled={isAuthenticated && decrementMutation.isPending}
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  <span className="w-6 text-center text-sm font-medium tabular-nums">{product.quantity}</span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => handleIncrement(product)}
+                    disabled={isAuthenticated && incrementMutation.isPending}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive ml-1"
+                    onClick={() => handleRemove(product.productId, product.unitId)}
+                    disabled={removeProductMutation.isPending}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}

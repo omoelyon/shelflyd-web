@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cartApi } from '@/lib/api/cart';
+import { businessesApi } from '@/lib/api/businesses';
 import { useCartStore } from '@/stores/cart.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { useGuestCartStore, toCartResponse } from '@/stores/guest-cart.store';
@@ -13,9 +14,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
-import { ShoppingCart, Trash2 } from 'lucide-react';
+import { ShoppingCart, Trash2, Minus, Plus } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import BusinessAvatar from '@/components/layout/business-avatar';
 import type { CartResponse } from '@/types';
 
 export default function CartPage() {
@@ -24,6 +26,8 @@ export default function CartPage() {
   const { isAuthenticated } = useAuthStore();
   const guestCarts = useGuestCartStore((s) => s.carts);
   const removeGuestItem = useGuestCartStore((s) => s.removeItem);
+  const decrementGuestItem = useGuestCartStore((s) => s.decrementItem);
+  const addGuestItem = useGuestCartStore((s) => s.addItem);
   const qc = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
@@ -31,6 +35,14 @@ export default function CartPage() {
     queryFn: cartApi.getAll,
     enabled: isAuthenticated,
   });
+
+  // SHF-12: cart cards only ever showed "Cart #7", with no way to tell whose store that
+  // was — a shopper buying from multiple businesses at once couldn't tell the cards apart.
+  const { data: businesses } = useQuery({
+    queryKey: ['businesses'],
+    queryFn: businessesApi.listAll,
+  });
+  const businessById = new Map((businesses ?? []).map((b) => [b.id, b]));
 
   useEffect(() => {
     if (data) setCarts(data);
@@ -48,12 +60,53 @@ export default function CartPage() {
     onError: (error) => toast.error(getApiError(error, 'Failed to remove item.')),
   });
 
+  // SHF-13: quantity stepper — +1 reuses the same add endpoint as the product page,
+  // -1 the same subtract endpoint used elsewhere, so the backend's own dedupe/line-item
+  // math stays the single source of truth instead of duplicating it client-side.
+  const incrementMutation = useMutation({
+    mutationFn: (data: { productId: number; unitId: number }) => cartApi.add({ ...data, quantity: 1 }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['carts'] }),
+    onError: (error) => toast.error(getApiError(error, 'Could not update quantity.')),
+  });
+
+  const decrementMutation = useMutation({
+    mutationFn: (data: { productId: number; unitId: number }) => cartApi.remove({ ...data, quantity: 1 }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['carts'] }),
+    onError: (error) => toast.error(getApiError(error, 'Could not update quantity.')),
+  });
+
   const handleRemove = (businessId: number, productId: number, unitId: number) => {
     if (isAuthenticated) {
       removeProductMutation.mutate({ productId, unitId });
     } else {
       removeGuestItem(businessId, productId, unitId);
       toast.success('Item removed.');
+    }
+  };
+
+  const handleIncrement = (businessId: number, product: CartResponse['products'][number]) => {
+    if (isAuthenticated) {
+      incrementMutation.mutate({ productId: product.productId, unitId: product.unitId });
+    } else {
+      addGuestItem(businessId, {
+        productId: product.productId,
+        unitId: product.unitId,
+        quantity: 1,
+        name: product.name,
+        type: product.type,
+        image: product.image,
+        unit: product.unit,
+        unitPrice: product.unitPrice,
+        note: product.note,
+      });
+    }
+  };
+
+  const handleDecrement = (businessId: number, productId: number, unitId: number) => {
+    if (isAuthenticated) {
+      decrementMutation.mutate({ productId, unitId });
+    } else {
+      decrementGuestItem(businessId, productId, unitId);
     }
   };
 
@@ -98,10 +151,14 @@ export default function CartPage() {
 
       {carts.map((cart) => {
         if (cart.products.length === 0) return null;
+        const business = businessById.get(cart.businessId);
         return (
           <Card key={cart.businessId}>
             <CardHeader>
-              <CardTitle className="text-base">{isAuthenticated ? `Cart #${cart.cartId}` : 'Cart'}</CardTitle>
+              <CardTitle className="text-base flex items-center gap-2.5">
+                {business && <BusinessAvatar business={business} size={28} />}
+                {business?.name ?? (isAuthenticated ? `Cart #${cart.cartId}` : 'Cart')}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {cart.products.map((product) => (
@@ -122,17 +179,38 @@ export default function CartPage() {
                       <p className="text-xs italic text-muted-foreground mt-0.5">Note: {product.note}</p>
                     )}
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <p className="font-semibold text-primary">₦{product.totalPrice.toLocaleString()}</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive mt-1"
-                      onClick={() => handleRemove(cart.businessId, product.productId, product.unitId)}
-                      disabled={removeProductMutation.isPending}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center gap-1 mt-1.5 justify-end">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => handleDecrement(cart.businessId, product.productId, product.unitId)}
+                        disabled={isAuthenticated && decrementMutation.isPending}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="w-6 text-center text-sm font-medium tabular-nums">{product.quantity}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => handleIncrement(cart.businessId, product)}
+                        disabled={isAuthenticated && incrementMutation.isPending}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive ml-1"
+                        onClick={() => handleRemove(cart.businessId, product.productId, product.unitId)}
+                        disabled={removeProductMutation.isPending}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}

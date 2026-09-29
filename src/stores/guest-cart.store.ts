@@ -23,6 +23,7 @@ interface GuestCartState {
   carts: GuestCart[];
   addItem: (businessId: number, item: Omit<GuestCartItem, 'quantity'> & { quantity: number }) => void;
   removeItem: (businessId: number, productId: number, unitId: number) => void;
+  decrementItem: (businessId: number, productId: number, unitId: number) => void;
   clearBusiness: (businessId: number) => void;
   clearAll: () => void;
   getCart: (businessId: number) => GuestCart | undefined;
@@ -68,6 +69,29 @@ export const useGuestCartStore = create<GuestCartState>()(
             .map((c) =>
               c.businessId === businessId
                 ? { ...c, items: c.items.filter((i) => !(i.productId === productId && i.unitId === unitId)) }
+                : c
+            )
+            .filter((c) => c.items.length > 0),
+        }));
+      },
+
+      // SHF-13: mirrors the (now-fixed) backend subtractFromCart — reducing to zero drops
+      // the line entirely rather than leaving a zero-quantity item behind.
+      decrementItem: (businessId, productId, unitId) => {
+        set((state) => ({
+          carts: state.carts
+            .map((c) =>
+              c.businessId === businessId
+                ? {
+                    ...c,
+                    items: c.items
+                      .map((i) =>
+                        i.productId === productId && i.unitId === unitId
+                          ? { ...i, quantity: i.quantity - 1 }
+                          : i
+                      )
+                      .filter((i) => i.quantity > 0),
+                  }
                 : c
             )
             .filter((c) => c.items.length > 0),
