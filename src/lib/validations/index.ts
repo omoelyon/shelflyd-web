@@ -30,10 +30,12 @@ export const registerBusinessSchema = z.object({
   description: z.string().optional(),
   slug: z
     .string()
-    .regex(/^[a-z0-9-]+$/, 'Slug may only contain lowercase letters, numbers, and hyphens')
     .min(3, 'Slug must be at least 3 characters')
-    .optional()
-    .or(z.literal('')),
+    .max(50, 'Slug must be at most 50 characters')
+    .regex(
+      /^[a-z0-9]+(-[a-z0-9]+)*$/,
+      'Use lowercase letters, numbers, and single hyphens between words (e.g. green-harvest)',
+    ),
 });
 
 export const updateSettingsSchema = z.object({

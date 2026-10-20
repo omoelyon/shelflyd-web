@@ -63,6 +63,7 @@ export interface Business extends BaseEntity {
 
 export interface RegisterBusinessRequest {
   name: string;
+  slug: string;
   description?: string;
   logo?: string;
 }

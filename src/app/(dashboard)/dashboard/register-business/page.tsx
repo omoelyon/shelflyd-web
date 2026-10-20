@@ -67,10 +67,7 @@ export default function RegisterBusinessPage() {
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="slug">
-                Storefront URL slug{' '}
-                <span className="text-muted-foreground font-normal text-xs">(optional)</span>
-              </Label>
+              <Label htmlFor="slug">Storefront URL slug *</Label>
               <div className="flex items-center gap-1">
                 <span className="text-muted-foreground text-sm">shelflyd.com/</span>
                 <Input
@@ -80,7 +77,7 @@ export default function RegisterBusinessPage() {
                   className="flex-1"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">Lowercase letters, numbers, and hyphens only. Leave blank to auto-generate.</p>
+              <p className="text-xs text-muted-foreground">Lowercase letters, numbers, and hyphens only. This is your store&apos;s public address.</p>
               {errors.slug && <p className="text-xs text-destructive">{errors.slug.message}</p>}
             </div>
 
