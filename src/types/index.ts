@@ -489,6 +489,8 @@ export interface SavePayoutAccountRequest {
 
 export interface ProcessingFeeQuote {
   amount: number;
+  /** Platform fee, a percentage of the items subtotal. */
+  serviceFee: number;
   processingFee: number;
   total: number;
 }
@@ -498,6 +500,41 @@ export interface OrderPaymentSummary {
   reference: string;
   itemsAmount: number | null;
   deliveryFee: number | null;
+  serviceFee: number | null;
   processingFee: number | null;
   total: number;
+}
+
+// ─── Seller subscription ─────────────────────────────────────────────────────
+
+export type SubscriptionState = 'TRIAL' | 'ACTIVE' | 'GRACE' | 'LAPSED';
+
+export interface SubscriptionCharge {
+  reference: string;
+  kind: 'SUBSCRIPTION' | 'CARD_SETUP';
+  amountNaira: number;
+  status: 'SUCCESS' | 'PENDING' | 'FAILED';
+  createdAt: string;
+}
+
+export interface Subscription {
+  state: SubscriptionState;
+  priceNaira: number;
+  trialEndsAt: string;
+  paidUntil: string | null;
+  /** End of the trial or the paid period, whichever is later. */
+  accessEndsAt: string;
+  /** accessEndsAt + the grace period; the storefront is hidden after this. */
+  graceEndsAt: string;
+  /** Whole days until accessEndsAt (TRIAL/ACTIVE) or graceEndsAt (GRACE); 0 when LAPSED. */
+  daysLeft: number;
+  autoRenew: boolean;
+  card: { brand: string | null; last4: string | null } | null;
+  cardSetupAmountNaira: number;
+  charges: SubscriptionCharge[];
+}
+
+export interface SubscriptionCheckout {
+  url: string;
+  reference: string;
 }

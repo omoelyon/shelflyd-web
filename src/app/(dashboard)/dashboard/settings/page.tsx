@@ -13,7 +13,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Store, MapPin, ArrowRight, Landmark } from 'lucide-react';
+import { Store, MapPin, ArrowRight, Landmark, CalendarClock } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
@@ -153,6 +153,28 @@ export default function SettingsPage() {
           >
             <Landmark className="h-4 w-4" />
             Manage Payout Account
+            <ArrowRight className="h-4 w-4 ml-1" />
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Subscription */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Subscription</CardTitle>
+          <CardDescription>
+            Your Shelflyd plan: free trial status, renewal and payment method.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            href="/dashboard/settings/subscription"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#091426] text-white text-sm font-medium hover:bg-[#091426]/90 transition-colors"
+          >
+            <CalendarClock className="h-4 w-4" />
+            Manage Subscription
             <ArrowRight className="h-4 w-4 ml-1" />
           </Link>
         </CardContent>

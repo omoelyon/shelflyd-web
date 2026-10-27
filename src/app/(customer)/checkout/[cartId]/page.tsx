@@ -60,11 +60,13 @@ export default function CheckoutPage({ params }: Props) {
 
   const feeBase = cart && deliveryFee !== null ? cart.totalCost + deliveryFee : 0;
 
-  // The buyer pays the payment processor's fee on top of items + delivery. Only quoted once
-  // the amount is final (pickup, or a delivery option has been chosen).
+  // The buyer pays a platform service fee (a % of the items) and the payment processor's fee
+  // on top of items + delivery. Only quoted once the amount is final (pickup, or a delivery
+  // option has been chosen).
+  const itemsSubtotal = cart?.totalCost ?? 0;
   const { data: feeQuote, isFetching: feeLoading } = useQuery({
-    queryKey: ['processing-fee', feeBase],
-    queryFn: () => paymentsApi.getProcessingFee(feeBase),
+    queryKey: ['processing-fee', feeBase, itemsSubtotal],
+    queryFn: () => paymentsApi.getProcessingFee(feeBase, itemsSubtotal),
     enabled: feeBase > 0,
     retry: false,
   });
@@ -120,6 +122,19 @@ export default function CheckoutPage({ params }: Props) {
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Delivery</span>
                 <span className="font-medium">₦{deliveryFee.toLocaleString()}</span>
+              </div>
+            )}
+            {feeBase > 0 && (feeLoading || !feeQuote || feeQuote.serviceFee > 0) && (
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>
+                  Service fee
+                  <span className="block text-xs">Shelflyd platform fee</span>
+                </span>
+                {feeLoading || !feeQuote ? (
+                  <Skeleton className="h-4 w-16" />
+                ) : (
+                  <span className="font-medium">₦{feeQuote.serviceFee.toLocaleString()}</span>
+                )}
               </div>
             )}
             {feeBase > 0 && (

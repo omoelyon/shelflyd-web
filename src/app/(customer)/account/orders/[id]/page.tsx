@@ -265,6 +265,12 @@ export default function OrderDetailPage({ params }: Props) {
                   <span className="tabular-nums">₦{recorded.deliveryFee.toLocaleString()}</span>
                 </div>
               )}
+              {!!recorded.serviceFee && (
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>Service fee</span>
+                  <span className="tabular-nums">₦{recorded.serviceFee.toLocaleString()}</span>
+                </div>
+              )}
               {!!recorded.processingFee && (
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <span>Payment processing fee</span>

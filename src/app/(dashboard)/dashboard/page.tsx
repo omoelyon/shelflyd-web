@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { businessesApi } from '@/lib/api/businesses';
 import { payoutApi } from '@/lib/api/payout';
+import { subscriptionApi } from '@/lib/api/subscription';
 import { useThemeStore } from '@/stores/theme.store';
 import { Skeleton } from '@/components/ui/skeleton';
 import StatCard from '@/components/ui/stat-card';
@@ -21,6 +22,7 @@ import {
   Store,
   BarChart3,
   Landmark,
+  CalendarClock,
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { cn, formatStatus } from '@/lib/utils';
@@ -41,6 +43,31 @@ export default function DashboardPage() {
     queryFn: payoutApi.getAccount,
     retry: false,
   });
+
+  // Owner-only; an error (team member, no business yet) simply hides the banner.
+  const { data: subscription } = useQuery({
+    queryKey: ['subscription'],
+    queryFn: subscriptionApi.get,
+    retry: false,
+  });
+
+  const subscriptionBanner = (() => {
+    if (!subscription) return null;
+    const graceEnds = new Date(subscription.graceEndsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+    const days = `${subscription.daysLeft} day${subscription.daysLeft === 1 ? '' : 's'}`;
+    if (subscription.state === 'LAPSED') {
+      return { tone: 'red', text: 'Your storefront is hidden', detail: ' — renew to start taking orders again.', cta: 'Renew now' };
+    }
+    if (subscription.state === 'GRACE') {
+      return { tone: 'red', text: 'Your subscription has ended', detail: ` — pay by ${graceEnds} or your storefront will be hidden.`, cta: 'Pay now' };
+    }
+    if (subscription.daysLeft <= 3 && !subscription.autoRenew) {
+      return subscription.state === 'TRIAL'
+        ? { tone: 'amber', text: `Your free trial ends in ${days}`, detail: ' — add a card or pay to keep your store live.', cta: 'Manage plan' }
+        : { tone: 'amber', text: `Your plan ends in ${days}`, detail: '', cta: 'Manage plan' };
+    }
+    return null;
+  })();
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['business-stats'],
@@ -144,6 +171,35 @@ export default function DashboardPage() {
             className={cn(buttonVariants({ size: 'sm' }), 'shrink-0 bg-[#091426] text-white hover:bg-[#091426]/90')}
           >
             Add account
+          </Link>
+        </div>
+      )}
+
+      {/* ── Subscription reminder ── */}
+      {subscriptionBanner && (
+        <div
+          className={cn(
+            'flex items-center gap-4 p-4 rounded-2xl border',
+            subscriptionBanner.tone === 'red' ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200',
+          )}
+        >
+          <div
+            className={cn(
+              'h-10 w-10 rounded-xl flex items-center justify-center shrink-0',
+              subscriptionBanner.tone === 'red' ? 'bg-red-100' : 'bg-amber-100',
+            )}
+          >
+            <CalendarClock className={cn('h-5 w-5', subscriptionBanner.tone === 'red' ? 'text-red-700' : 'text-amber-700')} />
+          </div>
+          <p className={cn('flex-1 text-sm', subscriptionBanner.tone === 'red' ? 'text-red-900' : 'text-amber-900')}>
+            <span className="font-semibold">{subscriptionBanner.text}</span>
+            {subscriptionBanner.detail}
+          </p>
+          <Link
+            href="/dashboard/settings/subscription"
+            className={cn(buttonVariants({ size: 'sm' }), 'shrink-0 bg-[#091426] text-white hover:bg-[#091426]/90')}
+          >
+            {subscriptionBanner.cta}
           </Link>
         </div>
       )}

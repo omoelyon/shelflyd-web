@@ -21,9 +21,12 @@ export const paymentsApi = {
     return res.data;
   },
 
-  /** The processor fee the buyer pays on top of `amount` (items + delivery). */
-  getProcessingFee: async (amount: number): Promise<ProcessingFeeQuote> => {
-    const res = await apiClient.get('/payments/processing-fee', { params: { amount } });
+  /**
+   * The fees the buyer pays on top of `amount` (items + delivery): the platform service fee
+   * (a percentage of `items`, the items subtotal alone) and the payment processor's fee.
+   */
+  getProcessingFee: async (amount: number, items?: number): Promise<ProcessingFeeQuote> => {
+    const res = await apiClient.get('/payments/processing-fee', { params: { amount, items } });
     return res.data;
   },
 
