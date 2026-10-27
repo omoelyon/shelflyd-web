@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { Suspense, use, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ordersApi } from '@/lib/api/orders';
 import { deliveryApi } from '@/lib/api/delivery';
@@ -9,14 +9,14 @@ import PageHeader from '@/components/ui/page-header';
 import StatusBadge from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Package, MapPin, Calendar, Hash, Truck, ExternalLink, User, Phone } from 'lucide-react';
+import { ArrowLeft, Package, MapPin, Calendar, Hash, Truck, ExternalLink, User, Phone, KeyRound } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
 import type { Order, OrderItem, OrderStatus } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 function nextStatuses(order: Order): OrderStatus[] {
   const { status, orderType } = order;
@@ -161,6 +161,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         )}
       </div>
+
+      {order.orderType === 'PICKUP' && order.status !== 'PICKED_UP' && (
+        <Suspense>
+          <ConfirmPickupCard orderId={orderId} />
+        </Suspense>
+      )}
 
       {/* Order details */}
       <div className="bg-white rounded-2xl shadow-card-md p-5">
@@ -316,6 +322,54 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           );
         })()}
+      </div>
+    </div>
+  );
+}
+
+function ConfirmPickupCard({ orderId }: { orderId: number }) {
+  const qc = useQueryClient();
+  const params = useSearchParams();
+  // Scanning the buyer's pass QR lands here with ?pickup=<code>
+  const [code, setCode] = useState(() => (params.get('pickup') ?? '').replace(/\D/g, '').slice(0, 6));
+
+  const verifyMutation = useMutation({
+    mutationFn: () => ordersApi.verifyPickup(orderId, code),
+    onSuccess: () => {
+      toast.success('Order handed over');
+      qc.invalidateQueries({ queryKey: ['order-detail', orderId] });
+      qc.invalidateQueries({ queryKey: ['business-orders'] });
+      qc.invalidateQueries({ queryKey: ['business-stats'] });
+    },
+    onError: (error) => toast.error(getApiError(error, 'Could not verify this pickup code.')),
+  });
+
+  return (
+    <div className="bg-white rounded-2xl shadow-card-md p-5 space-y-3">
+      <div className="flex items-center gap-2">
+        <KeyRound className="h-4 w-4 text-[#64748b]" />
+        <h2 className="font-semibold text-sm text-[#091426] font-heading">Confirm pickup</h2>
+      </div>
+      <p className="text-xs text-[#64748b]">
+        Ask the person collecting for the 6-digit pickup code from the buyer&apos;s pass (or scan its QR) before handing over the order.
+      </p>
+      <div className="flex items-center gap-3">
+        <input
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder="000000"
+          aria-label="Pickup code"
+          className="h-9 w-36 rounded-lg border border-[rgba(9,20,38,0.12)] px-3 text-center text-sm tracking-widest tabular-nums outline-none focus:border-[#0058be]"
+        />
+        <Button
+          size="sm"
+          disabled={code.length !== 6 || verifyMutation.isPending}
+          onClick={() => verifyMutation.mutate()}
+        >
+          {verifyMutation.isPending ? 'Checking…' : 'Confirm handover'}
+        </Button>
       </div>
     </div>
   );

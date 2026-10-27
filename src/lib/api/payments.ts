@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { PagedPayments, PaymentSummary } from '@/types';
+import type { PagedPayments, PaymentStatus, PaymentSummary } from '@/types';
 
 export const paymentsApi = {
   getMyTransactions: async (page = 0, size = 15): Promise<PagedPayments> => {
@@ -7,7 +7,7 @@ export const paymentsApi = {
     return res.data;
   },
 
-  getByReference: async (reference: string): Promise<{ businessId: number; cartId: number }> => {
+  getByReference: async (reference: string): Promise<{ businessId: number; cartId: number; status: PaymentStatus }> => {
     const res = await apiClient.get(`/payments/reference/${reference}`);
     return res.data;
   },

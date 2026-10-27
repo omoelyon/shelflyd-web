@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useReorder } from '@/hooks/use-reorder';
-import { ChevronLeft, ChevronRight, Package, MapPin, Store, RotateCcw, Truck, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Package, MapPin, Store, RotateCcw, Truck, ExternalLink, Download, Ticket, CheckCircle } from 'lucide-react';
 import type { OrderStatus, ShipmentStatus } from '@/types';
 
 const shipmentStatusLabel: Record<ShipmentStatus, string> = {
@@ -154,6 +154,10 @@ export default function OrderDetailPage({ params }: Props) {
         </CardContent>
       </Card>
 
+      {order.orderType === 'PICKUP' && (
+        <PickupPassCard orderId={orderId} collected={order.status === 'PICKED_UP'} />
+      )}
+
       {shipment && (
         <Card>
           <CardHeader className="pb-3">
@@ -256,5 +260,78 @@ export default function OrderDetailPage({ params }: Props) {
         </div>
       )}
     </div>
+  );
+}
+
+function PickupPassCard({ orderId, collected }: { orderId: number; collected: boolean }) {
+  const { data: pass, isError } = useQuery({
+    queryKey: ['my-order-pickup-pass', orderId],
+    queryFn: () => ordersApi.getMyPickupPass(orderId),
+    enabled: !collected,
+    retry: false,
+  });
+
+  // The query hands back an object URL, so it must not outlive this component: gcTime 0 drops
+  // the cached URL on unmount, and the effect below revokes it, so a stale one is never reused.
+  const { data: imageUrl } = useQuery({
+    queryKey: ['my-order-pickup-pass-image', orderId],
+    queryFn: async () => URL.createObjectURL(await ordersApi.getMyPickupPassImage(orderId)),
+    enabled: !!pass && !pass.collected,
+    retry: false,
+    gcTime: 0,
+    staleTime: Infinity,
+  });
+  useEffect(() => {
+    return () => {
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+    };
+  }, [imageUrl]);
+
+  if (collected || pass?.collected) {
+    return (
+      <Card>
+        <CardContent className="py-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <CheckCircle className="h-4 w-4" />
+          Collected — this pickup pass has been used.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Older orders or a transient failure: the order page is still useful without the pass.
+  if (isError || !pass) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Ticket className="h-4 w-4" />
+          Pickup pass
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageUrl} alt={`Pickup pass for order #${orderId}`} className="mx-auto w-full max-w-xs rounded-lg border" />
+        )}
+        <div className="text-center">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Pickup code</p>
+          <p className="text-3xl font-bold tracking-widest tabular-nums text-[#091426]">{pass.formattedCode}</p>
+        </div>
+        <p className="text-sm text-muted-foreground text-center">
+          Show this image or the code at pickup. Someone else can collect for you — just send them this pass.
+        </p>
+        {imageUrl && (
+          <a
+            href={imageUrl}
+            download={`shelflyd-pickup-order-${orderId}.png`}
+            className="flex items-center justify-center gap-1.5 text-sm text-primary hover:underline"
+          >
+            <Download className="h-4 w-4" />
+            Download pass
+          </a>
+        )}
+      </CardContent>
+    </Card>
   );
 }

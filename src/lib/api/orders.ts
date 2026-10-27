@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { CartResponse, Order, OrderItem, OrderStatus, PagedOrders, PatronizedBusiness, Shipment } from '@/types';
+import type { CartResponse, Order, OrderItem, OrderStatus, PagedOrders, PatronizedBusiness, PickupPass, Shipment } from '@/types';
 
 export const ordersApi = {
   /** Business owner: orders for my business */
@@ -32,6 +32,18 @@ export const ordersApi = {
     return res.data;
   },
 
+  /** Customer: pickup code for a PICKUP order I placed */
+  getMyPickupPass: async (id: number): Promise<PickupPass> => {
+    const res = await apiClient.get(`/orders/${id}/pickup-pass`);
+    return res.data;
+  },
+
+  /** Customer: the pickup pass as a shareable image (QR + code) */
+  getMyPickupPassImage: async (id: number): Promise<Blob> => {
+    const res = await apiClient.get(`/orders/${id}/pickup-pass.png`, { responseType: 'blob' });
+    return res.data;
+  },
+
   /** Customer: re-add every item from a past order into that business's cart */
   reorder: async (id: number): Promise<CartResponse> => {
     const res = await apiClient.post(`/orders/${id}/reorder`);
@@ -51,6 +63,12 @@ export const ordersApi = {
 
   updateStatus: async (id: number, status: OrderStatus): Promise<Order> => {
     const res = await apiClient.patch(`/business/orders/${id}/status`, { status });
+    return res.data;
+  },
+
+  /** Business owner: hand over a pickup order after checking the buyer's code */
+  verifyPickup: async (id: number, code: string): Promise<Order> => {
+    const res = await apiClient.post(`/business/orders/${id}/pickup/verify`, { code });
     return res.data;
   },
 

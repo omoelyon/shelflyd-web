@@ -313,6 +313,16 @@ export interface Order extends BaseEntity {
   deliveryState: string | null;
 }
 
+/** The buyer's proof of purchase for an in-person pickup — the code (or its QR image) is what the seller checks. */
+export interface PickupPass {
+  orderId: number;
+  /** 6 digits, e.g. "482913" */
+  code: string;
+  /** Grouped for reading aloud, e.g. "482 913" */
+  formattedCode: string;
+  collected: boolean;
+}
+
 export interface PatronizedBusiness {
   business: Business;
   orderCount: number;
@@ -321,7 +331,7 @@ export interface PatronizedBusiness {
 
 // ─── Payments ─────────────────────────────────────────────────────────────────
 
-export type PaymentStatus = 'pending' | 'paid';
+export type PaymentStatus = 'pending' | 'paid' | 'failed';
 
 export interface Payment extends BaseEntity {
   reference: string;
