@@ -19,7 +19,7 @@ import { getApiError } from '@/lib/utils';
 import { Store, Eye, EyeOff, ShoppingBag, Users, MapPin } from 'lucide-react';
 
 const features = [
-  { icon: ShoppingBag, text: 'Shop from thousands of African businesses' },
+  { icon: ShoppingBag, text: 'Shop from independent sellers, all in one place' },
   { icon: Users, text: 'Connect with sellers across Africa' },
   { icon: MapPin, text: 'Track every order, from checkout to delivery' },
 ];

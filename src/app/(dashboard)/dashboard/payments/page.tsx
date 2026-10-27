@@ -54,6 +54,7 @@ export default function DashboardPaymentsPage() {
       <div className="bg-white rounded-2xl shadow-card-md overflow-hidden">
         <div className="px-5 py-4 border-b border-[#f1f5f9]">
           <p className="font-semibold text-sm text-[#091426] font-heading">Payment History</p>
+          <p className="text-xs text-[#64748b] mt-0.5">Amounts are what the customer paid.</p>
         </div>
 
         <div className="p-4">
@@ -103,9 +104,14 @@ export default function DashboardPaymentsPage() {
                   </div>
 
                   <div className="text-right shrink-0 ml-4 space-y-1">
-                    <p className="font-bold text-[#091426] font-heading text-sm">
+                    <p className="font-bold text-[#091426] font-heading text-sm" title="Amount the customer paid">
                       {payment.currency} {payment.amount.toLocaleString()}
                     </p>
+                    {payment.status === 'paid' && payment.sellerShare != null && payment.sellerShare !== payment.amount && (
+                      <p className="text-xs text-[#64748b]">
+                        You receive ₦{payment.sellerShare.toLocaleString()}
+                      </p>
+                    )}
                     <div className="flex items-center justify-end gap-2">
                       <StatusBadge status={payment.status} type="payment" />
                       {payment.status !== 'paid' && (

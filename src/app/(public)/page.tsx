@@ -1,20 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, ShoppingBag, Store, Users, Sparkles, CheckCircle, TrendingUp, Shield, Layers } from 'lucide-react';
+import { ArrowRight, Sparkles, CheckCircle, Shield, Store, Truck, Layers } from 'lucide-react';
 import FeaturedBusinesses from '@/components/features/business/featured-businesses';
-import StatCard from '@/components/ui/stat-card';
 import { useQuery } from '@tanstack/react-query';
 import { categoriesApi } from '@/lib/api/categories';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthStore } from '@/stores/auth.store';
 import { useMyBusiness } from '@/hooks/use-my-business';
 
-const platformStats = [
-  { icon: Store,    label: 'Active Businesses', value: '500+',    accent: '#0058be', bg: '#eff4ff' },
-  { icon: ShoppingBag, label: 'Products Listed', value: '12,000+', accent: '#059669', bg: '#ecfdf5' },
-  { icon: Users,    label: 'Happy Customers',   value: '35,000+', accent: '#d97706', bg: '#fffbeb' },
-];
+// Kept in one place so the pricing shown here matches the subscription backend (SUBSCRIPTION_PRICE_NAIRA).
+const MONTHLY_PRICE = '₦20,000';
 
 const steps = [
   {
@@ -25,20 +21,20 @@ const steps = [
   {
     step: '02',
     title: 'Register Your Business',
-    desc: 'Add your business details, logo, and brand colors. Get approved quickly.',
+    desc: 'Add your business name and choose your storefront link. Your store goes live right away.',
   },
   {
     step: '03',
     title: 'Start Selling',
-    desc: 'List your products and start receiving orders from customers across Africa.',
+    desc: 'Add your products, connect your bank account, and start receiving orders.',
   },
 ];
 
 const sellerPerks = [
-  'Your own subdomain storefront (yourbrand.shelflyd.com)',
-  'Manage products, inventory, and orders from one dashboard',
-  'Accept payments via Paystack, Flutterwave, or Stripe',
-  'Invite team members to manage your store',
+  `Free for your first 30 days, then ${MONTHLY_PRICE} a month`,
+  'Your own storefront link you can share anywhere',
+  'Customers pay securely with Paystack — your earnings go straight to your bank account',
+  'Manage products, stock, and orders from one dashboard, and invite your team',
 ];
 
 export default function LandingPage() {
@@ -58,7 +54,7 @@ export default function LandingPage() {
     : hasBusiness
       ? '/dashboard'
       : '/dashboard/register-business';
-  const sellLabel = isAuthenticated && hasBusiness ? 'Go to Dashboard' : 'Start Selling Free';
+  const sellLabel = isAuthenticated && hasBusiness ? 'Go to Dashboard' : 'Start selling';
 
   return (
     <div className="flex flex-col">
@@ -90,8 +86,8 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto leading-relaxed">
-            Discover thousands of businesses, shop fresh produce, and connect with sellers across Africa.
-            Launch your own branded store in minutes.
+            Shop from independent sellers, or open your own branded store in minutes —
+            with secure payments and pickup or delivery built in.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
@@ -112,25 +108,14 @@ export default function LandingPage() {
           {/* Trust indicators */}
           <div className="flex flex-wrap items-center justify-center gap-6 pt-4 text-sm text-white/50">
             <span className="flex items-center gap-1.5">
-              <Shield className="h-4 w-4 text-[#60a5fa]" /> Verified Businesses
+              <Shield className="h-4 w-4 text-[#60a5fa]" /> Secure payments with Paystack
             </span>
             <span className="flex items-center gap-1.5">
-              <TrendingUp className="h-4 w-4 text-[#60a5fa]" /> 35,000+ Happy Customers
+              <Truck className="h-4 w-4 text-[#60a5fa]" /> Pickup or delivery
             </span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle className="h-4 w-4 text-[#60a5fa]" /> Secure Payments
+              <Store className="h-4 w-4 text-[#60a5fa]" /> Your own storefront
             </span>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Stats — tonal layering ── */}
-      <section className="bg-[#f8f9ff] py-16 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {platformStats.map((s) => (
-              <StatCard key={s.label} {...s} className="p-7 shadow-card-lg" />
-            ))}
           </div>
         </div>
       </section>
@@ -212,13 +197,13 @@ export default function LandingPage() {
                 <p className="text-white/65 text-base leading-relaxed">
                   {isAuthenticated && hasBusiness
                     ? 'Jump into your seller dashboard to manage products, orders, and payments.'
-                    : 'Get your own branded storefront and start selling to customers across Africa today.'}
+                    : `Get your own branded storefront and start selling today. Free for 30 days, then ${MONTHLY_PRICE} a month.`}
                 </p>
                 <Link
                   href={sellHref}
                   className="inline-flex items-center justify-center gap-2 rounded-lg font-semibold bg-white text-[#091426] hover:bg-white/90 h-12 px-7 text-base shadow-lg transition-all"
                 >
-                  {isAuthenticated && hasBusiness ? 'Go to Dashboard' : 'Get Started Free'} <ArrowRight className="h-4 w-4" />
+                  {isAuthenticated && hasBusiness ? 'Go to Dashboard' : 'Start your free month'} <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
 

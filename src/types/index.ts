@@ -344,6 +344,12 @@ export interface Payment extends BaseEntity {
   /** Absent on payment rows created before this field existed. */
   orderId?: number;
   businessId: number;
+  /** Breakdown of what the customer paid — null on payments made before it was recorded. */
+  sellerShare?: number | null;
+  itemsAmount?: number | null;
+  deliveryFee?: number | null;
+  processingFee?: number | null;
+  commissionAmount?: number | null;
 }
 
 // ─── Delivery Locations ───────────────────────────────────────────────────────
@@ -451,6 +457,31 @@ export interface SpringPage<T> {
 export type PagedProducts = SpringPage<Product>;
 export type PagedOrders = SpringPage<Order>;
 export type PagedPayments = SpringPage<Payment>;
+export type PagedEarnings = SpringPage<EarningRow>;
+
+// ─── Seller earnings ─────────────────────────────────────────────────────────
+
+export interface EarningsSummary {
+  currency: string;
+  totalEarned: number;
+  thisMonth: number;
+  last30Days: number;
+  paidOrders: number;
+  averageOrder: number;
+}
+
+/** What a seller receives for one paid order. The breakdown is null for older payments. */
+export interface EarningRow {
+  paymentId: number;
+  reference: string;
+  orderId: number | null;
+  paidAt: string;
+  itemsAmount: number | null;
+  deliveryFee: number | null;
+  courierDelivery: boolean;
+  earnings: number;
+  customerPaid: number;
+}
 
 // ─── Analytics ───────────────────────────────────────────────────────────────
 

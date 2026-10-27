@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   BarChart3,
+  Wallet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -24,6 +25,7 @@ const navItems = [
   { href: '/dashboard/products',  label: 'Products',  icon: Package },
   { href: '/dashboard/orders',    label: 'Orders',    icon: ShoppingBag },
   { href: '/dashboard/payments',  label: 'Payments',  icon: CreditCard },
+  { href: '/dashboard/earnings',  label: 'Earnings',  icon: Wallet },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/dashboard/team',      label: 'Team',      icon: Users },
   { href: '/dashboard/settings',  label: 'Settings',  icon: Settings },
