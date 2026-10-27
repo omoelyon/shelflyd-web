@@ -25,6 +25,9 @@ export interface DeliveryMethodValue {
   courierRequestToken?: string;
   courierServiceCode?: string;
   courierId?: number;
+  // The delivery fee for the chosen option (courier rate), so the checkout summary can
+  // total it up; for flat mode the parent looks it up from the chosen location instead.
+  amount?: number;
 }
 
 interface Props {
@@ -219,6 +222,7 @@ export default function DeliveryMethodPicker({ cartId, locations, value, onChang
                           courierId: option.courierId,
                           courierServiceCode: option.serviceCode,
                           courierRequestToken: quoteMutation.data?.requestToken,
+                          amount: option.amount,
                         })
                       }
                       className={`w-full flex items-center justify-between p-3 rounded-lg border-2 text-left transition-colors ${

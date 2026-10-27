@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { businessesApi } from '@/lib/api/businesses';
+import { payoutApi } from '@/lib/api/payout';
 import { useThemeStore } from '@/stores/theme.store';
 import { Skeleton } from '@/components/ui/skeleton';
 import StatCard from '@/components/ui/stat-card';
@@ -19,6 +20,7 @@ import {
   ArrowUpRight,
   Store,
   BarChart3,
+  Landmark,
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { cn, formatStatus } from '@/lib/utils';
@@ -31,6 +33,13 @@ export default function DashboardPage() {
   const { data: business, isLoading: bizLoading } = useQuery({
     queryKey: ['business-profile'],
     queryFn: businessesApi.getProfile,
+  });
+
+  // Team members may not be allowed to read this — an error simply hides the banner.
+  const { data: payoutAccount } = useQuery({
+    queryKey: ['payout-account'],
+    queryFn: payoutApi.getAccount,
+    retry: false,
   });
 
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -117,6 +126,25 @@ export default function DashboardPage() {
               Settings
             </Link>
           </div>
+        </div>
+      )}
+
+      {/* ── Payout account reminder ── */}
+      {payoutAccount && !payoutAccount.configured && (
+        <div className="flex items-center gap-4 p-4 rounded-2xl bg-amber-50 border border-amber-200">
+          <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+            <Landmark className="h-5 w-5 text-amber-700" />
+          </div>
+          <p className="flex-1 text-sm text-amber-900">
+            <span className="font-semibold">Add your payout account to start receiving payments</span>
+            {' '}— customers can&apos;t check out until you do.
+          </p>
+          <Link
+            href="/dashboard/settings/payout"
+            className={cn(buttonVariants({ size: 'sm' }), 'shrink-0 bg-[#091426] text-white hover:bg-[#091426]/90')}
+          >
+            Add account
+          </Link>
         </div>
       )}
 

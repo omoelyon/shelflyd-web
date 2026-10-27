@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { CartResponse, Order, OrderItem, OrderStatus, PagedOrders, PatronizedBusiness, PickupPass, Shipment } from '@/types';
+import type { CartResponse, Order, OrderItem, OrderPaymentSummary, OrderStatus, PagedOrders, PatronizedBusiness, PickupPass, Shipment } from '@/types';
 
 export const ordersApi = {
   /** Business owner: orders for my business */
@@ -41,6 +41,12 @@ export const ordersApi = {
   /** Customer: the pickup pass as a shareable image (QR + code) */
   getMyPickupPassImage: async (id: number): Promise<Blob> => {
     const res = await apiClient.get(`/orders/${id}/pickup-pass.png`, { responseType: 'blob' });
+    return res.data;
+  },
+
+  /** Customer: what was paid for an order I placed, broken into items / delivery / processing fee */
+  getMyPaymentSummary: async (id: number): Promise<OrderPaymentSummary> => {
+    const res = await apiClient.get(`/orders/${id}/payment-summary`);
     return res.data;
   },
 

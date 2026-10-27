@@ -467,3 +467,37 @@ export interface ApiError {
   message: string;
   timestamp: string;
 }
+
+// ─── Payout account & payment fees ───────────────────────────────────────────
+
+export interface Bank {
+  name: string;
+  code: string;
+}
+
+export interface PayoutAccount {
+  configured: boolean;
+  bankName: string | null;
+  accountName: string | null;
+  accountNumberMasked: string | null;
+}
+
+export interface SavePayoutAccountRequest {
+  bankCode: string;
+  accountNumber: string;
+}
+
+export interface ProcessingFeeQuote {
+  amount: number;
+  processingFee: number;
+  total: number;
+}
+
+/** Older orders only carry `total`; the breakdown fields are null for them. */
+export interface OrderPaymentSummary {
+  reference: string;
+  itemsAmount: number | null;
+  deliveryFee: number | null;
+  processingFee: number | null;
+  total: number;
+}

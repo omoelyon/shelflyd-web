@@ -74,6 +74,16 @@ export default function OrderDetailPage({ params }: Props) {
     enabled: !!order,
   });
 
+  // The recorded payment breakdown. Older orders only have a total, and a missing payment
+  // is a 404 — both fall back silently to the computed figures below.
+  const { data: paymentSummary } = useQuery({
+    queryKey: ['my-order-payment-summary', orderId],
+    queryFn: () => ordersApi.getMyPaymentSummary(orderId),
+    enabled: !!order,
+    retry: false,
+  });
+  const recorded = paymentSummary && paymentSummary.itemsAmount !== null ? paymentSummary : null;
+
   // SHF-14: this used to be shown as "Total" but never included the delivery fee for a
   // DELIVERY order — it was really just the item subtotal, understating what was paid.
   const subtotal = items?.reduce((acc, item) => acc + item.totalPrice, 0) ?? 0;
@@ -245,17 +255,34 @@ export default function OrderDetailPage({ params }: Props) {
         <div className="space-y-1.5 px-1">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>Subtotal</span>
-            <span className="tabular-nums">₦{subtotal.toLocaleString()}</span>
+            <span className="tabular-nums">₦{(recorded?.itemsAmount ?? subtotal).toLocaleString()}</span>
           </div>
-          {order.orderType === 'DELIVERY' && (
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>Delivery fee</span>
-              <span className="tabular-nums">₦{deliveryFee.toLocaleString()}</span>
-            </div>
+          {recorded ? (
+            <>
+              {!!recorded.deliveryFee && (
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>Delivery fee</span>
+                  <span className="tabular-nums">₦{recorded.deliveryFee.toLocaleString()}</span>
+                </div>
+              )}
+              {!!recorded.processingFee && (
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>Payment processing fee</span>
+                  <span className="tabular-nums">₦{recorded.processingFee.toLocaleString()}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            order.orderType === 'DELIVERY' && (
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Delivery fee</span>
+                <span className="tabular-nums">₦{deliveryFee.toLocaleString()}</span>
+              </div>
+            )
           )}
           <div className="flex items-center justify-between pt-1">
-            <p className="text-sm font-medium">Total</p>
-            <p className="text-xl font-bold text-primary">₦{total.toLocaleString()}</p>
+            <p className="text-sm font-medium">{recorded ? 'Total paid' : 'Total'}</p>
+            <p className="text-xl font-bold text-primary">₦{(recorded?.total ?? total).toLocaleString()}</p>
           </div>
         </div>
       )}

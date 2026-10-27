@@ -4,6 +4,7 @@ import { use, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { cartApi } from '@/lib/api/cart';
 import { deliveryApi } from '@/lib/api/delivery';
+import { paymentsApi } from '@/lib/api/payments';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { checkoutSchema, type CheckoutFormValues } from '@/lib/validations';
@@ -47,6 +48,26 @@ export default function CheckoutPage({ params }: Props) {
 
   const orderType = watch('orderType');
   const [delivery, setDelivery] = useState<DeliveryMethodValue>({ mode: 'flat' });
+
+  // Delivery fee for the option the buyer has actually picked so far: a flat-rate zone's
+  // price comes from the seller's locations, a courier rate travels on the picker's value.
+  const deliveryFee =
+    orderType !== 'DELIVERY'
+      ? 0
+      : delivery.mode === 'flat'
+        ? (locations?.find((l) => l.id === delivery.locationId)?.amount ?? null)
+        : (delivery.courierId ? (delivery.amount ?? null) : null);
+
+  const feeBase = cart && deliveryFee !== null ? cart.totalCost + deliveryFee : 0;
+
+  // The buyer pays the payment processor's fee on top of items + delivery. Only quoted once
+  // the amount is final (pickup, or a delivery option has been chosen).
+  const { data: feeQuote, isFetching: feeLoading } = useQuery({
+    queryKey: ['processing-fee', feeBase],
+    queryFn: () => paymentsApi.getProcessingFee(feeBase),
+    enabled: feeBase > 0,
+    retry: false,
+  });
 
   const checkoutMutation = useMutation({
     mutationFn: (data: CheckoutFormValues) =>
@@ -95,9 +116,30 @@ export default function CheckoutPage({ params }: Props) {
                 <span className="font-medium">₦{p.totalPrice.toLocaleString()}</span>
               </div>
             ))}
+            {deliveryFee !== null && deliveryFee > 0 && (
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Delivery</span>
+                <span className="font-medium">₦{deliveryFee.toLocaleString()}</span>
+              </div>
+            )}
+            {feeBase > 0 && (
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>
+                  Payment processing fee
+                  <span className="block text-xs">Charged by our payment processor</span>
+                </span>
+                {feeLoading || !feeQuote ? (
+                  <Skeleton className="h-4 w-16" />
+                ) : (
+                  <span className="font-medium">₦{feeQuote.processingFee.toLocaleString()}</span>
+                )}
+              </div>
+            )}
             <div className="border-t pt-2 flex justify-between font-bold">
               <span>Total</span>
-              <span className="text-primary">₦{cart.totalCost.toLocaleString()}</span>
+              <span className="text-primary">
+                ₦{(feeQuote && feeBase > 0 ? feeQuote.total : (feeBase > 0 ? feeBase : cart.totalCost)).toLocaleString()}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -165,7 +207,7 @@ export default function CheckoutPage({ params }: Props) {
           type="submit"
           className="w-full bg-primary text-primary-foreground hover:opacity-90"
           size="lg"
-          disabled={checkoutMutation.isPending}
+          disabled={checkoutMutation.isPending || feeLoading}
         >
           {checkoutMutation.isPending ? 'Processing...' : 'Pay Now'}
         </Button>

@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { PagedPayments, PaymentStatus, PaymentSummary } from '@/types';
+import type { PagedPayments, PaymentStatus, PaymentSummary, ProcessingFeeQuote } from '@/types';
 
 export const paymentsApi = {
   getMyTransactions: async (page = 0, size = 15): Promise<PagedPayments> => {
@@ -18,6 +18,12 @@ export const paymentsApi = {
    */
   resync: async (reference: string): Promise<{ status: string; paid: boolean }> => {
     const res = await apiClient.post(`/payments/reference/${reference}/resync`);
+    return res.data;
+  },
+
+  /** The processor fee the buyer pays on top of `amount` (items + delivery). */
+  getProcessingFee: async (amount: number): Promise<ProcessingFeeQuote> => {
+    const res = await apiClient.get('/payments/processing-fee', { params: { amount } });
     return res.data;
   },
 
