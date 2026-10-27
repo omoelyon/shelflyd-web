@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth.store';
 import { usersApi } from '@/lib/api/users';
 
@@ -13,6 +14,19 @@ import { usersApi } from '@/lib/api/users';
  */
 export default function AuthHydrator() {
   const { hasHydrated, isAuthenticated, setUser, logout, setAuthChecked } = useAuthStore();
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const previousUserId = useRef<number | null>(null);
+
+  // Everything in the query cache belongs to whoever was signed in. When that changes — a
+  // sign-out, or a different account signing in on the same browser — drop it all, so the new
+  // session can never briefly show the previous person's store, orders or earnings.
+  useEffect(() => {
+    if (previousUserId.current !== null && previousUserId.current !== userId) {
+      queryClient.clear();
+    }
+    previousUserId.current = userId;
+  }, [userId, queryClient]);
 
   useEffect(() => {
     if (!hasHydrated) return;

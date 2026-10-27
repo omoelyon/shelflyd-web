@@ -7,27 +7,17 @@ import { payoutApi } from '@/lib/api/payout';
 import { subscriptionApi } from '@/lib/api/subscription';
 import { useThemeStore } from '@/stores/theme.store';
 import { Skeleton } from '@/components/ui/skeleton';
-import StatCard from '@/components/ui/stat-card';
 import StatusBadge from '@/components/ui/status-badge';
-import {
-  ShoppingBag,
-  CreditCard,
-  TrendingUp,
-  Package,
-  Clock,
-  CheckCircle,
-  Truck,
-  Settings,
-  ArrowUpRight,
-  Store,
-  BarChart3,
-  Landmark,
-  CalendarClock,
-} from 'lucide-react';
+import { TrendingUp, Settings, ArrowUpRight, Store, Share2 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { cn, formatStatus } from '@/lib/utils';
 import { businessStatusColors } from '@/lib/constants/status-colors';
 import Link from 'next/link';
+import SetupChecklist, { SetupChecklistSkeleton } from '@/components/features/dashboard/setup-checklist';
+import StoreLinkCard, { StoreLinkCardSkeleton } from '@/components/features/dashboard/store-link-card';
+import AttentionCard from '@/components/features/dashboard/attention-card';
+import OrdersAtAGlance from '@/components/features/dashboard/orders-at-a-glance';
+import { SubscriptionBanner, PayoutReminder } from '@/components/features/dashboard/dashboard-banners';
 
 export default function DashboardPage() {
   const loadFromBusiness = useThemeStore((s) => s.loadFromBusiness);
@@ -51,23 +41,12 @@ export default function DashboardPage() {
     retry: false,
   });
 
-  const subscriptionBanner = (() => {
-    if (!subscription) return null;
-    const graceEnds = new Date(subscription.graceEndsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-    const days = `${subscription.daysLeft} day${subscription.daysLeft === 1 ? '' : 's'}`;
-    if (subscription.state === 'LAPSED') {
-      return { tone: 'red', text: 'Your storefront is hidden', detail: ' — renew to start taking orders again.', cta: 'Renew now' };
-    }
-    if (subscription.state === 'GRACE') {
-      return { tone: 'red', text: 'Your subscription has ended', detail: ` — pay by ${graceEnds} or your storefront will be hidden.`, cta: 'Pay now' };
-    }
-    if (subscription.daysLeft <= 3 && !subscription.autoRenew) {
-      return subscription.state === 'TRIAL'
-        ? { tone: 'amber', text: `Your free trial ends in ${days}`, detail: ' — add a card or pay to keep your store live.', cta: 'Manage plan' }
-        : { tone: 'amber', text: `Your plan ends in ${days}`, detail: '', cta: 'Manage plan' };
-    }
-    return null;
-  })();
+  // Which setup steps are done. An error (team member, older backend) just hides the checklist.
+  const { data: setupStatus, isLoading: setupLoading } = useQuery({
+    queryKey: ['setup-status'],
+    queryFn: businessesApi.getSetupStatus,
+    retry: false,
+  });
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['business-stats'],
@@ -83,22 +62,11 @@ export default function DashboardPage() {
     if (business) loadFromBusiness(business);
   }, [business, loadFromBusiness]);
 
-  const statCards = stats
-    ? [
-        { label: 'Total Orders',       value: stats.totalOrders,          icon: ShoppingBag, accent: '#0058be', bg: '#eff4ff' },
-        { label: 'Pending Payment',    value: stats.createdOrders,        icon: Clock,       accent: '#b45309', bg: '#fef3c7' },
-        { label: 'Paid',               value: stats.paidOrders,           icon: CreditCard,  accent: '#059669', bg: '#ecfdf5' },
-        { label: 'Preparing',          value: stats.preparingOrders,      icon: Package,     accent: '#d97706', bg: '#fffbeb' },
-        { label: 'Ready for Pickup',   value: stats.readyForPickupOrders, icon: Package,     accent: '#7c3aed', bg: '#f5f3ff' },
-        { label: 'Picked Up',          value: stats.pickedUpOrders,       icon: CheckCircle, accent: '#0058be', bg: '#eff4ff' },
-        { label: 'Ready for Delivery', value: stats.readyForDeliveryOrders, icon: Package,   accent: '#7c3aed', bg: '#f5f3ff' },
-        { label: 'Out for Delivery',   value: stats.outForDeliveryOrders, icon: Truck,       accent: '#0891b2', bg: '#ecfeff' },
-        { label: 'Delivered',          value: stats.deliveredOrders,      icon: CheckCircle, accent: '#0058be', bg: '#eff4ff' },
-      ]
-    : [];
-
   return (
     <div className="space-y-5">
+      {/* ── Most urgent first: trial ending, grace period, or lapsed ── */}
+      <SubscriptionBanner subscription={subscription} />
+
       {/* ── Business profile banner ── */}
       {/* The dashboard layout only renders this page once it's confirmed the
           user has a business, so `business` is always present once loaded. */}
@@ -143,7 +111,7 @@ export default function DashboardPage() {
               className="inline-flex items-center gap-1.5 text-xs font-medium text-[#0058be] hover:text-[#091426] transition-colors"
             >
               <Store className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">View Store</span>
+              <span className="hidden sm:inline">View store</span>
             </Link>
             <Link
               href="/dashboard/settings"
@@ -156,138 +124,76 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── Payout account reminder ── */}
-      {payoutAccount && !payoutAccount.configured && (
-        <div className="flex items-center gap-4 p-4 rounded-2xl bg-amber-50 border border-amber-200">
-          <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-            <Landmark className="h-5 w-5 text-amber-700" />
-          </div>
-          <p className="flex-1 text-sm text-amber-900">
-            <span className="font-semibold">Add your payout account to start receiving payments</span>
-            {' '}— customers can&apos;t check out until you do.
-          </p>
-          <Link
-            href="/dashboard/settings/payout"
-            className={cn(buttonVariants({ size: 'sm' }), 'shrink-0 bg-[#091426] text-white hover:bg-[#091426]/90')}
-          >
-            Add account
-          </Link>
-        </div>
-      )}
+      {/* ── Setup checklist (hides itself when everything is done) ── */}
+      {setupLoading ? <SetupChecklistSkeleton /> : setupStatus && <SetupChecklist status={setupStatus} />}
 
-      {/* ── Subscription reminder ── */}
-      {subscriptionBanner && (
-        <div
-          className={cn(
-            'flex items-center gap-4 p-4 rounded-2xl border',
-            subscriptionBanner.tone === 'red' ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200',
-          )}
-        >
-          <div
-            className={cn(
-              'h-10 w-10 rounded-xl flex items-center justify-center shrink-0',
-              subscriptionBanner.tone === 'red' ? 'bg-red-100' : 'bg-amber-100',
-            )}
-          >
-            <CalendarClock className={cn('h-5 w-5', subscriptionBanner.tone === 'red' ? 'text-red-700' : 'text-amber-700')} />
-          </div>
-          <p className={cn('flex-1 text-sm', subscriptionBanner.tone === 'red' ? 'text-red-900' : 'text-amber-900')}>
-            <span className="font-semibold">{subscriptionBanner.text}</span>
-            {subscriptionBanner.detail}
-          </p>
-          <Link
-            href="/dashboard/settings/subscription"
-            className={cn(buttonVariants({ size: 'sm' }), 'shrink-0 bg-[#091426] text-white hover:bg-[#091426]/90')}
-          >
-            {subscriptionBanner.cta}
-          </Link>
-        </div>
-      )}
+      {/* Edge case only: checklist hidden (or unavailable) but payouts still aren't set up */}
+      {(!setupStatus || setupStatus.completed >= setupStatus.total) && <PayoutReminder payoutAccount={payoutAccount} />}
 
-      {/* ── Revenue gradient card ── */}
-      {stats && (
-        <div className="rounded-2xl p-6 text-white relative overflow-hidden shadow-lg gradient-primary">
-          <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/[0.06]" />
-          <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-white/[0.06]" />
+      {/* ── Orders that need the seller ── */}
+      {stats && <AttentionCard stats={stats} />}
 
-          <div className="relative flex items-center justify-between">
-            <div>
-              <p className="text-white/60 text-xs font-medium uppercase tracking-wider mb-1.5">
-                Total Revenue
-              </p>
-              <p className="text-4xl font-bold font-heading">
-                ₦{stats.totalRevenue.toLocaleString()}
-              </p>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <div className="h-12 w-12 rounded-xl bg-white/15 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-white" />
+      {/* ── Revenue + store link ── */}
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-5">
+        <div className="min-w-0 md:col-span-3">
+          {statsLoading || !stats ? (
+            <Skeleton className="h-full min-h-32 rounded-2xl" />
+          ) : (
+            <div className="h-full rounded-2xl p-6 text-white relative overflow-hidden shadow-lg gradient-primary">
+              <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/[0.06]" />
+              <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-white/[0.06]" />
+              <div className="relative flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-white/60 text-xs font-medium uppercase tracking-wider mb-1.5">Total earned</p>
+                  <p className="text-4xl font-bold font-heading tabular-nums">₦{stats.totalRevenue.toLocaleString()}</p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="h-12 w-12 rounded-xl bg-white/15 flex items-center justify-center" aria-hidden="true">
+                    <TrendingUp className="h-6 w-6 text-white" />
+                  </div>
+                  <Link
+                    href="/dashboard/earnings"
+                    className="inline-flex items-center gap-1 text-xs text-white/70 hover:text-white transition-colors"
+                  >
+                    View earnings <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
+                  </Link>
+                </div>
               </div>
-              <Link
-                href="/dashboard/payments"
-                className="inline-flex items-center gap-1 text-xs text-white/70 hover:text-white transition-colors"
-              >
-                View details <ArrowUpRight className="h-3 w-3" />
-              </Link>
             </div>
-          </div>
-
-          {/* Sparkline placeholder */}
-          <div className="relative flex items-end gap-1 mt-5 h-8">
-            {[40, 65, 50, 80, 60, 90, 75, 100].map((h, i) => (
-              <div key={i} className="flex-1 rounded-sm bg-white/20" style={{ height: `${h}%` }} />
-            ))}
-          </div>
+          )}
         </div>
-      )}
-
-      {/* ── KPI bento grid ── */}
-      {statsLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {Array.from({ length: 9 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-2xl" />
-          ))}
+        <div className="min-w-0 md:col-span-2">
+          {bizLoading || !business ? <StoreLinkCardSkeleton /> : <StoreLinkCard slug={business.slug} />}
         </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {statCards.map((card) => (
-            <StatCard key={card.label} {...card} />
-          ))}
-        </div>
-      )}
-
-      {/* ── Quick actions ── */}
-      <div className="grid grid-cols-2 gap-3">
-        {[
-          { href: '/dashboard/products', icon: Package,   title: 'Products', sub: 'Manage catalog' },
-          { href: '/dashboard/orders',   icon: BarChart3,  title: 'Orders',   sub: 'Track & fulfill' },
-        ].map(({ href, icon: Icon, title, sub }) => (
-          <Link
-            key={href}
-            href={href}
-            className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-card-md hover:shadow-card-hover transition-all group"
-          >
-            <div className="h-9 w-9 rounded-xl bg-[#eff4ff] flex items-center justify-center shrink-0">
-              <Icon className="h-4.5 w-4.5 text-[#0058be]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#091426]">{title}</p>
-              <p className="text-xs text-[#64748b]">{sub}</p>
-            </div>
-            <ArrowUpRight className="h-4 w-4 text-[#64748b] group-hover:text-[#0058be] transition-colors shrink-0" />
-          </Link>
-        ))}
       </div>
 
-      {/* ── Recent orders ── */}
+      {/* ── Orders at a glance, or an invitation when there are none yet ── */}
+      {statsLoading ? (
+        <Skeleton className="h-24 rounded-2xl" />
+      ) : stats && stats.totalOrders > 0 ? (
+        <OrdersAtAGlance stats={stats} />
+      ) : stats && setupStatus && setupStatus.completed >= setupStatus.total ? (
+        <div className="flex flex-col items-center text-center gap-2 bg-white rounded-2xl shadow-card-md px-6 py-8">
+          <div className="h-12 w-12 rounded-2xl bg-[#eff4ff] flex items-center justify-center" aria-hidden="true">
+            <Share2 className="h-6 w-6 text-[#0058be]" />
+          </div>
+          <p className="font-semibold text-[#091426]">Share your store link to get your first order</p>
+          <p className="text-sm text-[#64748b] max-w-sm leading-relaxed">
+            Send it to friends and customers, or post it on WhatsApp and social media. New orders show up here.
+          </p>
+        </div>
+      ) : null}
+
+      {/* ── Recent orders (only once there are some) ── */}
+      {(ordersLoading || !!ordersPage?.content?.length) && (
       <div className="bg-white rounded-2xl shadow-card-md overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#f1f5f9]">
-          <h3 className="font-bold text-sm text-[#091426] font-heading">Recent Orders</h3>
+          <h3 className="font-bold text-sm text-[#091426] font-heading">Recent orders</h3>
           <Link
             href="/dashboard/orders"
             className="inline-flex items-center gap-1 text-xs font-medium text-[#0058be] hover:text-[#091426] transition-colors"
           >
-            View All <ArrowUpRight className="h-3 w-3" />
+            View all <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
 
@@ -299,7 +205,7 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : !ordersPage?.content?.length ? (
-            <p className="text-[#64748b] text-sm text-center py-8">No orders yet.</p>
+            <p className="text-[#64748b] text-sm text-center py-8">Orders appear here as soon as customers check out.</p>
           ) : (
             <div className="space-y-1">
               {ordersPage.content.map((order) => (
@@ -320,6 +226,7 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

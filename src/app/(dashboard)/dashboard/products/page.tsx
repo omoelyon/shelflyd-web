@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { businessesApi } from '@/lib/api/businesses';
 import { productsApi } from '@/lib/api/products';
@@ -40,18 +41,13 @@ import StatusBadge from '@/components/ui/status-badge';
 import PaginationControls from '@/components/ui/pagination-controls';
 import { toast } from 'sonner';
 import { getApiError, formatStatus } from '@/lib/utils';
-import { Plus, Package, Boxes, Tag, Trash2, ImageIcon, Pencil, AlertTriangle, ArrowLeftRight } from 'lucide-react';
+import { Plus, Package, Boxes, Tag, Trash2, ImageIcon, Pencil, ArrowLeftRight, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import type { Product, PriceDetail } from '@/types';
 
 export default function DashboardProductsPage() {
+  const router = useRouter();
   const [page, setPage] = useState(0);
-
-  // Create dialog
-  const [createOpen, setCreateOpen] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageUploading, setImageUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Edit dialog
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -62,9 +58,6 @@ export default function DashboardProductsPage() {
   // Delete dialog
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
 
-  // No-inventory warning dialog (shown after product creation if no stock was set)
-  const [noInventoryProduct, setNoInventoryProduct] = useState<Product | null>(null);
-
   // Inventory / pricing dialogs
   const [inventoryProduct, setInventoryProduct] = useState<Product | null>(null);
   const [inventoryQty, setInventoryQty] = useState('');
@@ -72,7 +65,7 @@ export default function DashboardProductsPage() {
   const [conversionDirection, setConversionDirection] = useState<'new-per-base' | 'base-per-new'>('new-per-base');
 
   // New-category dialog — usable from either the create or edit product form
-  const [categoryDialogTarget, setCategoryDialogTarget] = useState<'create' | 'edit' | null>(null);
+  const [categoryDialogTarget, setCategoryDialogTarget] = useState<'edit' | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
 
   const qc = useQueryClient();
@@ -95,20 +88,6 @@ export default function DashboardProductsPage() {
 
   const inventoryBaseUnit =
     inventoryProduct?.prices.find((p) => p.isBaseUnit) ?? inventoryProduct?.prices[0];
-
-  // ── Create form ──────────────────────────────────────────────────────────────
-
-  const {
-    register,
-    handleSubmit,
-    control,
-    reset,
-    setValue,
-    formState: { errors },
-  } = useForm<CreateProductFormValues>({
-    resolver: zodResolver(createProductSchema),
-    defaultValues: { status: 'IN_STOCK' },
-  });
 
   // ── Edit form ────────────────────────────────────────────────────────────────
 
@@ -147,19 +126,6 @@ export default function DashboardProductsPage() {
     );
 
   // ── Mutations ────────────────────────────────────────────────────────────────
-
-  const createMutation = useMutation({
-    mutationFn: productsApi.create,
-    onSuccess: (newProduct) => {
-      qc.invalidateQueries({ queryKey: ['business-products'] });
-      setCreateOpen(false);
-      setImagePreview(null);
-      reset();
-      // Always prompt about inventory since it's never set during creation
-      setNoInventoryProduct(newProduct as unknown as Product);
-    },
-    onError: (error) => toast.error(getApiError(error, 'Failed to create product.')),
-  });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: CreateProductFormValues }) =>
@@ -233,8 +199,7 @@ export default function DashboardProductsPage() {
     mutationFn: (name: string) => categoriesApi.createForBusiness({ name }),
     onSuccess: (category) => {
       qc.invalidateQueries({ queryKey: ['categories'] });
-      if (categoryDialogTarget === 'create') setValue('category', category.id);
-      else if (categoryDialogTarget === 'edit') setEditValue('category', category.id);
+      if (categoryDialogTarget === 'edit') setEditValue('category', category.id);
       toast.success(`Category "${category.name}" added.`);
       setCategoryDialogTarget(null);
       setNewCategoryName('');
@@ -244,22 +209,18 @@ export default function DashboardProductsPage() {
 
   // ── Image upload helpers ─────────────────────────────────────────────────────
 
-  const handleImageFile = async (file: File, forEdit = false) => {
-    const setPreview = forEdit ? setEditImagePreview : setImagePreview;
-    const setUploading = forEdit ? setEditImageUploading : setImageUploading;
-    const setVal = forEdit ? setEditValue : setValue;
-
-    setPreview(URL.createObjectURL(file));
-    setUploading(true);
+  const handleEditImageFile = async (file: File) => {
+    setEditImagePreview(URL.createObjectURL(file));
+    setEditImageUploading(true);
     try {
       const url = await uploadsApi.uploadFile(file);
-      setVal('image', url);
-      toast.success('Image uploaded!');
+      setEditValue('image', url);
+      toast.success('Image uploaded');
     } catch (err) {
-      toast.error(getApiError(err, 'Image upload failed.'));
-      setPreview(null);
+      toast.error(getApiError(err, "The photo didn't upload. Try again."));
+      setEditImagePreview(null);
     } finally {
-      setUploading(false);
+      setEditImageUploading(false);
     }
   };
 
@@ -276,7 +237,7 @@ export default function DashboardProductsPage() {
     });
   };
 
-  // ── Shared form body (used in both create + edit dialogs) ───────────────────
+  // ── Product form body (edit dialog) ─────────────────────────────────────────
 
   const ProductFormFields = ({
     reg,
@@ -289,9 +250,9 @@ export default function DashboardProductsPage() {
     onRemoveImage,
     onNewCategory,
   }: {
-    reg: typeof register;
-    ctrl: typeof control;
-    errs: typeof errors;
+    reg: typeof registerEdit;
+    ctrl: typeof controlEdit;
+    errs: typeof editErrors;
     preview: string | null;
     uploading: boolean;
     inputRef: React.RefObject<HTMLInputElement | null>;
@@ -444,11 +405,11 @@ export default function DashboardProductsPage() {
         subtitle={`${data?.totalElements ?? 0} total products`}
         action={
           <Button
-            onClick={() => setCreateOpen(true)}
+            onClick={() => router.push('/dashboard/products/new')}
             className="bg-[#091426] text-white hover:bg-[#091426]/90"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add Product
+            Add product
           </Button>
         }
       />
@@ -464,9 +425,9 @@ export default function DashboardProductsPage() {
         <div className="bg-white rounded-2xl shadow-card-md">
           <EmptyState
             icon={Package}
-            title="No products yet"
-            subtitle="Add your first product to start selling."
-            action={{ label: 'Add Product', onClick: () => setCreateOpen(true) }}
+            title="Add your first product"
+            subtitle="Add a photo, a price, and how much you have. It takes about a minute."
+            action={{ label: 'Add a product', onClick: () => router.push('/dashboard/products/new') }}
           />
         </div>
       ) : (
@@ -523,18 +484,46 @@ export default function DashboardProductsPage() {
                   </div>
 
                   {product.prices?.length > 0 ? (
-                    <div className="space-y-0.5">
-                      {product.prices.map((p) => (
-                        <p key={p.id} className="text-xs text-[#64748b]">
-                          <span className="font-semibold text-[#091426]">
-                            {p.currency} {p.price.toLocaleString()}
-                          </span>
-                          {' / '}{p.unitName}
-                        </p>
-                      ))}
-                    </div>
+                    (() => {
+                      const base = product.prices.find((p) => p.isBaseUnit) ?? product.prices[0];
+                      const others = product.prices.length - 1;
+                      return (
+                        <div className="flex items-end justify-between gap-2">
+                          <p className="text-sm text-[#64748b]">
+                            <span className="font-bold text-[#091426] font-heading">
+                              {base.currency === 'NGN' ? '₦' : `${base.currency} `}
+                              {base.price.toLocaleString()}
+                            </span>
+                            {' / '}{base.unitName}
+                            {others > 0 && (
+                              <span className="text-xs text-[#94a3b8]"> · +{others} more {others === 1 ? 'unit' : 'units'}</span>
+                            )}
+                          </p>
+                          {typeof product.stock === 'number' && (
+                            <p className={`text-xs shrink-0 ${product.stock <= 0 ? 'text-red-600 font-medium' : 'text-[#64748b]'}`}>
+                              {product.stock <= 0 ? 'None left' : `${product.stock.toLocaleString()} in stock`}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()
                   ) : (
-                    <p className="text-xs text-[#64748b] italic">No prices set</p>
+                    <div className="flex items-center justify-between gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                      <p className="flex items-center gap-1.5 text-xs text-amber-800">
+                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                        Customers can&apos;t buy this yet
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPricingProduct(product);
+                          resetPrice();
+                        }}
+                        className="text-xs font-semibold text-[#0058be] hover:underline shrink-0"
+                      >
+                        Set price
+                      </button>
+                    </div>
                   )}
 
                   <div className="grid grid-cols-2 gap-2">
@@ -548,7 +537,7 @@ export default function DashboardProductsPage() {
                       }}
                     >
                       <Boxes className="h-3 w-3 mr-1.5" />
-                      Inventory
+                      Stock
                     </Button>
                     <Button
                       variant="outline"
@@ -579,53 +568,6 @@ export default function DashboardProductsPage() {
         </>
       )}
 
-      {/* ── Create product dialog ─────────────────────────────────────────────── */}
-      <Dialog
-        open={createOpen}
-        onOpenChange={(open) => {
-          setCreateOpen(open);
-          if (!open) { setImagePreview(null); reset(); }
-        }}
-      >
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Add New Product</DialogTitle>
-          </DialogHeader>
-          <form
-            onSubmit={handleSubmit((d) => createMutation.mutate(d))}
-            className="space-y-4 mt-2"
-          >
-            <ProductFormFields
-              reg={register}
-              ctrl={control}
-              errs={errors}
-              preview={imagePreview}
-              uploading={imageUploading}
-              inputRef={fileInputRef}
-              onFileChange={(f) => handleImageFile(f, false)}
-              onRemoveImage={() => {
-                setImagePreview(null);
-                setValue('image', '');
-                if (fileInputRef.current) fileInputRef.current.value = '';
-              }}
-              onNewCategory={() => setCategoryDialogTarget('create')}
-            />
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="bg-[#091426] text-white hover:bg-[#091426]/90"
-                disabled={createMutation.isPending || imageUploading}
-              >
-                {createMutation.isPending ? 'Creating…' : 'Create Product'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
       {/* ── Edit product dialog ───────────────────────────────────────────────── */}
       <Dialog
         open={!!editProduct}
@@ -651,7 +593,7 @@ export default function DashboardProductsPage() {
               preview={editImagePreview}
               uploading={editImageUploading}
               inputRef={editFileInputRef}
-              onFileChange={(f) => handleImageFile(f, true)}
+              onFileChange={handleEditImageFile}
               onRemoveImage={() => {
                 setEditImagePreview(null);
                 setEditValue('image', '');
@@ -672,65 +614,6 @@ export default function DashboardProductsPage() {
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── No-inventory warning ─────────────────────────────────────────────── */}
-      <Dialog
-        open={!!noInventoryProduct}
-        onOpenChange={(open: boolean) => { if (!open) setNoInventoryProduct(null); }}
-      >
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <span className="flex items-center justify-center h-8 w-8 rounded-full bg-amber-100 shrink-0">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-              </span>
-              Product created — no inventory set
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="mt-1 space-y-3">
-            <p className="text-sm text-[#475569] leading-relaxed">
-              <span className="font-semibold text-[#091426]">&quot;{noInventoryProduct?.name}&quot;</span> is
-              now live on your store. Since you haven&apos;t set a stock quantity, customers
-              can still purchase it — the system will treat it as <span className="font-semibold">unlimited stock</span>.
-            </p>
-            <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800 space-y-1">
-              <p className="font-semibold">What this means:</p>
-              <ul className="list-disc list-inside space-y-0.5 text-amber-700">
-                <li>Customers can order any quantity at any time</li>
-                <li>No automatic &quot;out of stock&quot; protection</li>
-                <li>You won&apos;t see stock levels on your dashboard</li>
-              </ul>
-            </div>
-            <p className="text-sm text-[#64748b]">
-              You can add inventory at any time using the <span className="font-medium text-[#091426]">Inventory</span> button on the product card.
-            </p>
-          </div>
-
-          <div className="flex gap-3 mt-5">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => setNoInventoryProduct(null)}
-            >
-              Skip for now
-            </Button>
-            <Button
-              className="flex-1 bg-[#091426] text-white hover:bg-[#091426]/90"
-              onClick={() => {
-                const product = noInventoryProduct;
-                setNoInventoryProduct(null);
-                // Open inventory dialog for this product
-                setInventoryProduct(product);
-                setInventoryQty('');
-              }}
-            >
-              <Boxes className="h-4 w-4 mr-2" />
-              Add inventory now
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
 
@@ -769,7 +652,7 @@ export default function DashboardProductsPage() {
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Inventory — {inventoryProduct?.name}</DialogTitle>
+            <DialogTitle>Stock — {inventoryProduct?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
             {inventoryBaseUnit ? (

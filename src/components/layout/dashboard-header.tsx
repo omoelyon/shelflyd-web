@@ -3,7 +3,7 @@
 import { useAuthStore } from '@/stores/auth.store';
 import { Button } from '@/components/ui/button';
 import { LogOut, Bell, Search } from 'lucide-react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { businessesApi } from '@/lib/api/businesses';
 
@@ -22,7 +22,6 @@ const pageTitles: Record<string, string> = {
 
 export default function DashboardHeader() {
   const { user, logout } = useAuthStore();
-  const router = useRouter();
   const pathname = usePathname();
 
   const { data: business } = useQuery({
@@ -35,7 +34,8 @@ export default function DashboardHeader() {
   const handleLogout = async () => {
     await fetch('/api/auth/clear-cookie', { method: 'POST' });
     logout();
-    router.push('/');
+    // Full page load so nothing from this account stays in memory for the next one.
+    window.location.assign('/');
   };
 
   const pageTitle = pageTitles[pathname] ?? 'Dashboard';

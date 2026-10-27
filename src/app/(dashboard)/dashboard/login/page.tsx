@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { authApi } from '@/lib/api/auth';
 import { usersApi } from '@/lib/api/users';
 import { useAuthStore } from '@/stores/auth.store';
@@ -33,7 +33,6 @@ export default function DashboardLoginPage() {
 }
 
 function DashboardLoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from');
   const { setUser } = useAuthStore();
@@ -62,7 +61,9 @@ function DashboardLoginForm() {
       setUser(profile);
       await mergeGuestCartIntoServer();
       toast.success('Welcome back!');
-      router.push(from || '/dashboard');
+      // A full page load, not a client-side navigation: it guarantees nothing from the previous account
+      // (cached queries, component state) can carry over into the next session on this browser.
+      window.location.assign(from || '/dashboard');
     },
     onError: (error) => toast.error(getApiError(error, 'Invalid email or password.')),
   });

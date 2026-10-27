@@ -26,7 +26,7 @@ export default function DashboardMobileNav() {
     exact ? pathname === href : pathname.startsWith(href);
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-3 pb-3 pt-0">
+    <nav aria-label="Dashboard" className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-0">
       <div className="glass rounded-2xl shadow-[0_-4px_24px_rgba(9,20,38,0.10)] border border-[rgba(9,20,38,0.06)] flex items-center justify-around px-2 py-2">
         {navItems.map(({ href, label, icon: Icon, exact }) => {
           const active = isActive(href, exact);
@@ -34,6 +34,7 @@ export default function DashboardMobileNav() {
             <Link
               key={href}
               href={href}
+              aria-current={active ? 'page' : undefined}
               className={cn(
                 'flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-150',
                 active

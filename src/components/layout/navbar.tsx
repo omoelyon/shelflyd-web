@@ -37,7 +37,8 @@ export default function Navbar() {
   const handleLogout = async () => {
     await fetch('/api/auth/clear-cookie', { method: 'POST' });
     logout();
-    router.push('/');
+    // Full page load so nothing from this account stays in memory for the next one.
+    window.location.assign('/');
   };
 
   const initials = user

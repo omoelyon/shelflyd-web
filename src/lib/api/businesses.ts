@@ -9,6 +9,7 @@ import type {
   PagedPayments,
   PaymentSummary,
   RevenueDataPoint,
+  SetupStatus,
 } from '@/types';
 
 export const businessesApi = {
@@ -63,6 +64,12 @@ export const businessesApi = {
 
   getStats: async (): Promise<BusinessStats> => {
     const res = await apiClient.get('/business/stats');
+    return res.data;
+  },
+
+  /** Which store-setup steps are done (store, product, payout, pickup address, logo). */
+  getSetupStatus: async (): Promise<SetupStatus> => {
+    const res = await apiClient.get('/business/setup-status');
     return res.data;
   },
 

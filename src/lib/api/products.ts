@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { Product, PagedProducts, CreateProductRequest, UpdateProductRequest } from '@/types';
+import type { Product, PagedProducts, CreateProductRequest, QuickProductRequest, UpdateProductRequest } from '@/types';
 
 export const productsApi = {
   listAll: async (page = 0, size = 15, category?: string): Promise<PagedProducts> => {
@@ -23,6 +23,12 @@ export const productsApi = {
 
   create: async (data: CreateProductRequest): Promise<Product> => {
     const res = await apiClient.post('/business/products', data);
+    return res.data;
+  },
+
+  /** Creates the product, its first unit and price, and optional stock in one call. */
+  createQuick: async (data: QuickProductRequest): Promise<Product> => {
+    const res = await apiClient.post('/business/products/quick', data);
     return res.data;
   },
 

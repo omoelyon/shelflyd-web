@@ -62,6 +62,16 @@ export const createProductSchema = z.object({
   status: z.enum(['COMING_SOON', 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK']).optional(),
 });
 
+export const quickProductSchema = z.object({
+  name: z.string().trim().min(1, 'Give your product a name'),
+  description: z.string().max(500, 'Keep the description under 500 characters').optional(),
+  category: z.number().optional(),
+  image: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  unitName: z.string().trim().min(1, 'Say how it is sold, like Bag or Kg'),
+  price: z.number({ message: 'Enter a price' }).positive('Price must be more than 0'),
+  stock: z.number({ message: 'Enter a number' }).min(0, 'Stock cannot be negative').optional(),
+});
+
 export const addPriceSchema = z.object({
   unitName: z.string().min(1, 'Unit name is required (e.g. Bag, Carton, Piece)'),
   price: z.number().positive('Price must be greater than 0'),
@@ -116,6 +126,7 @@ export type RegisterBusinessFormValues = z.infer<typeof registerBusinessSchema>;
 export type UpdateSettingsFormValues = z.infer<typeof updateSettingsSchema>;
 export type ThemeColorFormValues = z.infer<typeof themeColorSchema>;
 export type CreateProductFormValues = z.infer<typeof createProductSchema>;
+export type QuickProductFormValues = z.infer<typeof quickProductSchema>;
 export type InviteTeammateFormValues = z.infer<typeof inviteTeammateSchema>;
 export type AcceptInviteFormValues = z.infer<typeof acceptInviteSchema>;
 export type DeliveryLocationFormValues = z.infer<typeof deliveryLocationSchema>;

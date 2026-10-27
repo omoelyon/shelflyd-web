@@ -61,6 +61,23 @@ export interface Business extends BaseEntity {
   pickupAddressCode: string | null;
 }
 
+// ─── Store setup checklist ────────────────────────────────────────────────────
+
+export type SetupStepKey = 'store' | 'product' | 'payout' | 'pickup' | 'logo';
+
+export interface SetupStep {
+  key: SetupStepKey;
+  done: boolean;
+  /** Required steps block selling (payout, product); optional ones just help. */
+  required: boolean;
+}
+
+export interface SetupStatus {
+  steps: SetupStep[];
+  completed: number;
+  total: number;
+}
+
 export interface RegisterBusinessRequest {
   name: string;
   slug: string;
@@ -155,6 +172,8 @@ export interface Product extends BaseEntity {
   status: ProductStatus;
   businessId: number;
   prices: PriceDetail[];  // backend field name: "prices" (PriceDetail shape)
+  /** Units in stock, when the seller tracks it and the backend includes it in the list response. */
+  stock?: number | null;
 }
 
 export interface CreateProductRequest {
@@ -165,6 +184,17 @@ export interface CreateProductRequest {
   image?: string;
   status?: ProductStatus;
   priceDetails?: PriceDetail[];
+}
+
+/** One-step product setup: creates the product, its first unit and price, and optional stock together. */
+export interface QuickProductRequest {
+  name: string;
+  description?: string;
+  category?: number;
+  image?: string;
+  unitName: string;
+  price: number;
+  stock?: number;
 }
 
 export interface UpdateProductRequest {
