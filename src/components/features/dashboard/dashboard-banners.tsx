@@ -51,7 +51,7 @@ function Banner({
 
 /** The most urgent item on the dashboard: a trial or plan running out, in grace, or lapsed. */
 export function SubscriptionBanner({ subscription }: { subscription?: Subscription }) {
-  if (!subscription) return null;
+  if (!subscription || !subscription.enforced) return null;
   const graceEnds = new Date(subscription.graceEndsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
   const days = `${subscription.daysLeft} day${subscription.daysLeft === 1 ? '' : 's'}`;
   const href = '/dashboard/settings/subscription';
@@ -66,7 +66,7 @@ export function SubscriptionBanner({ subscription }: { subscription?: Subscripti
     return subscription.state === 'TRIAL' ? (
       <Banner tone="amber" icon={CalendarClock} title={`Your free trial ends in ${days}`} detail=" — add a card or pay to keep your store live." href={href} cta="Manage plan" />
     ) : (
-      <Banner tone="amber" icon={CalendarClock} title={`Your plan ends in ${days}`} detail="" href={href} cta="Manage plan" />
+      <Banner tone="amber" icon={CalendarClock} title={`Your plan ends in ${days}`} detail=" — renew or add a card to keep your store live." href={href} cta="Manage plan" />
     );
   }
   return null;

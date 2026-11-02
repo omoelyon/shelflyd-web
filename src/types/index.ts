@@ -593,6 +593,8 @@ export interface Subscription {
   card: { brand: string | null; last4: string | null } | null;
   cardSetupAmountNaira: number;
   charges: SubscriptionCharge[];
+  /** False while the platform isn't enforcing subscriptions: nothing is hidden, so nothing should warn. */
+  enforced: boolean;
 }
 
 export interface SubscriptionCheckout {
