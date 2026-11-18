@@ -14,12 +14,28 @@ export async function mergeGuestCartIntoServer(): Promise<void> {
   let hadFailure = false;
   for (const cart of guestCarts) {
     for (const item of cart.items) {
+      if (item.groupId != null) continue; // sets are sent as a unit below
       try {
         const updated = await cartApi.add({
           productId: item.productId,
           unitId: item.unitId,
           quantity: item.quantity,
           note: item.note,
+        });
+        useCartStore.getState().updateCart(updated);
+      } catch {
+        hadFailure = true;
+      }
+    }
+    for (const group of cart.groups ?? []) {
+      try {
+        const updated = await cartApi.createGroup({
+          businessId: cart.businessId,
+          name: group.name,
+          sets: group.sets,
+          items: cart.items
+            .filter((i) => i.groupId === group.id)
+            .map((i) => ({ productId: i.productId, unitId: i.unitId, quantityPerSet: i.quantityPerSet ?? 1, note: i.note })),
         });
         useCartStore.getState().updateCart(updated);
       } catch {

@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { OrderItemsList } from '@/components/features/orders/set-summary';
 import { useReorder } from '@/hooks/use-reorder';
 import { ChevronLeft, ChevronRight, Package, MapPin, Store, RotateCcw, Truck, ExternalLink, Download, Ticket, CheckCircle } from 'lucide-react';
 import type { OrderStatus, ShipmentStatus } from '@/types';
@@ -210,7 +211,9 @@ export default function OrderDetailPage({ params }: Props) {
           ) : !items?.length ? (
             <p className="text-sm text-muted-foreground">No items found for this order.</p>
           ) : (
-            items.map((item) => {
+            <OrderItemsList
+              items={items}
+              renderItem={(item) => {
               const content = (
                 <>
                   <div className="relative h-14 w-14 rounded-lg overflow-hidden bg-muted shrink-0">
@@ -235,18 +238,18 @@ export default function OrderDetailPage({ params }: Props) {
               );
               return business ? (
                 <Link
-                  key={item.productId}
                   href={`/storefront/${business.slug}/products/${item.productId}`}
                   className="flex items-center gap-4 p-3 rounded-lg bg-muted/40 hover:bg-muted/70 transition-colors"
                 >
                   {content}
                 </Link>
               ) : (
-                <div key={item.productId} className="flex items-center gap-4 p-3 rounded-lg bg-muted/40">
+                <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/40">
                   {content}
                 </div>
               );
-            })
+            }}
+            />
           )}
         </CardContent>
       </Card>

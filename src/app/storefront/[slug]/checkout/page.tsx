@@ -12,6 +12,7 @@ import { checkoutSchema, type CheckoutFormValues } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CartLinesSummary } from '@/components/features/orders/set-summary';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
 import { Truck, Store, MapPin, ArrowLeft } from 'lucide-react';
@@ -100,12 +101,7 @@ function StorefrontCheckoutContent({ slug }: { slug: string }) {
             <CardTitle className="text-base">Order Summary</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {cart.products.map((p, i) => (
-              <div key={i} className="flex justify-between text-sm">
-                <span>{p.name} × {p.quantity}</span>
-                <span className="font-medium">₦{p.totalPrice.toLocaleString()}</span>
-              </div>
-            ))}
+            <CartLinesSummary cart={cart} />
             <div className="border-t pt-2 flex justify-between font-bold">
               <span>Total</span>
               <span className="text-primary">₦{cart.totalCost.toLocaleString()}</span>

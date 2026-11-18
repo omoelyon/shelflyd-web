@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { MapPin } from 'lucide-react';
 import { formatStatus } from '@/lib/utils';
+import SetsEntryRow from '@/components/features/cart-sets/sets-entry-row';
 
 interface Props {
   params: Promise<{ uuid: string }>;
@@ -85,7 +86,8 @@ export default function BusinessStorefrontPage({ params }: Props) {
       </div>
 
       {/* Products */}
-      <h2 className="text-xl font-semibold mb-6">Products</h2>
+      <h2 className="text-xl font-semibold mb-4">Products</h2>
+      <SetsEntryRow businessId={business.id} businessName={business.name} />
       {prodLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-xl" />)}

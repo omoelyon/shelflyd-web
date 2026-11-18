@@ -14,10 +14,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
-import { ShoppingCart, Trash2, ArrowLeft, Minus, Plus } from 'lucide-react';
+import { ShoppingCart, ArrowLeft } from 'lucide-react';
 import type { CartProduct } from '@/types';
+import CartLines from '@/components/features/cart/cart-lines';
 import Link from 'next/link';
-import Image from 'next/image';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -171,59 +171,17 @@ export default function StorefrontCartPage({ params }: Props) {
           <CardTitle className="text-base">{info?.name ?? 'Cart'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {businessCart.products.map((product) => (
-            <div key={`${product.productId}-${product.unitId}`} className="flex items-center gap-4 p-3 rounded-lg bg-muted/40">
-              <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-muted shrink-0">
-                {product.image ? (
-                  <Image src={product.image} alt={product.name} fill className="object-cover" unoptimized />
-                ) : (
-                  <div className="absolute inset-0 bg-muted" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{product.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {product.unit} · {product.quantity}x · ₦{product.unitPrice.toLocaleString()} each
-                </p>
-                {product.note && (
-                  <p className="text-xs italic text-muted-foreground mt-0.5">Note: {product.note}</p>
-                )}
-              </div>
-              <div className="text-right shrink-0">
-                <p className="font-semibold text-primary">₦{product.totalPrice.toLocaleString()}</p>
-                <div className="flex items-center gap-1 mt-1.5 justify-end">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => handleDecrement(product.productId, product.unitId)}
-                    disabled={isAuthenticated && decrementMutation.isPending}
-                  >
-                    <Minus className="h-3 w-3" />
-                  </Button>
-                  <span className="w-6 text-center text-sm font-medium tabular-nums">{product.quantity}</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => handleIncrement(product)}
-                    disabled={isAuthenticated && incrementMutation.isPending}
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive ml-1"
-                    onClick={() => handleRemove(product.productId, product.unitId)}
-                    disabled={removeProductMutation.isPending}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ))}
+          <CartLines
+            cart={businessCart}
+            businessName={info?.name}
+            isAuthenticated={isAuthenticated}
+            onIncrement={handleIncrement}
+            onDecrement={(product) => handleDecrement(product.productId, product.unitId)}
+            onRemove={(product) => handleRemove(product.productId, product.unitId)}
+            incrementPending={incrementMutation.isPending}
+            decrementPending={decrementMutation.isPending}
+            removePending={removeProductMutation.isPending}
+          />
         </CardContent>
         <CardFooter className="flex items-center justify-between border-t pt-4">
           <div>

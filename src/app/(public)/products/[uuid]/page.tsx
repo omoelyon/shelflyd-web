@@ -20,6 +20,7 @@ import { ShoppingCart, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { BuildSetButton } from '@/components/features/cart-sets/set-builder-dialog';
 
 interface Props {
   params: Promise<{ uuid: string }>;
@@ -214,6 +215,15 @@ export default function ProductDetailPage({ params }: Props) {
           <ShoppingCart className="mr-2 h-4 w-4" />
           {addToCart.isPending ? 'Adding...' : 'Add to Cart'}
         </Button>
+        {(product.status === 'IN_STOCK' || product.status === 'LOW_STOCK') && product.prices?.length > 0 && (
+          <div className="text-center">
+            <BuildSetButton
+              businessId={product.businessId}
+              label="Add to a set"
+              initialItem={{ productId: product.id, unitId: selectedUnitId ? Number(selectedUnitId) : product.prices[0].unit }}
+            />
+          </div>
+        )}
         {!product.prices?.length && (
           <p className="text-xs text-center text-muted-foreground">
             This item isn&apos;t available for purchase yet — the seller hasn&apos;t set a price.

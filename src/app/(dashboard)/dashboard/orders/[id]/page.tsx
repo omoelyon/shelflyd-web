@@ -6,6 +6,7 @@ import { ordersApi } from '@/lib/api/orders';
 import { deliveryApi } from '@/lib/api/delivery';
 import { Skeleton } from '@/components/ui/skeleton';
 import PageHeader from '@/components/ui/page-header';
+import { OrderItemsList, PackingList } from '@/components/features/orders/set-summary';
 import StatusBadge from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -238,6 +239,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         </div>
       )}
 
+      {orderItems && <PackingList items={orderItems} />}
+
       {/* Order items */}
       <div className="bg-white rounded-2xl shadow-card-md overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-4 border-b border-[#f1f5f9]">
@@ -262,8 +265,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           ) : orderItems.length === 0 ? (
             <p className="p-5 text-sm text-[#64748b]">No items found.</p>
           ) : (
-            orderItems.map((item: OrderItem) => (
-              <div key={item.productId} className="flex items-center gap-3 px-5 py-3">
+            <OrderItemsList
+              tone="seller"
+              items={orderItems}
+              renderItem={(item: OrderItem) => (
+              <div className="flex items-center gap-3 px-5 py-3">
                 {item.image ? (
                   <Image
                     src={item.image}
@@ -291,7 +297,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   ₦{Number(item.totalPrice).toLocaleString()}
                 </p>
               </div>
-            ))
+            )}
+            />
           )}
         </div>
 

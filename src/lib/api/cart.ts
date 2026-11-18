@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { CartResponse, CartUpdateRequest, CheckoutRequest, CheckoutResponse, DeliveryAddress, DeliveryQuoteResponse } from '@/types';
+import type { CartGroupRequest, CartResponse, CartUpdateRequest, CheckoutRequest, CheckoutResponse, DeliveryAddress, DeliveryQuoteResponse } from '@/types';
 
 export const cartApi = {
   getDeliveryQuotes: async (cartId: number, dropoffAddress: DeliveryAddress): Promise<DeliveryQuoteResponse> => {
@@ -29,6 +29,22 @@ export const cartApi = {
 
   removeProduct: async (productId: number, unitId: number): Promise<CartResponse> => {
     const res = await apiClient.put(`/carts/product/${productId}/unit/${unitId}/remove`);
+    return res.data;
+  },
+
+  createGroup: async (data: CartGroupRequest): Promise<CartResponse> => {
+    const res = await apiClient.post('/carts/groups', data);
+    return res.data;
+  },
+
+  updateGroup: async (groupId: number, data: CartGroupRequest): Promise<CartResponse> => {
+    const res = await apiClient.put(`/carts/groups/${groupId}`, data);
+    return res.data;
+  },
+
+  /** `ungroup` keeps the items as ordinary cart lines; `remove` takes them out of the cart. */
+  deleteGroup: async (groupId: number, mode: 'ungroup' | 'remove'): Promise<CartResponse> => {
+    const res = await apiClient.delete(`/carts/groups/${groupId}`, { params: { mode } });
     return res.data;
   },
 

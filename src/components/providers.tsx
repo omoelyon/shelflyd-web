@@ -6,6 +6,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster, toast } from 'sonner';
 import { useState } from 'react';
 import AuthHydrator from './auth-hydrator';
+import SetsVariantBadge from './features/cart-sets/sets-variant-badge';
 import { getApiError } from '@/lib/utils';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -33,6 +34,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         <AuthHydrator />
         {children}
         <Toaster richColors position="top-right" />
+        <SetsVariantBadge />
       </TooltipProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

@@ -219,6 +219,18 @@ export interface CartProduct {
   unitPrice: number;
   totalPrice: number;
   note?: string;
+  /** Set this line belongs to, if any. `quantity` is already the full total (quantityPerSet × sets). */
+  groupId?: number | null;
+  /** Units of this item in ONE set. */
+  quantityPerSet?: number | null;
+}
+
+/** A "set": the same combination of items ordered several times (see lib/cart-sets.ts). */
+export interface CartGroup {
+  groupId: number;
+  name: string;
+  sets: number;
+  totalPrice: number;
 }
 
 export interface CartResponse {
@@ -226,6 +238,23 @@ export interface CartResponse {
   businessId: number;
   products: CartProduct[];
   totalCost: number;
+  groups?: CartGroup[];
+}
+
+export interface CartGroupItemRequest {
+  productId: number;
+  unitId: number;
+  quantityPerSet: number;
+  note?: string;
+}
+
+export interface CartGroupRequest {
+  businessId: number;
+  name?: string;
+  sets: number;
+  items: CartGroupItemRequest[];
+  /** Create only: remove the cart's ordinary lines for these same items (used when grouping what's already in the cart). */
+  absorbLoose?: boolean;
 }
 
 export interface CartUpdateRequest {
@@ -315,6 +344,11 @@ export interface OrderItem {
   unitPrice: number;
   totalPrice: number;
   note?: string;
+  /** Set this line was ordered in, if any (name and sets repeated on each member line). */
+  groupId?: number | null;
+  groupName?: string | null;
+  groupSets?: number | null;
+  quantityPerSet?: number | null;
 }
 
 // ─── Orders ───────────────────────────────────────────────────────────────────

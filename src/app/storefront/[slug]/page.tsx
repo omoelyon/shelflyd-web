@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Search, MapPin, Package } from 'lucide-react';
+import SetsEntryRow from '@/components/features/cart-sets/sets-entry-row';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -80,6 +81,8 @@ export default function StorefrontHomePage({ params }: Props) {
           />
         </div>
       </div>
+
+      {info && <SetsEntryRow businessId={info.id} businessName={info.name} />}
 
       {prodLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

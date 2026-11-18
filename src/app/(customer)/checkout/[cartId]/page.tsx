@@ -11,6 +11,7 @@ import { checkoutSchema, type CheckoutFormValues } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CartLinesSummary } from '@/components/features/orders/set-summary';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
 import { Truck, Store, MapPin } from 'lucide-react';
@@ -112,12 +113,7 @@ export default function CheckoutPage({ params }: Props) {
             <CardTitle className="text-base">Order Summary</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {cart.products.map((p, i) => (
-              <div key={i} className="flex justify-between text-sm">
-                <span>{p.name} × {p.quantity}</span>
-                <span className="font-medium">₦{p.totalPrice.toLocaleString()}</span>
-              </div>
-            ))}
+            <CartLinesSummary cart={cart} />
             {deliveryFee !== null && deliveryFee > 0 && (
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Delivery</span>
