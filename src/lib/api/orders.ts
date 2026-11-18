@@ -72,6 +72,18 @@ export const ordersApi = {
     return res.data;
   },
 
+  /** Business owner: tell the buyer their pickup order is ready to collect (emails them the pickup pass) */
+  markReadyForPickup: async (id: number): Promise<Order> => {
+    const res = await apiClient.post(`/business/orders/${id}/ready`);
+    return res.data;
+  },
+
+  /** Business owner: cancel an order that hasn't been dispatched; the buyer is refunded and the items return to stock */
+  cancel: async (id: number, reason?: string): Promise<Order> => {
+    const res = await apiClient.post(`/business/orders/${id}/cancel`, { reason: reason?.trim() || undefined });
+    return res.data;
+  },
+
   /** Business owner: hand over a pickup order after checking the buyer's code */
   verifyPickup: async (id: number, code: string): Promise<Order> => {
     const res = await apiClient.post(`/business/orders/${id}/pickup/verify`, { code });

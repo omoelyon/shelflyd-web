@@ -6,14 +6,15 @@ import type { BusinessStats } from '@/types';
 
 /** Amber nudge for orders waiting on the seller. Renders nothing when nothing needs them. */
 export default function AttentionCard({ stats }: { stats: BusinessStats }) {
-  const toPrepare = stats.paidOrders;
-  const ready = stats.readyForPickupOrders + stats.readyForDeliveryOrders;
+  // Ready pickup orders are still PROCESSING but are waiting on the buyer, not on the seller.
+  const ready = stats.readyForPickupOrders;
+  const toPrepare = Math.max(0, stats.processingOrders - ready);
   const total = toPrepare + ready;
   if (total === 0) return null;
 
   const parts = [
     toPrepare > 0 ? `${toPrepare} to prepare` : null,
-    ready > 0 ? `${ready} ready to hand over` : null,
+    ready > 0 ? `${ready} ready for pickup` : null,
   ].filter(Boolean);
 
   return (

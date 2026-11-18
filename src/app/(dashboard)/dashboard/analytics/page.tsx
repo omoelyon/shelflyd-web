@@ -18,11 +18,10 @@ import StatCard from '@/components/ui/stat-card';
 import {
   TrendingUp,
   ShoppingBag,
-  CreditCard,
   Package,
   CheckCircle,
-  Clock,
   Truck,
+  XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -56,11 +55,11 @@ export default function AnalyticsPage() {
   const statCards = stats
     ? [
         { label: 'Total Orders',    value: stats.totalOrders,     icon: ShoppingBag, accent: '#0058be', bg: '#eff4ff' },
-        { label: 'Paid Orders',     value: stats.paidOrders,      icon: CreditCard,  accent: '#059669', bg: '#ecfdf5' },
-        { label: 'Preparing',       value: stats.preparingOrders, icon: Package,     accent: '#d97706', bg: '#fffbeb' },
-        { label: 'Delivered',       value: stats.deliveredOrders, icon: CheckCircle, accent: '#0058be', bg: '#eff4ff' },
-        { label: 'Pending',         value: stats.createdOrders,   icon: Clock,       accent: '#b45309', bg: '#fef3c7' },
-        { label: 'Out for Delivery',value: stats.pickedUpOrders,  icon: Truck,       accent: '#0891b2', bg: '#ecfeff' },
+        { label: 'Processing',       value: Math.max(0, stats.processingOrders - stats.readyForPickupOrders), icon: Package, accent: '#d97706', bg: '#fffbeb' },
+        { label: 'Ready for pickup', value: stats.readyForPickupOrders, icon: CheckCircle, accent: '#4f46e5', bg: '#eef2ff' },
+        { label: 'Dispatched',       value: stats.dispatchedOrders,     icon: Truck,       accent: '#0891b2', bg: '#ecfeff' },
+        { label: 'Completed',        value: stats.completedOrders,      icon: CheckCircle, accent: '#059669', bg: '#ecfdf5' },
+        { label: 'Cancelled',        value: stats.cancelledOrders,      icon: XCircle,     accent: '#dc2626', bg: '#fef2f2' },
       ]
     : [];
 

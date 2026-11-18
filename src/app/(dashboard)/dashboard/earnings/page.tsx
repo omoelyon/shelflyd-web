@@ -223,7 +223,10 @@ export default function EarningsPage() {
             />
           ) : (
             <div className="space-y-2">
-              {transactions.content.map((row) => (
+              {transactions.content.map((row) => {
+                // Set once the order was cancelled and the buyer refunded; the server leaves such payments out of the totals.
+                const refunded = !!row.refundStatus;
+                return (
                 <div
                   key={row.paymentId}
                   className="flex items-center justify-between p-4 rounded-xl bg-[#f8f9ff] hover:bg-[#eff4ff] transition-colors"
@@ -243,6 +246,9 @@ export default function EarningsPage() {
                       <span className="text-xs text-[#64748b]">
                         {row.paidAt ? format(new Date(row.paidAt), 'dd MMM yyyy, HH:mm') : '—'}
                       </span>
+                      {refunded && (
+                        <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700">Refunded</span>
+                      )}
                     </div>
                     <p className="text-xs text-[#64748b] font-mono truncate">{row.reference}</p>
                     {row.itemsAmount != null && (
@@ -257,11 +263,12 @@ export default function EarningsPage() {
                   </div>
 
                   <div className="text-right shrink-0 ml-4">
-                    <p className="font-bold text-[#091426] font-heading text-sm">{naira(row.earnings)}</p>
+                    <p className={`font-bold font-heading text-sm ${refunded ? 'text-[#94a3b8] line-through' : 'text-[#091426]'}`}>{naira(row.earnings)}</p>
                     <p className="text-xs text-[#64748b]">Customer paid {naira(row.customerPaid)}</p>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -12,9 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OrderItemsList } from '@/components/features/orders/set-summary';
+import OrderProgress from '@/components/features/orders/order-progress';
+import BuyerCancelledCard from '@/components/features/orders/buyer-cancelled-card';
+import { displayOrderStatus } from '@/lib/order-status';
+import { orderStatusColors } from '@/lib/constants/status-colors';
 import { useReorder } from '@/hooks/use-reorder';
 import { ChevronLeft, ChevronRight, Package, MapPin, Store, RotateCcw, Truck, ExternalLink, Download, Ticket, CheckCircle } from 'lucide-react';
-import type { OrderStatus, ShipmentStatus } from '@/types';
+import type { ShipmentStatus } from '@/types';
 
 const shipmentStatusLabel: Record<ShipmentStatus, string> = {
   PENDING: 'Booked',
@@ -23,18 +27,6 @@ const shipmentStatusLabel: Record<ShipmentStatus, string> = {
   IN_TRANSIT: 'In transit',
   DELIVERED: 'Delivered',
   CANCELLED: 'Cancelled',
-};
-
-const statusColor: Record<OrderStatus | string, string> = {
-  CREATED: 'bg-slate-100 text-slate-700',
-  PAID: 'bg-blue-100 text-blue-700',
-  PREPARING: 'bg-amber-100 text-amber-700',
-  READY_FOR_PICKUP: 'bg-amber-100 text-amber-700',
-  READY_FOR_DELIVERY: 'bg-amber-100 text-amber-700',
-  OUT_FOR_DELIVERY: 'bg-indigo-100 text-indigo-700',
-  DELIVERED: 'bg-green-100 text-green-700',
-  PICKED_UP: 'bg-purple-100 text-purple-700',
-  CANCELLED: 'bg-red-100 text-red-700',
 };
 
 interface Props {
@@ -120,8 +112,8 @@ export default function OrderDetailPage({ params }: Props) {
             <ChevronLeft className="h-5 w-5" />
           </Link>
           <h1 className="text-2xl font-bold text-[#091426]">Order #{order.id}</h1>
-          <Badge className={`text-xs font-medium border-0 ${statusColor[order.status] ?? 'bg-slate-100 text-slate-700'}`}>
-            {order.status.replace(/_/g, ' ')}
+          <Badge className={`text-xs font-medium border-0 ${orderStatusColors[displayOrderStatus(order, 'buyer').tone]}`}>
+            {displayOrderStatus(order, 'buyer').label}
           </Badge>
         </div>
         <div className="flex items-center gap-3 shrink-0">
@@ -147,6 +139,12 @@ export default function OrderDetailPage({ params }: Props) {
         </div>
       </div>
 
+      {order.status === 'CANCELLED' ? (
+        <BuyerCancelledCard order={order} paymentSummary={paymentSummary} />
+      ) : (
+        <OrderProgress order={order} />
+      )}
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -165,11 +163,11 @@ export default function OrderDetailPage({ params }: Props) {
         </CardContent>
       </Card>
 
-      {order.orderType === 'PICKUP' && (
-        <PickupPassCard orderId={orderId} collected={order.status === 'PICKED_UP'} />
+      {order.orderType === 'PICKUP' && order.status !== 'CANCELLED' && (
+        <PickupPassCard orderId={orderId} collected={order.status === 'COMPLETED'} ready={!!order.readyForPickupAt} />
       )}
 
-      {shipment && (
+      {shipment && order.status !== 'CANCELLED' && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -299,7 +297,7 @@ export default function OrderDetailPage({ params }: Props) {
   );
 }
 
-function PickupPassCard({ orderId, collected }: { orderId: number; collected: boolean }) {
+function PickupPassCard({ orderId, collected, ready }: { orderId: number; collected: boolean; ready: boolean }) {
   const { data: pass, isError } = useQuery({
     queryKey: ['my-order-pickup-pass', orderId],
     queryFn: () => ordersApi.getMyPickupPass(orderId),
@@ -346,6 +344,11 @@ function PickupPassCard({ orderId, collected }: { orderId: number; collected: bo
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {ready && (
+          <p className="rounded-lg bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700 text-center">
+            Ready for pickup — show this code at the store
+          </p>
+        )}
         {imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={imageUrl} alt={`Pickup pass for order #${orderId}`} className="mx-auto w-full max-w-xs rounded-lg border" />

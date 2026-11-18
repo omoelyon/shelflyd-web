@@ -10,19 +10,37 @@ import BusinessAvatar from '@/components/layout/business-avatar';
 import { useReorder } from '@/hooks/use-reorder';
 import { ShoppingBag, ChevronLeft, ChevronRight, Store, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
-import type { Business, OrderStatus } from '@/types';
+import { displayOrderStatus } from '@/lib/order-status';
+import { orderStatusColors } from '@/lib/constants/status-colors';
+import { cn } from '@/lib/utils';
+import type { Business, Order } from '@/types';
 
-const statusColor: Record<OrderStatus | string, string> = {
-  CREATED:   'bg-slate-100 text-slate-700',
-  PAID:      'bg-blue-100 text-blue-700',
-  PREPARING: 'bg-amber-100 text-amber-700',
-  DELIVERED: 'bg-green-100 text-green-700',
-  PICKED_UP: 'bg-purple-100 text-purple-700',
-  CANCELLED: 'bg-red-100 text-red-700',
+type OrderFilter = 'ALL' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+
+const FILTERS: { value: OrderFilter; label: string }[] = [
+  { value: 'ALL', label: 'All' },
+  { value: 'IN_PROGRESS', label: 'In progress' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+];
+
+/** "In progress" covers everything that is not finished: processing, ready for pickup and dispatched. */
+const matchesFilter = (order: Order, filter: OrderFilter) => {
+  switch (filter) {
+    case 'IN_PROGRESS':
+      return order.status === 'PROCESSING' || order.status === 'DISPATCHED';
+    case 'COMPLETED':
+      return order.status === 'COMPLETED';
+    case 'CANCELLED':
+      return order.status === 'CANCELLED';
+    default:
+      return true;
+  }
 };
 
 export default function MyOrdersPage() {
   const [page, setPage] = useState(0);
+  const [filter, setFilter] = useState<OrderFilter>('ALL');
   const size = 15;
   const reorder = useReorder();
 
@@ -37,6 +55,7 @@ export default function MyOrdersPage() {
   });
 
   const businessMap = new Map<number, Business>((patronized ?? []).map((p) => [p.business.id, p.business]));
+  const visibleOrders = (data?.content ?? []).filter((o) => matchesFilter(o, filter));
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
@@ -64,8 +83,33 @@ export default function MyOrdersPage() {
         </div>
       ) : (
         <>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Filter orders by status">
+            {FILTERS.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => setFilter(f.value)}
+                aria-pressed={filter === f.value}
+                className={cn(
+                  'h-8 px-3 rounded-full text-xs font-medium border transition-colors',
+                  filter === f.value
+                    ? 'bg-[#091426] text-white border-[#091426]'
+                    : 'bg-white text-muted-foreground border-border hover:bg-muted/50',
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {visibleOrders.length === 0 && (
+            <p className="text-center py-10 text-sm text-muted-foreground">
+              No {FILTERS.find((f) => f.value === filter)?.label.toLowerCase()} orders on this page.
+            </p>
+          )}
+
           <div className="space-y-3">
-            {data.content.map((order) => {
+            {visibleOrders.map((order) => {
               const business = businessMap.get(order.businessId);
               const isReordering = reorder.isPending && reorder.variables === order.id;
               return (
@@ -85,11 +129,14 @@ export default function MyOrdersPage() {
                         {order.deliveryLocationId ? ' · Delivery' : ''}
                       </p>
                     </Link>
-                    <Badge
-                      className={`text-xs font-medium border-0 shrink-0 ${statusColor[order.status] ?? 'bg-slate-100 text-slate-700'}`}
-                    >
-                      {order.status.replace('_', ' ')}
-                    </Badge>
+                    {(() => {
+                      const status = displayOrderStatus(order, 'buyer');
+                      return (
+                        <Badge className={`text-xs font-medium border-0 shrink-0 ${orderStatusColors[status.tone]}`}>
+                          {status.label}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                   <div className="flex items-center gap-2 mt-3">
                     <Button

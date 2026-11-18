@@ -1,66 +1,38 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { businessesApi } from '@/lib/api/businesses';
-import { ordersApi } from '@/lib/api/orders';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import PageHeader from '@/components/ui/page-header';
 import EmptyState from '@/components/ui/empty-state';
-import StatusBadge from '@/components/ui/status-badge';
+import SellerStatusBadge from '@/components/features/orders/seller-status-badge';
+import { cn } from '@/lib/utils';
 import PaginationControls from '@/components/ui/pagination-controls';
 import { ShoppingBag, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { toast } from 'sonner';
-import { getApiError } from '@/lib/utils';
-import type { Order, OrderStatus } from '@/types';
+import type { OrderStatus } from '@/types';
 
-/** Returns the statuses a merchant can manually advance to, given current status and order type. */
-function nextStatuses(order: Order): OrderStatus[] {
-  const { status, orderType } = order;
-  switch (status) {
-    case 'PAID':               return ['PREPARING'];
-    case 'PREPARING':          return orderType === 'DELIVERY' ? ['READY_FOR_DELIVERY'] : ['READY_FOR_PICKUP'];
-    case 'READY_FOR_DELIVERY': return ['OUT_FOR_DELIVERY'];
-    case 'OUT_FOR_DELIVERY':   return ['DELIVERED'];
-    case 'READY_FOR_PICKUP':   return ['PICKED_UP'];
-    default:                   return [];
-  }
-}
+const FILTERS: { value: 'ALL' | OrderStatus; label: string }[] = [
+  { value: 'ALL', label: 'All' },
+  { value: 'PROCESSING', label: 'Processing' },
+  { value: 'DISPATCHED', label: 'Dispatched' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+];
 
 export default function DashboardOrdersPage() {
   const [page, setPage] = useState(0);
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
-  const qc = useQueryClient();
+  const [filter, setFilter] = useState<'ALL' | OrderStatus>('ALL');
 
   const { data, isLoading } = useQuery({
     queryKey: ['business-orders', page],
     queryFn: () => businessesApi.getOrders(page, 15),
   });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: OrderStatus }) =>
-      ordersApi.updateStatus(id, status),
-    onMutate: ({ id }) => setUpdatingId(id),
-    onSuccess: () => {
-      toast.success('Order status updated!');
-      qc.invalidateQueries({ queryKey: ['business-orders'] });
-      qc.invalidateQueries({ queryKey: ['business-stats'] });
-    },
-    onError: (error) => toast.error(getApiError(error, 'Failed to update order status.')),
-    onSettled: () => setUpdatingId(null),
-  });
-
-  const statusLabels: Partial<Record<OrderStatus, string>> = {
-    PREPARING:           'Preparing',
-    READY_FOR_PICKUP:    'Ready for Pickup',
-    READY_FOR_DELIVERY:  'Ready for Delivery',
-    OUT_FOR_DELIVERY:    'Out for Delivery',
-    DELIVERED:           'Delivered',
-    PICKED_UP:           'Picked Up',
-  };
+  // The filter applies to the page of orders that is loaded.
+  const orders = (data?.content ?? []).filter((o) => filter === 'ALL' || o.status === filter);
 
   return (
     <div className="space-y-6">
@@ -73,6 +45,23 @@ export default function DashboardOrdersPage() {
       <div className="bg-white rounded-2xl shadow-card-md overflow-hidden">
         <div className="px-5 py-4 border-b border-[#f1f5f9]">
           <p className="font-semibold text-sm text-[#091426] font-heading">Order History</p>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto px-4 pt-4" role="group" aria-label="Filter orders by status">
+          {FILTERS.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setFilter(f.value)}
+              aria-pressed={filter === f.value}
+              className={cn(
+                'shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+                filter === f.value ? 'bg-[#091426] text-white' : 'bg-[#f1f5f9] text-[#334155] hover:bg-[#e2e8f0]',
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
 
         <div className="p-4">
@@ -88,12 +77,11 @@ export default function DashboardOrdersPage() {
               title="No orders yet"
               subtitle="Orders will appear here once customers check out."
             />
+          ) : orders.length === 0 ? (
+            <p className="py-8 text-center text-sm text-[#64748b]">No {FILTERS.find((f) => f.value === filter)?.label.toLowerCase()} orders on this page.</p>
           ) : (
             <div className="space-y-2">
-              {data.content.map((order) => {
-                const actions = nextStatuses(order);
-                const isUpdating = updatingId === order.id;
-
+              {orders.map((order) => {
                 return (
                   <div
                     key={order.id}
@@ -109,38 +97,14 @@ export default function DashboardOrdersPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <StatusBadge status={order.status} type="order" />
-
+                    <div className="flex items-center gap-3 shrink-0">
+                      <SellerStatusBadge order={order} />
                       <Link
                         href={`/dashboard/orders/${order.id}`}
-                        className="hidden sm:flex items-center gap-1 text-xs text-[#0058be] hover:text-[#0046a0] font-medium transition-colors"
+                        className="flex items-center gap-1 text-xs text-[#0058be] hover:text-[#0046a0] font-medium transition-colors"
                       >
                         Details <ArrowRight className="h-3 w-3" />
                       </Link>
-
-                      {actions.length > 0 && (
-                        <Select
-                          value=""
-                          disabled={isUpdating}
-                          onValueChange={(status) =>
-                            updateStatusMutation.mutate({ id: order.id, status: status as OrderStatus })
-                          }
-                        >
-                          <SelectTrigger className="h-8 text-xs w-40 border-[rgba(9,20,38,0.12)] bg-white">
-                            <SelectValue placeholder={isUpdating ? 'Updating…' : 'Update status'}>
-                              {undefined}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {actions.map((s) => (
-                              <SelectItem key={s} value={s} className="text-xs">
-                                → {statusLabels[s] ?? s}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
                     </div>
                   </div>
                 );

@@ -7,49 +7,23 @@ import { deliveryApi } from '@/lib/api/delivery';
 import { Skeleton } from '@/components/ui/skeleton';
 import PageHeader from '@/components/ui/page-header';
 import { OrderItemsList, PackingList } from '@/components/features/orders/set-summary';
-import StatusBadge from '@/components/ui/status-badge';
+import SellerStatusBadge from '@/components/features/orders/seller-status-badge';
+import SellerOrderActions from '@/components/features/orders/seller-order-actions';
+import { displayOrderStatus } from '@/lib/order-status';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Package, MapPin, Calendar, Hash, Truck, ExternalLink, User, Phone, KeyRound } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
-import type { Order, OrderItem, OrderStatus } from '@/types';
+import type { OrderItem } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-
-function nextStatuses(order: Order): OrderStatus[] {
-  const { status, orderType } = order;
-  switch (status) {
-    case 'PAID':               return ['PREPARING'];
-    case 'PREPARING':          return orderType === 'DELIVERY' ? ['READY_FOR_DELIVERY'] : ['READY_FOR_PICKUP'];
-    case 'READY_FOR_DELIVERY': return ['OUT_FOR_DELIVERY'];
-    case 'OUT_FOR_DELIVERY':   return ['DELIVERED'];
-    case 'READY_FOR_PICKUP':   return ['PICKED_UP'];
-    default:                   return [];
-  }
-}
-
-const statusLabels: Partial<Record<OrderStatus, string>> = {
-  PREPARING:           'Preparing',
-  READY_FOR_PICKUP:    'Ready for Pickup',
-  READY_FOR_DELIVERY:  'Ready for Delivery',
-  OUT_FOR_DELIVERY:    'Out for Delivery',
-  DELIVERED:           'Delivered',
-  PICKED_UP:           'Picked Up',
-};
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const orderId = Number(id);
   const router = useRouter();
-  const qc = useQueryClient();
-  // Base UI's Select only reliably renders its dropdown content on its first open —
-  // reopening the same mounted instance (confirmed live: works once, then opens empty
-  // every time after, with no page reload) silently shows nothing. Forcing a remount
-  // on every close guarantees the next open is always a fresh instance.
-  const [statusSelectKey, setStatusSelectKey] = useState(0);
 
   const { data: order, isLoading, isError } = useQuery({
     queryKey: ['order-detail', orderId],
@@ -69,21 +43,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     enabled: !!order,
   });
 
-  const { data: shipment } = useQuery({
+  const { data: shipment, isLoading: shipmentLoading } = useQuery({
     queryKey: ['order-shipment', orderId],
     queryFn: () => ordersApi.getShipment(orderId),
     enabled: !!order,
-  });
-
-  const updateStatusMutation = useMutation({
-    mutationFn: (status: OrderStatus) => ordersApi.updateStatus(orderId, status),
-    onSuccess: () => {
-      toast.success('Order status updated!');
-      qc.invalidateQueries({ queryKey: ['order-detail', orderId] });
-      qc.invalidateQueries({ queryKey: ['business-orders'] });
-      qc.invalidateQueries({ queryKey: ['business-stats'] });
-    },
-    onError: (error) => toast.error(getApiError(error, 'Failed to update status.')),
   });
 
   const deliveryLocation = deliveryLocations?.find(
@@ -109,7 +72,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  const actions = nextStatuses(order);
+  const status = displayOrderStatus(order, 'seller');
   const formattedDate = order.createdAt
     ? format(new Date(order.createdAt.replace(' ', 'T')), 'dd MMM yyyy, HH:mm')
     : '—';
@@ -131,39 +94,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
       {/* Status card */}
       <div className="bg-white rounded-2xl shadow-card-md p-5 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <h2 className="font-semibold text-sm text-[#091426] font-heading">Order Status</h2>
-          <StatusBadge status={order.status} type="order" />
+          <SellerStatusBadge order={order} />
         </div>
+        {order.status !== 'CANCELLED' && <p className="text-xs text-[#64748b]">{status.detail}</p>}
 
-        {actions.length > 0 && (
-          <div className="flex items-center gap-3">
-            <p className="text-xs text-[#64748b]">Advance to:</p>
-            <Select
-              key={statusSelectKey}
-              value=""
-              disabled={updateStatusMutation.isPending}
-              onValueChange={(s) => updateStatusMutation.mutate(s as OrderStatus)}
-              onOpenChange={(open) => { if (!open) setStatusSelectKey((k) => k + 1); }}
-            >
-              <SelectTrigger className="h-8 text-xs w-52 border-[rgba(9,20,38,0.12)]">
-                <SelectValue placeholder={updateStatusMutation.isPending ? 'Updating…' : 'Select next status'}>
-                  {undefined}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {actions.map((s) => (
-                  <SelectItem key={s} value={s} className="text-xs">
-                    → {statusLabels[s] ?? s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+        <SellerOrderActions order={order} shipment={shipment} shipmentLoading={shipmentLoading} />
       </div>
 
-      {order.orderType === 'PICKUP' && order.status !== 'PICKED_UP' && (
+      {order.orderType === 'PICKUP' && order.status === 'PROCESSING' && (
         <Suspense>
           <ConfirmPickupCard orderId={orderId} />
         </Suspense>

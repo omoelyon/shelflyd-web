@@ -12,16 +12,9 @@ import { useMyBusiness } from '@/hooks/use-my-business';
 import { useReorder } from '@/hooks/use-reorder';
 import { User, ShoppingBag, ChevronRight, Store, RotateCcw, Sparkles, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
+import { displayOrderStatus } from '@/lib/order-status';
+import { orderStatusColors } from '@/lib/constants/status-colors';
 import type { Business } from '@/types';
-
-const statusColor: Record<string, string> = {
-  CREATED:   'bg-slate-100 text-slate-700',
-  PAID:      'bg-blue-100 text-blue-700',
-  PREPARING: 'bg-amber-100 text-amber-700',
-  DELIVERED: 'bg-green-100 text-green-700',
-  PICKED_UP: 'bg-purple-100 text-purple-700',
-  CANCELLED: 'bg-red-100 text-red-700',
-};
 
 export default function AccountPage() {
   const { hasBusiness, isChecking } = useMyBusiness();
@@ -209,11 +202,14 @@ export default function AccountPage() {
                           Order #{order.id} · {order.orderType ?? 'Standard'}
                         </p>
                       </Link>
-                      <Badge
-                        className={`text-xs font-medium border-0 shrink-0 ${statusColor[order.status] ?? 'bg-slate-100 text-slate-700'}`}
-                      >
-                        {order.status.replace('_', ' ')}
-                      </Badge>
+                      {(() => {
+                        const status = displayOrderStatus(order, 'buyer');
+                        return (
+                          <Badge className={`text-xs font-medium border-0 shrink-0 ${orderStatusColors[status.tone]}`}>
+                            {status.label}
+                          </Badge>
+                        );
+                      })()}
                     </div>
                     <div className="flex items-center gap-2 mt-3">
                       <Button

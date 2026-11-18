@@ -97,14 +97,12 @@ export interface UpdateBusinessStatusRequest {
 
 export interface BusinessStats {
   totalOrders: number;
-  createdOrders: number;
-  paidOrders: number;
-  preparingOrders: number;
+  processingOrders: number;
+  dispatchedOrders: number;
+  completedOrders: number;
+  cancelledOrders: number;
+  /** Pickup orders still PROCESSING that the seller has already told the buyer are ready. */
   readyForPickupOrders: number;
-  readyForDeliveryOrders: number;
-  outForDeliveryOrders: number;
-  deliveredOrders: number;
-  pickedUpOrders: number;
   totalRevenue: number;
 }
 
@@ -353,15 +351,11 @@ export interface OrderItem {
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
-export type OrderStatus =
-  | 'CREATED'
-  | 'PAID'
-  | 'PREPARING'
-  | 'READY_FOR_PICKUP'
-  | 'READY_FOR_DELIVERY'
-  | 'OUT_FOR_DELIVERY'
-  | 'DELIVERED'
-  | 'PICKED_UP';
+/**
+ * Pickup orders go PROCESSING → COMPLETED; delivery orders PROCESSING → DISPATCHED → COMPLETED; either can end
+ * CANCELLED (with a refund) while still PROCESSING. "Ready for pickup" is not a status, see readyForPickupAt.
+ */
+export type OrderStatus = 'PROCESSING' | 'DISPATCHED' | 'COMPLETED' | 'CANCELLED';
 
 export interface Order extends BaseEntity {
   userId: number;
@@ -375,6 +369,10 @@ export interface Order extends BaseEntity {
   deliveryAddressLine: string | null;
   deliveryCity: string | null;
   deliveryState: string | null;
+  /** Pickup orders: when the seller told the buyer it's ready to collect (ISO), else null. */
+  readyForPickupAt?: string | null;
+  cancelledAt?: string | null;
+  cancelReason?: string | null;
 }
 
 /** The buyer's proof of purchase for an in-person pickup — the code (or its QR image) is what the seller checks. */
@@ -414,6 +412,9 @@ export interface Payment extends BaseEntity {
   deliveryFee?: number | null;
   processingFee?: number | null;
   commissionAmount?: number | null;
+  /** Set when the order was cancelled and the buyer refunded; such a payment is not part of the seller's earnings. */
+  refundStatus?: 'REQUESTED' | 'FAILED' | null;
+  refundAmount?: number | null;
 }
 
 // ─── Delivery Locations ───────────────────────────────────────────────────────
@@ -545,6 +546,8 @@ export interface EarningRow {
   courierDelivery: boolean;
   earnings: number;
   customerPaid: number;
+  /** Set when the order was cancelled and refunded; shown but not part of the earnings. */
+  refundStatus?: 'REQUESTED' | 'FAILED' | null;
 }
 
 // ─── Analytics ───────────────────────────────────────────────────────────────
@@ -598,6 +601,9 @@ export interface OrderPaymentSummary {
   serviceFee: number | null;
   processingFee: number | null;
   total: number;
+  /** Set once the order was cancelled: REQUESTED (on its way back to the buyer) or FAILED (being handled by hand). */
+  refundStatus?: 'REQUESTED' | 'FAILED' | null;
+  refundAmount?: number | null;
 }
 
 // ─── Seller subscription ─────────────────────────────────────────────────────

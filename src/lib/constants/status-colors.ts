@@ -4,14 +4,12 @@
  */
 
 export const orderStatusColors: Record<string, string> = {
-  CREATED:             'bg-slate-100 text-slate-600',
-  PAID:                'bg-blue-50 text-blue-700',
-  PREPARING:           'bg-orange-50 text-orange-700',
-  READY_FOR_PICKUP:    'bg-indigo-50 text-indigo-700',
-  READY_FOR_DELIVERY:  'bg-indigo-50 text-indigo-700',
-  OUT_FOR_DELIVERY:    'bg-cyan-50 text-cyan-700',
-  DELIVERED:           'bg-emerald-50 text-emerald-700',
-  PICKED_UP:           'bg-emerald-50 text-emerald-700',
+  PROCESSING: 'bg-blue-50 text-blue-700',
+  DISPATCHED: 'bg-cyan-50 text-cyan-700',
+  COMPLETED:  'bg-emerald-50 text-emerald-700',
+  CANCELLED:  'bg-red-50 text-red-700',
+  // Not a real status: a pickup order that is still PROCESSING but already marked ready (see displayOrderStatus).
+  READY_FOR_PICKUP: 'bg-indigo-50 text-indigo-700',
 };
 
 export const paymentStatusColors: Record<string, string> = {

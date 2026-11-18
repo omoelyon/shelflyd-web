@@ -8,14 +8,11 @@ export default function OrdersAtAGlance({ stats }: { stats: BusinessStats }) {
   if (stats.totalOrders === 0) return null;
 
   const items = [
-    { label: 'Awaiting payment', value: stats.createdOrders },
-    { label: 'Paid', value: stats.paidOrders },
-    { label: 'Preparing', value: stats.preparingOrders },
+    // Ready pickup orders are PROCESSING on the server; show them apart so the two chips don't double count.
+    { label: 'Processing', value: Math.max(0, stats.processingOrders - stats.readyForPickupOrders) },
     { label: 'Ready for pickup', value: stats.readyForPickupOrders },
-    { label: 'Ready for delivery', value: stats.readyForDeliveryOrders },
-    { label: 'Out for delivery', value: stats.outForDeliveryOrders },
-    { label: 'Delivered', value: stats.deliveredOrders },
-    { label: 'Picked up', value: stats.pickedUpOrders },
+    { label: 'Dispatched', value: stats.dispatchedOrders },
+    { label: 'Completed', value: stats.completedOrders },
   ].filter((i) => i.value > 0);
 
   return (
