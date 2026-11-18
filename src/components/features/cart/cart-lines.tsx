@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from 'react';
 import Image from 'next/image';
 import { Layers, Minus, Plus, Trash2, X } from 'lucide-react';
+import { atStockLimit, lineStock } from '@/lib/cart-stock';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { splitCart, useSetsVariant, type SetView } from '@/lib/cart-sets';
@@ -212,6 +213,7 @@ export default function CartLines({
                 {product.unit} · {product.quantity}x · ₦{product.unitPrice.toLocaleString()} each
               </p>
               {product.note && <p className="mt-0.5 text-xs italic text-muted-foreground">Note: {product.note}</p>}
+              <StockNote line={product} />
             </div>
             <div className="shrink-0 text-right">
               <p className="font-semibold text-primary">₦{product.totalPrice.toLocaleString()}</p>
@@ -234,7 +236,7 @@ export default function CartLines({
                     className="h-6 w-6"
                     aria-label={`Increase ${product.name}`}
                     onClick={() => onIncrement(product)}
-                    disabled={isAuthenticated && incrementPending}
+                    disabled={(isAuthenticated && incrementPending) || atStockLimit(product)}
                   >
                     <Plus className="h-3 w-3" />
                   </Button>
@@ -294,5 +296,22 @@ export default function CartLines({
         />
       )}
     </div>
+  );
+}
+
+/** "Only 3 left" / "Sold out" under a cart line, so the limit is visible before checkout refuses. */
+function StockNote({ line }: { line: CartProduct }) {
+  const stock = lineStock(line);
+  if (stock.kind === 'ok') return null;
+  const text =
+    stock.kind === 'soldout'
+      ? 'Sold out. Remove it to continue.'
+      : stock.kind === 'short'
+        ? `Only ${stock.left} left. Reduce the quantity to continue.`
+        : `Only ${stock.left} left`;
+  return (
+    <p role={stock.kind === 'low' ? undefined : 'alert'} className={stock.kind === 'low' ? 'mt-0.5 text-xs text-amber-700' : 'mt-0.5 text-xs font-medium text-destructive'}>
+      {text}
+    </p>
   );
 }

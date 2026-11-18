@@ -153,7 +153,7 @@ export default function StorefrontProductPage({ params }: Props) {
                   : 'bg-red-100 text-red-700'
                 }
               >
-                {formatStatus(product.status)}
+                {product.status === 'OUT_OF_STOCK' ? 'Sold out' : formatStatus(product.status)}
               </Badge>
             </div>
             <h1 className="text-3xl font-bold">{product.name}</h1>
@@ -223,7 +223,7 @@ export default function StorefrontProductPage({ params }: Props) {
             onClick={handleAddToCart}
           >
             <ShoppingCart className="mr-2 h-4 w-4" />
-            {addToCart.isPending ? 'Adding...' : 'Add to Cart'}
+            {addToCart.isPending ? 'Adding...' : product.status === 'OUT_OF_STOCK' ? 'Sold out' : 'Add to Cart'}
           </Button>
           {(product.status === 'IN_STOCK' || product.status === 'LOW_STOCK') && product.prices?.length > 0 && (
             <div className="text-center">
@@ -234,6 +234,9 @@ export default function StorefrontProductPage({ params }: Props) {
                 initialItem={{ productId: product.id, unitId: selectedUnitId ? Number(selectedUnitId) : product.prices[0].unit }}
               />
             </div>
+          )}
+          {product.status === 'OUT_OF_STOCK' && (
+            <p className="text-xs text-center text-muted-foreground">This item is sold out right now. Check back soon.</p>
           )}
           {!product.prices?.length && (
             <p className="text-xs text-center text-muted-foreground">

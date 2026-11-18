@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { getApiError } from '@/lib/utils';
 import { useCartSetsActions, type SetItemInput, type SetView } from '@/lib/cart-sets';
+import { maxSetsInStock } from '@/lib/cart-stock';
 import type { CartProduct } from '@/types';
 import QtyStepper from './qty-stepper';
 
@@ -39,6 +40,8 @@ export default function SetCard({ businessId, set, onEdit }: SetCardProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [confirmRemove, setConfirmRemove] = useState(false);
+  // The most sets the stock allows; the stepper stops there instead of letting the server refuse.
+  const stockMax = maxSetsInStock(lines);
 
   const run = async (action: () => Promise<void>, fallback: string, success?: string) => {
     setBusy(true);
@@ -65,7 +68,7 @@ export default function SetCard({ businessId, set, onEdit }: SetCardProps) {
           <Layers className="h-4 w-4 shrink-0 text-[#0058be]" aria-hidden="true" />
           <span className="truncate">{group.name}</span>
         </h3>
-        <QtyStepper value={group.sets} onChange={changeSets} label="sets" disabled={busy} className="shrink-0" />
+        <QtyStepper value={group.sets} onChange={changeSets} label="sets" disabled={busy} max={Math.max(group.sets, stockMax ?? 1000)} className="shrink-0" />
       </div>
 
       <p className="mt-0.5 text-xs text-muted-foreground">
@@ -92,6 +95,16 @@ export default function SetCard({ businessId, set, onEdit }: SetCardProps) {
         <span className="text-sm font-semibold text-primary tabular-nums">{naira(group.totalPrice)}</span>
       </div>
 
+      {stockMax != null && group.sets > stockMax && (
+        <p role="alert" className="mt-2 text-xs font-medium text-destructive">
+          {stockMax === 0 ? 'Not enough stock left for even one set. Remove it to continue.' : `Only enough stock for ${stockMax} ${stockMax === 1 ? 'set' : 'sets'}. Reduce the number of sets to continue.`}
+        </p>
+      )}
+      {stockMax != null && group.sets <= stockMax && stockMax - group.sets < 3 && (
+        <p className="mt-2 text-xs text-amber-700">
+          {stockMax === group.sets ? `That's all the stock for ${group.sets} ${group.sets === 1 ? 'set' : 'sets'}.` : `Stock allows up to ${stockMax} sets.`}
+        </p>
+      )}
       {error && (
         <p role="alert" className="mt-2 text-xs text-destructive">
           {error}

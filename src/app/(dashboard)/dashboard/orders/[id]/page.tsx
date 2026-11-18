@@ -103,6 +103,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         <SellerOrderActions order={order} shipment={shipment} shipmentLoading={shipmentLoading} />
       </div>
 
+      {order.stockShortfall && order.status === 'PROCESSING' && (
+        <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 space-y-1">
+          <p className="text-sm font-semibold text-amber-900">Stock ran short on this order</p>
+          <p className="text-xs text-amber-900">
+            {order.stockShortfall}. The buyer has already paid. If you have more on hand, go ahead and prepare it. If not,
+            cancel the order and they are refunded in full.
+          </p>
+        </div>
+      )}
+
       {order.orderType === 'PICKUP' && order.status === 'PROCESSING' && (
         <Suspense>
           <ConfirmPickupCard orderId={orderId} />

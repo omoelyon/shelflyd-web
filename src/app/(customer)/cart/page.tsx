@@ -18,6 +18,7 @@ import { ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import BusinessAvatar from '@/components/layout/business-avatar';
 import CartLines from '@/components/features/cart/cart-lines';
+import { cartStockIssue } from '@/lib/cart-stock';
 import type { CartResponse } from '@/types';
 
 export default function CartPage() {
@@ -179,12 +180,16 @@ export default function CartPage() {
                 <p className="text-xl font-bold text-primary">₦{cart.totalCost.toLocaleString()}</p>
               </div>
               {isAuthenticated ? (
-                <Link
-                  href={`/checkout/${cart.cartId}`}
-                  className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}
-                >
-                  Checkout
-                </Link>
+                cartStockIssue(cart) ? (
+                  <Button disabled className="bg-primary text-primary-foreground">Checkout</Button>
+                ) : (
+                  <Link
+                    href={`/checkout/${cart.cartId}`}
+                    className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}
+                  >
+                    Checkout
+                  </Link>
+                )
               ) : (
                 <Button
                   onClick={handleCheckoutClick}
@@ -194,6 +199,9 @@ export default function CartPage() {
                 </Button>
               )}
             </CardFooter>
+            {cartStockIssue(cart) && (
+              <p role="alert" className="px-6 pb-4 text-xs font-medium text-destructive">{cartStockIssue(cart)}</p>
+            )}
           </Card>
         );
       })}

@@ -221,6 +221,8 @@ export interface CartProduct {
   groupId?: number | null;
   /** Units of this item in ONE set. */
   quantityPerSet?: number | null;
+  /** How much of this item is left, in this line's unit; null/absent when the seller doesn't track stock. */
+  availableQuantity?: number | null;
 }
 
 /** A "set": the same combination of items ordered several times (see lib/cart-sets.ts). */
@@ -373,6 +375,8 @@ export interface Order extends BaseEntity {
   readyForPickupAt?: string | null;
   cancelledAt?: string | null;
   cancelReason?: string | null;
+  /** Seller-only: stock ran short between checkout and payment, e.g. "Chicken wrap (2 short)". The buyer has paid. */
+  stockShortfall?: string | null;
 }
 
 /** The buyer's proof of purchase for an in-person pickup — the code (or its QR image) is what the seller checks. */

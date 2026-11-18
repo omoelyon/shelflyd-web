@@ -98,6 +98,9 @@ export default function DashboardOrdersPage() {
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
+                      {order.stockShortfall && order.status === 'PROCESSING' && (
+                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-800">Stock short</span>
+                      )}
                       <SellerStatusBadge order={order} />
                       <Link
                         href={`/dashboard/orders/${order.id}`}

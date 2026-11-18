@@ -17,6 +17,7 @@ import { getApiError } from '@/lib/utils';
 import { ShoppingCart, ArrowLeft } from 'lucide-react';
 import type { CartProduct } from '@/types';
 import CartLines from '@/components/features/cart/cart-lines';
+import { cartStockIssue } from '@/lib/cart-stock';
 import Link from 'next/link';
 
 interface Props {
@@ -189,12 +190,16 @@ export default function StorefrontCartPage({ params }: Props) {
             <p className="text-xl font-bold text-primary">₦{businessCart.totalCost.toLocaleString()}</p>
           </div>
           {isAuthenticated ? (
-            <Link
-              href={`/storefront/${slug}/checkout?cartId=${businessCart.cartId}`}
-              className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}
-            >
-              Checkout
-            </Link>
+            cartStockIssue(businessCart) ? (
+              <Button disabled className="bg-primary text-primary-foreground">Checkout</Button>
+            ) : (
+              <Link
+                href={`/storefront/${slug}/checkout?cartId=${businessCart.cartId}`}
+                className={cn(buttonVariants(), 'bg-primary text-primary-foreground hover:opacity-90')}
+              >
+                Checkout
+              </Link>
+            )
           ) : (
             <Button
               onClick={handleCheckoutClick}
@@ -204,6 +209,9 @@ export default function StorefrontCartPage({ params }: Props) {
             </Button>
           )}
         </CardFooter>
+        {cartStockIssue(businessCart) && (
+          <p role="alert" className="px-6 pb-4 text-xs font-medium text-destructive">{cartStockIssue(businessCart)}</p>
+        )}
       </Card>
     </div>
   );

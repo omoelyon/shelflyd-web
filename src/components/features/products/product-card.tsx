@@ -12,7 +12,7 @@ interface ProductCardProps {
 const statusConfig: Record<Product['status'], { label: string; className: string }> = {
   IN_STOCK: { label: 'In Stock', className: 'bg-green-50 text-green-700' },
   LOW_STOCK: { label: 'Low Stock', className: 'bg-orange-50 text-orange-700' },
-  OUT_OF_STOCK: { label: 'Out of Stock', className: 'bg-red-50 text-red-700' },
+  OUT_OF_STOCK: { label: 'Sold out', className: 'bg-red-50 text-red-700' },
   COMING_SOON: { label: 'Coming Soon', className: 'bg-blue-50 text-blue-700' },
 };
 
@@ -37,7 +37,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               src={product.image}
               alt={product.name}
               fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              className={`object-cover transition-transform duration-300 group-hover:scale-105 ${product.status === 'OUT_OF_STOCK' ? 'opacity-50 grayscale' : ''}`}
               unoptimized
               onError={() => setImageFailed(true)}
             />
