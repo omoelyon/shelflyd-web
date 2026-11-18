@@ -5,7 +5,7 @@ const links = {
   marketplace: [
     { href: '/businesses', label: 'Businesses' },
     { href: '/products', label: 'Products' },
-    { href: '/auth/register', label: 'Sell on Shelflyd' },
+    { href: '/auth/register?as=seller', label: 'Sell on Shelflyd' },
   ],
   account: [
     { href: '/auth/login', label: 'Sign In' },

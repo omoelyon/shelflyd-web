@@ -184,8 +184,8 @@ function DashboardLoginForm() {
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             New to Shelflyd?{' '}
-            <Link href="/auth/register" className="text-primary font-medium hover:underline">
-              Create an account
+            <Link href="/auth/register?as=seller" className="text-primary font-medium hover:underline">
+              Create a seller account
             </Link>
           </p>
           <p className="text-center text-xs text-muted-foreground mt-3">

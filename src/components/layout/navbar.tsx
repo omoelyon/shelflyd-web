@@ -144,6 +144,14 @@ export default function Navbar() {
               <Button
                 variant="ghost"
                 size="sm"
+                className="hidden md:inline-flex text-[#64748b] hover:text-[#091426] hover:bg-[#eff4ff]"
+                onClick={() => router.push('/auth/register?as=seller')}
+              >
+                Sell on Shelflyd
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 className="text-[#64748b] hover:text-[#091426] hover:bg-[#eff4ff]"
                 onClick={() => router.push('/auth/login')}
               >
@@ -154,7 +162,7 @@ export default function Navbar() {
                 className="bg-[#091426] text-white hover:bg-[#091426]/90 shadow-sm"
                 onClick={() => router.push('/auth/register')}
               >
-                Get Started
+                Sign Up
               </Button>
             </div>
           )}
@@ -207,7 +215,14 @@ export default function Navbar() {
                         className="w-full bg-[#0058be] text-white hover:bg-[#0058be]/90"
                         onClick={() => { router.push('/auth/register'); setMobileOpen(false); }}
                       >
-                        Get Started
+                        Sign Up
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="w-full text-white/70 hover:text-white hover:bg-white/8"
+                        onClick={() => { router.push('/auth/register?as=seller'); setMobileOpen(false); }}
+                      >
+                        Sell on Shelflyd
                       </Button>
                     </div>
                   )}

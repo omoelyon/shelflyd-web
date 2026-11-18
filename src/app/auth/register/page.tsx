@@ -7,13 +7,47 @@ import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authApi } from '@/lib/api/auth';
+import { usersApi } from '@/lib/api/users';
+import { useAuthStore } from '@/stores/auth.store';
+import { mergeGuestCartIntoServer } from '@/lib/guest-cart-merge';
 import { registerSchema, type RegisterFormValues } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
-import { Store, Eye, EyeOff } from 'lucide-react';
+import { Store, Eye, EyeOff, ShoppingBag, ShieldCheck, Truck, Landmark, Zap, Gift } from 'lucide-react';
+
+// One account type underneath: anyone can open a store later. "Seller" only changes the copy and
+// where they land afterwards, so a shopper never has to read a business sign-up form.
+const COPY = {
+  shopper: {
+    panelTitle: <>Shop from independent<br />sellers, all in one place</>,
+    panelBlurb: 'Create a free account to order, pay securely and track every delivery.',
+    features: [
+      { icon: ShoppingBag, text: 'Browse stores and order in a few taps' },
+      { icon: ShieldCheck, text: 'Pay securely by card or bank transfer' },
+      { icon: Truck, text: 'Track every order, from checkout to delivery' },
+    ],
+    title: 'Create your account',
+    subtitle: 'It takes a minute, and it\u2019s free to shop.',
+    submit: 'Create account',
+    submitting: 'Creating account…',
+  },
+  seller: {
+    panelTitle: <>Open your store<br />on Shelflyd</>,
+    panelBlurb: 'Add your products, share your store link and get paid straight to your bank.',
+    features: [
+      { icon: Zap, text: 'Add your first product in one step' },
+      { icon: Landmark, text: 'Payments go straight to your bank account' },
+      { icon: Gift, text: 'Free for your first 30 days' },
+    ],
+    title: 'Create your seller account',
+    subtitle: 'Step 1 of 2 \u2014 your details. Next, you\u2019ll set up your store.',
+    submit: 'Continue',
+    submitting: 'Creating account…',
+  },
+} as const;
 
 export default function RegisterPage() {
   return (
@@ -27,6 +61,9 @@ function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from');
+  const seller = searchParams.get('as') === 'seller';
+  const copy = COPY[seller ? 'seller' : 'shopper'];
+  const { setUser } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -37,11 +74,36 @@ function RegisterForm() {
     resolver: zodResolver(registerSchema),
   });
 
+  const suffix = from ? `?from=${encodeURIComponent(from)}` : '';
+
+  // Sign them straight in after registering — no detour through a login screen. If that sign-in
+  // step fails for any reason the account still exists, so fall back to the login page.
   const { mutate, isPending } = useMutation({
-    mutationFn: authApi.register,
-    onSuccess: () => {
-      toast.success('Account created! Please sign in.');
-      router.push(`/auth/login${from ? `?from=${encodeURIComponent(from)}` : ''}`);
+    mutationFn: async (values: RegisterFormValues) => {
+      await authApi.register(values);
+      try {
+        const { token } = await authApi.login({ email: values.email, password: values.password });
+        return { token, firstName: values.firstName };
+      } catch {
+        return { token: null, firstName: values.firstName };
+      }
+    },
+    onSuccess: async ({ token, firstName }) => {
+      if (!token) {
+        toast.success('Account created! Please sign in.');
+        router.push(`/auth/login${suffix}`);
+        return;
+      }
+      await fetch('/api/auth/set-cookie', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      setUser(await usersApi.me());
+      await mergeGuestCartIntoServer();
+      toast.success(`Welcome to Shelflyd, ${firstName}!`);
+      // Full page load, as on login: nothing from a previous session can carry over.
+      window.location.assign(seller ? '/dashboard/register-business' : from || '/');
     },
     onError: (error) => toast.error(getApiError(error, 'Registration failed.')),
   });
@@ -62,13 +124,19 @@ function RegisterForm() {
         </Link>
 
         <div className="mt-16 relative z-10">
-          <h2 className="text-3xl font-bold leading-tight mb-3">
-            Shop from local sellers<br />or open your own store
-          </h2>
-          <p className="text-white/70 text-base mb-10">
-            Create your account to start shopping, or start selling, across Africa today.
-          </p>
+          <h2 className="text-3xl font-bold leading-tight mb-3">{copy.panelTitle}</h2>
+          <p className="text-white/70 text-base mb-10">{copy.panelBlurb}</p>
 
+          <ul className="space-y-4">
+            {copy.features.map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+                  <Icon className="h-4 w-4 text-white" />
+                </div>
+                <span className="text-sm text-white/85">{text}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <p className="mt-auto relative z-10 text-sm text-white/50">
@@ -90,8 +158,8 @@ function RegisterForm() {
           </div>
 
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-foreground">Create your account</h1>
-            <p className="text-muted-foreground text-sm mt-1">Join Shelflyd and start buying or selling.</p>
+            <h1 className="text-2xl font-bold text-foreground">{copy.title}</h1>
+            <p className="text-muted-foreground text-sm mt-1">{copy.subtitle}</p>
           </div>
 
           <form onSubmit={handleSubmit((d) => mutate(d))} className="space-y-4">
@@ -120,9 +188,13 @@ function RegisterForm() {
 
             <div className="space-y-1.5">
               <Label htmlFor="phoneNumber" className="text-sm font-medium">Phone Number</Label>
-              <Input id="phoneNumber" placeholder="08012345678" className="h-10" {...register('phoneNumber')} />
-              {errors.phoneNumber && (
+              <Input id="phoneNumber" type="tel" inputMode="tel" autoComplete="tel" placeholder="08012345678" className="h-10" {...register('phoneNumber')} />
+              {errors.phoneNumber ? (
                 <p className="text-xs text-destructive">{errors.phoneNumber.message}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {seller ? 'So customers and couriers can reach you about orders.' : 'For delivery updates on your orders.'}
+                </p>
               )}
             </div>
 
@@ -146,20 +218,13 @@ function RegisterForm() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {errors.password && (
+              {errors.password ? (
                 <p className="text-xs text-destructive">{errors.password.message}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  At least 8 characters, with upper and lower case letters, a number and a symbol.
+                </p>
               )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="country" className="text-sm font-medium">Country</Label>
-                <Input id="country" placeholder="Nigeria" className="h-10" {...register('country')} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="sector" className="text-sm font-medium">Sector</Label>
-                <Input id="sector" placeholder="Agriculture" className="h-10" {...register('sector')} />
-              </div>
             </div>
 
             <Button
@@ -167,18 +232,32 @@ function RegisterForm() {
               className="w-full h-10 bg-primary text-primary-foreground hover:opacity-90 font-medium"
               disabled={isPending}
             >
-              {isPending ? 'Creating account…' : 'Create Account'}
+              {isPending ? copy.submitting : copy.submit}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{' '}
-            <Link
-              href={`/auth/login${from ? `?from=${encodeURIComponent(from)}` : ''}`}
-              className="text-primary font-medium hover:underline"
-            >
+            <Link href={`/auth/login${suffix}`} className="text-primary font-medium hover:underline">
               Sign in
             </Link>
+          </p>
+          <p className="text-center text-xs text-muted-foreground mt-3">
+            {seller ? (
+              <>
+                Just want to shop?{' '}
+                <Link href={`/auth/register${suffix}`} className="text-primary font-medium hover:underline">
+                  Create a shopper account
+                </Link>
+              </>
+            ) : (
+              <>
+                Selling something?{' '}
+                <Link href="/auth/register?as=seller" className="text-primary font-medium hover:underline">
+                  Open a store
+                </Link>
+              </>
+            )}
           </p>
         </div>
       </div>

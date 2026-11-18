@@ -50,7 +50,7 @@ export default function LandingPage() {
   // signed in yet — a logged-in user either already has a business (send them
   // to it) or just needs to register one (skip straight to that, not signup).
   const sellHref = !isAuthenticated
-    ? '/auth/register'
+    ? '/auth/register?as=seller'
     : hasBusiness
       ? '/dashboard'
       : '/dashboard/register-business';
