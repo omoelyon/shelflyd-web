@@ -123,6 +123,8 @@ export interface StorefrontInfo {
   description: string | null;
   logo: string | null;
   themeColor: string | null;
+  /** The published storefront design (see lib/storefront/design.ts); null until the seller publishes one. */
+  design: unknown | null;
 }
 
 // ─── Category ────────────────────────────────────────────────────────────────
