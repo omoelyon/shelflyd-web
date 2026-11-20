@@ -5,6 +5,38 @@ import { usePathname } from 'next/navigation';
 import type { StorefrontInfo } from '@/types';
 import { normalizeDesign, type PageKey, type StorefrontDesign } from '@/lib/storefront/design';
 
+const previewKey = (slug: string) => `sf-preview-${slug}`;
+
+/**
+ * The private draft-preview token for this store, if the visitor has one: from `?preview=` in the address (and kept
+ * in sessionStorage so it survives links that drop the query string), otherwise from sessionStorage. Client only.
+ */
+export function readPreviewToken(slug: string): string | null {
+  if (typeof window === 'undefined') return null;
+  const fromUrl = new URLSearchParams(window.location.search).get('preview');
+  try {
+    if (fromUrl) {
+      sessionStorage.setItem(previewKey(slug), fromUrl);
+      return fromUrl;
+    }
+    return sessionStorage.getItem(previewKey(slug));
+  } catch {
+    return fromUrl; // storage blocked: the preview lasts until the next full page load
+  }
+}
+
+/** Leaves draft preview: forgets the token and reloads the same page without `?preview=`. */
+export function exitPreview(slug: string): void {
+  try {
+    sessionStorage.removeItem(previewKey(slug));
+  } catch {
+    // nothing to clear
+  }
+  const url = new URL(window.location.href);
+  url.searchParams.delete('preview');
+  window.location.assign(url.toString());
+}
+
 interface StorefrontContextValue {
   slug: string;
   info: StorefrontInfo | undefined;
@@ -13,6 +45,8 @@ interface StorefrontContextValue {
   design: StorefrontDesign;
   /** The editor's live preview: links stay on the page and the theme is scoped to the preview instead of the whole document. */
   preview: boolean;
+  /** A shopper-side private draft preview (opened through the seller's preview link): the design shown is the unpublished draft. */
+  previewing: boolean;
   /** Preview only: the page being shown, so the header menu can highlight it (live pages work it out from the URL). */
   activePage: string | undefined;
 }
@@ -35,9 +69,10 @@ export function StorefrontProvider({ slug, info, isLoading, designOverride, prev
   const raw = designOverride ?? info?.design;
   const themeColor = info?.themeColor;
   const design = useMemo(() => normalizeDesign(raw, themeColor), [raw, themeColor]);
+  const previewing = !preview && info?.previewing === true;
   const value = useMemo(
-    () => ({ slug, info, isLoading, design, preview, activePage }),
-    [slug, info, isLoading, design, preview, activePage],
+    () => ({ slug, info, isLoading, design, preview, previewing, activePage }),
+    [slug, info, isLoading, design, preview, previewing, activePage],
   );
   return <StorefrontContext.Provider value={value}>{children}</StorefrontContext.Provider>;
 }

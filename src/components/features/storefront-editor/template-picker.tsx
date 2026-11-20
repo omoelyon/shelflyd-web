@@ -56,15 +56,15 @@ export default function TemplatePicker({ design, onApply }: Props) {
               onClick={() => choose(t)}
               aria-pressed={current}
               className={cn(
-                'group rounded-xl border p-2 text-left outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50',
+                'sf-press sf-lift group rounded-xl border bg-card p-2 text-left outline-none transition-[border-color,box-shadow,transform] duration-300 ease-(--ease-out) focus-visible:ring-3 focus-visible:ring-ring/50',
                 current ? 'border-primary ring-1 ring-primary' : 'hover:border-foreground/30',
               )}
             >
               <DesignThumbnail design={built} />
               <div className="mt-2 flex items-center gap-1.5">
                 <span className="text-sm font-semibold">{t.name}</span>
-                {current && <Check className="h-3.5 w-3.5 text-primary" aria-label="Current layout" />}
-                {based && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">Customised</span>}
+                {current && <Check className="sf-pop h-3.5 w-3.5 text-primary" aria-label="Current layout" />}
+                {based && <span className="animate-in fade-in-0 zoom-in-95 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">Customised</span>}
               </div>
               <p className="text-xs text-muted-foreground">{t.tagline}</p>
               <p className="mt-1 text-[11px] font-medium text-foreground/70">Best for: {t.bestFor}</p>

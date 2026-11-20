@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useCartDrawer } from './cart-drawer-store';
 import { CartLinesList, CartMessage, CartStockAlert, CartTotalBar, useStorefrontCart } from './cart-panel';
+import { stagger } from './motion';
 import { useStorefront } from './storefront-context';
 
 /**
@@ -37,7 +38,11 @@ export default function CartDrawer() {
   if (!isDrawer) return null;
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
+      <SheetContent
+        side="right"
+        // A longer, softer slide than the primitive's default: the whole panel travels in from the edge and settles.
+        className="w-full gap-0 p-0 duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] data-[side=right]:data-ending-style:translate-x-full data-[side=right]:data-starting-style:translate-x-full sm:max-w-md"
+      >
         <DrawerBody slug={slug} close={() => setOpen(false)} />
       </SheetContent>
     </Sheet>
@@ -53,12 +58,12 @@ function DrawerBody({ slug, close }: { slug: string; close: () => void }) {
 
   return (
     <>
-      <SheetHeader className="border-b p-4 pr-12">
+      <SheetHeader className="sf-rise border-b p-4 pr-12">
         <SheetTitle className="text-base">Your cart</SheetTitle>
         <SheetDescription>{info?.name ?? 'Your order'}</SheetDescription>
       </SheetHeader>
 
-      <div className="flex-1 space-y-4 overflow-y-auto p-4">
+      <div className="sf-rise flex-1 space-y-4 overflow-y-auto p-4" style={stagger(1)}>
         <CartMessage message={design.pages.cart.message} />
         {state.isLoading ? (
           <div className="space-y-3">
@@ -84,7 +89,7 @@ function DrawerBody({ slug, close }: { slug: string; close: () => void }) {
       </div>
 
       {cart && !state.isEmpty && (
-        <div className="space-y-3 border-t p-4">
+        <div className="sf-rise space-y-3 border-t p-4" style={stagger(2)}>
           <CartStockAlert issue={state.stockIssue} />
           <CartTotalBar state={state} slug={slug} onNavigate={close} />
           <Link href={fullCart} onClick={close} className="block text-center text-sm font-medium text-primary hover:underline">

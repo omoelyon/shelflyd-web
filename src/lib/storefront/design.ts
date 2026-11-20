@@ -172,7 +172,18 @@ export interface StorefrontDesign {
   theme: StorefrontTheme;
   header: StorefrontHeader;
   footer: StorefrontFooter;
+  /** How the store appears in search results and when its link is shared (all optional; falls back to the business's own details). */
+  seo: StorefrontSeo;
   pages: StorefrontPages;
+}
+
+export interface StorefrontSeo {
+  /** Page title in search results and browser tabs (<= 60). Empty = the business name. */
+  title: string;
+  /** The line under the title in search results and shared links (<= 160). Empty = the business description. */
+  description: string;
+  /** The picture shown when the link is shared (an https URL). Empty = the business logo. */
+  image: string;
 }
 
 /** The product page: photo beside the details (split) or a big photo above them (stacked). */
@@ -227,6 +238,7 @@ export function classicDesign(primary: string = DEFAULT_PRIMARY): StorefrontDesi
     theme: { primary, radius: 'soft', headingFont: 'manrope', bodyFont: 'inter' },
     header: { variant: 'classic', sticky: true },
     footer: { variant: 'dark' },
+    seo: { title: '', description: '', image: '' },
     pages: {
       home: {
         sections: [
@@ -415,6 +427,7 @@ export function normalizeDesign(raw: unknown, fallbackPrimary?: string | null): 
   const theme = obj(d.theme);
   const header = obj(d.header);
   const footer = obj(d.footer);
+  const seo = obj(d.seo);
   const rawPages = obj(d.pages);
   const normalizeList = (raw: unknown): StorefrontSection[] =>
     Array.isArray(raw) ? raw.map(normalizeSection).filter((x): x is StorefrontSection => x !== null) : [];
@@ -444,6 +457,7 @@ export function normalizeDesign(raw: unknown, fallbackPrimary?: string | null): 
     },
     header: { variant: oneOf(header.variant, ['classic', 'centered'] as const, 'classic'), sticky: bool(header.sticky, true) },
     footer: { variant: oneOf(footer.variant, ['dark', 'light'] as const, 'dark') },
+    seo: { title: str(seo.title), description: str(seo.description), image: str(seo.image) },
     pages: {
       home: { sections },
       product: {

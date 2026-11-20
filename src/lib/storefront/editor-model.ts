@@ -21,6 +21,7 @@ import {
   type SocialsSection,
   type StorefrontDesign,
   type StorefrontSection,
+  type StorefrontSeo,
   type TestimonialsSection,
 } from './design';
 
@@ -113,6 +114,8 @@ export const LIMITS = {
   socialUrl: 200,
   pageTitle: 40,
   cartMessage: 160,
+  seoTitle: 60,
+  seoDescription: 160,
 } as const;
 
 const uid = () => Math.random().toString(36).slice(2, 8);
@@ -336,6 +339,10 @@ export function setProductPage(d: StorefrontDesign, patch: Partial<ProductPageSe
   return { ...d, pages: { ...d.pages, product: { ...d.pages.product, ...patch } } };
 }
 
+export function setSeo(d: StorefrontDesign, patch: Partial<StorefrontSeo>): StorefrontDesign {
+  return { ...d, seo: { ...d.seo, ...patch } };
+}
+
 export function setCart(d: StorefrontDesign, patch: Partial<CartSettings>): StorefrontDesign {
   return { ...d, pages: { ...d.pages, cart: { ...d.pages.cart, ...patch } } };
 }
@@ -475,6 +482,9 @@ export function clientValidate(d: StorefrontDesign): string | null {
     const problem = validateSections(p.sections, { requireProducts: false, pageName: p.title.trim() });
     if (problem) return problem;
   }
+  if (d.seo.title.trim().length > LIMITS.seoTitle) return `The search title is too long (at most ${LIMITS.seoTitle} characters).`;
+  if (d.seo.description.trim().length > LIMITS.seoDescription) return `The search description is too long (at most ${LIMITS.seoDescription} characters).`;
+  if (!isSafeLink(d.seo.image)) return 'The sharing picture must be an https link.';
   if (d.pages.cart.message.trim().length > LIMITS.cartMessage) return `The cart message is too long (at most ${LIMITS.cartMessage} characters).`;
   return null;
 }

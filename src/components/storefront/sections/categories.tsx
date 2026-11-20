@@ -23,7 +23,7 @@ export default function Categories({ section }: { section: CategoriesSection }) 
   const primary = design.theme.primary;
   const chip = (selected: boolean) =>
     cn(
-      'shrink-0 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50',
+      'shrink-0 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm font-medium outline-none transition-[color,background-color,border-color,transform,translate,scale] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-95 focus-visible:ring-3 focus-visible:ring-ring/50',
       selected ? 'border-transparent' : 'bg-white text-muted-foreground hover:text-foreground',
     );
   const chipStyle = (selected: boolean) => (selected ? { backgroundColor: primary, color: readableTextOn(primary) } : undefined);

@@ -33,8 +33,8 @@ export default function Featured({ section }: { section: FeaturedSection }) {
         </div>
       ) : (
         <div className={grid}>
-          {products!.map((product) => (
-            <ProductTile key={product.id} product={product} look={section.variant} />
+          {products!.map((product, i) => (
+            <ProductTile key={product.id} product={product} look={section.variant} index={i} />
           ))}
         </div>
       )}

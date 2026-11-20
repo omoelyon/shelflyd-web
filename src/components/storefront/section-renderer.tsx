@@ -2,6 +2,8 @@
 
 import type { ComponentType } from 'react';
 import { CategoryFilterProvider } from './category-filter';
+import Reveal from './reveal';
+import { useStorefront } from './storefront-context';
 import type { SectionType, StorefrontSection } from '@/lib/storefront/design';
 import About from './sections/about';
 import AnnouncementBar from './sections/announcement-bar';
@@ -36,15 +38,28 @@ const REGISTRY: Registry = {
   socials: Socials,
 };
 
+/** Sections that sit at the very top of a page: they are on screen at once, so they are never scroll-revealed. */
+const ABOVE_THE_FOLD: SectionType[] = ['announcement', 'hero'];
+
 /** Renders a page's sections in order, skipping hidden ones and any type this version doesn't know. */
 export default function SectionList({ sections }: { sections: StorefrontSection[] }) {
+  // In the editor preview every section stays put, so what the seller is editing never hides itself.
+  const { preview } = useStorefront();
+  let rendered = 0;
   return (
     // One provider per page, so category chips only filter the products section on the same page.
     <CategoryFilterProvider>
       {sections.map((section) => {
         if (section.hidden) return null;
         const Component = REGISTRY[section.type] as ComponentType<{ section: StorefrontSection }> | undefined;
-        return Component ? <Component key={section.id} section={section} /> : null;
+        if (!Component) return null;
+        // The first two sections are above the fold on any screen; the rest rise in as they scroll into view.
+        const index = rendered++;
+        return (
+          <Reveal key={section.id} disabled={preview || index < 2 || ABOVE_THE_FOLD.includes(section.type)}>
+            <Component section={section} />
+          </Reveal>
+        );
       })}
     </CategoryFilterProvider>
   );

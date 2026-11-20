@@ -23,6 +23,7 @@ export default function LivePreview({ slug, design, page = 'home', className }: 
   const latest = useRef(design);
   const latestPage = useRef<PreviewPage>(page);
   const [device, setDevice] = useState<'phone' | 'desktop'>('desktop');
+  const [loaded, setLoaded] = useState(false);
 
   const post = useCallback((message: PreviewMessage) => {
     frame.current?.contentWindow?.postMessage(message, window.location.origin);
@@ -42,10 +43,19 @@ export default function LivePreview({ slug, design, page = 'home', className }: 
     send(design);
   }, [design, send]);
 
-  // Switching page only needs the page message.
+  // Switching page only needs the page message; the frame softly dips and returns so the swap doesn't feel like a jump.
+  const firstPage = useRef(true);
   useEffect(() => {
     latestPage.current = page;
     post({ type: 'sf-page', page });
+    if (firstPage.current) {
+      firstPage.current = false;
+      return;
+    }
+    const el = frame.current;
+    if (el && typeof el.animate === 'function' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.animate([{ opacity: 0.35, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 420, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+    }
   }, [page, post]);
 
   // The page announces itself when it loads (including after a reload) and gets the current design back.
@@ -62,7 +72,15 @@ export default function LivePreview({ slug, design, page = 'home', className }: 
     <div className={cn('flex flex-col gap-2', className)}>
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium text-muted-foreground">Live preview</p>
-        <div role="radiogroup" aria-label="Preview size" className="inline-flex rounded-lg border bg-background p-0.5">
+        <div role="radiogroup" aria-label="Preview size" className="relative inline-grid grid-cols-2 rounded-lg border bg-background p-0.5">
+          {/* The highlighted pill glides between the two choices. */}
+          <span
+            aria-hidden="true"
+            className={cn(
+              'pointer-events-none absolute inset-y-0.5 left-0.5 w-[calc(50%-2px)] rounded-md bg-primary shadow-sm transition-transform duration-300 ease-(--ease-in-out)',
+              device === 'desktop' && 'translate-x-full',
+            )}
+          />
           {(
             [
               { value: 'phone', label: 'Phone', Icon: Smartphone },
@@ -76,8 +94,8 @@ export default function LivePreview({ slug, design, page = 'home', className }: 
               aria-checked={device === value}
               onClick={() => setDevice(value)}
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-                device === value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+                'relative z-10 inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium outline-none transition-colors duration-300 ease-(--ease-out) focus-visible:ring-3 focus-visible:ring-ring/50',
+                device === value ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
               )}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -91,8 +109,15 @@ export default function LivePreview({ slug, design, page = 'home', className }: 
           ref={frame}
           title="Storefront preview"
           src={`/storefront-preview?slug=${encodeURIComponent(slug)}`}
-          onLoad={() => send(latest.current)}
-          className={cn('h-full min-h-[480px] rounded-lg border bg-white shadow-sm transition-[width] duration-200', device === 'phone' ? 'w-[390px] max-w-full' : 'w-full')}
+          onLoad={() => {
+            send(latest.current);
+            setLoaded(true);
+          }}
+          className={cn(
+            'h-full min-h-[480px] rounded-lg border bg-white shadow-sm transition-[width,opacity] duration-500 ease-(--ease-in-out)',
+            device === 'phone' ? 'w-[390px] max-w-full' : 'w-full',
+            loaded ? 'opacity-100' : 'opacity-0',
+          )}
         />
       </div>
     </div>

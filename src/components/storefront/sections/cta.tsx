@@ -21,7 +21,7 @@ export default function Cta({ section }: { section: CtaSection }) {
         {showButton && (
           <SectionLink
             href={buttonLink}
-            className="inline-flex h-11 items-center rounded-lg px-6 text-sm font-semibold shadow-sm transition-opacity hover:opacity-90"
+            className="inline-flex h-11 items-center rounded-lg px-6 text-sm font-semibold shadow-sm transition-[opacity,transform,translate,scale,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:opacity-95 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
             style={{ backgroundColor: ink, color: primary }}
           >
             {buttonLabel}

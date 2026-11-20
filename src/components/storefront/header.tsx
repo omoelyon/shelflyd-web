@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { ArrowLeft, ShoppingCart, Store } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +9,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { readableTextOn } from '@/lib/storefront/design';
 import { useCartDrawer } from './cart-drawer-store';
+import { useChangePulse } from './use-change-pulse';
+import { useHydrated } from './use-hydrated';
 import { SfLink } from './sf-link';
 import { useActivePage, useNavPages, useStorefront } from './storefront-context';
 
@@ -56,20 +59,33 @@ function Brand() {
   );
 }
 
+/**
+ * The item count on the cart icon. It appears (and bumps whenever the count changes) with a small spring pop, but
+ * never on the first render, so a page load doesn't flash it.
+ */
+function CartBadge({ count, primary }: { count: number; primary: string }) {
+  const hydrated = useHydrated();
+  const pulses = useChangePulse(count, hydrated);
+  if (count <= 0) return null;
+  return (
+    <Badge
+      // A new key remounts the badge, which replays the pop animation once per change.
+      key={pulses}
+      className={cn('absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs', pulses > 0 && 'sf-pop')}
+      style={{ backgroundColor: primary, color: readableTextOn(primary) }}
+    >
+      {count > 9 ? '9+' : count}
+    </Badge>
+  );
+}
+
 function CartLink({ totalItems }: { totalItems: number }) {
   const { slug, design, preview } = useStorefront();
   const primary = design.theme.primary;
   const inner = (
-    <div className="h-9 w-9 rounded-lg flex items-center justify-center text-[#64748b] hover:text-[#091426] hover:bg-[#eff4ff] transition-colors">
+    <div className="h-9 w-9 rounded-lg flex items-center justify-center text-[#64748b] transition-[color,background-color,transform,translate,scale] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:text-[#091426] hover:bg-[#eff4ff] active:scale-90">
       <ShoppingCart className="h-4.5 w-4.5" />
-      {totalItems > 0 && (
-        <Badge
-          className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
-          style={{ backgroundColor: primary, color: readableTextOn(primary) }}
-        >
-          {totalItems > 9 ? '9+' : totalItems}
-        </Badge>
-      )}
+      <CartBadge count={totalItems} primary={primary} />
     </div>
   );
   // With the drawer style the cart slides in over the page instead of opening the cart page.
@@ -106,7 +122,7 @@ function NavLinks({ className, listClassName }: { className?: string; listClassN
             <SfLink
               href={l.href}
               aria-current={active === l.key ? 'page' : undefined}
-              className="block whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium text-[#64748b] outline-none transition-colors hover:text-[#091426] focus-visible:ring-3 focus-visible:ring-ring/50 aria-[current=page]:bg-primary/10 aria-[current=page]:text-[#091426]"
+              className="relative block whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium text-[#64748b] outline-none transition-[color,background-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] after:absolute after:inset-x-2.5 after:bottom-0.5 after:h-0.5 after:origin-left after:scale-x-0 after:rounded-full after:bg-primary after:transition-transform after:duration-300 after:ease-[cubic-bezier(0.22,1,0.36,1)] hover:text-[#091426] hover:after:scale-x-100 focus-visible:ring-3 focus-visible:ring-ring/50 aria-[current=page]:bg-primary/10 aria-[current=page]:text-[#091426] aria-[current=page]:after:scale-x-100"
             >
               {l.label}
             </SfLink>
@@ -123,7 +139,7 @@ function LoginLink() {
   return (
     <SfLink
       href="/auth/login"
-      className={cn(buttonVariants({ size: 'sm' }), 'shadow-sm hover:opacity-90 transition-opacity')}
+      className={cn(buttonVariants({ size: 'sm' }), 'shadow-sm transition-[opacity,transform,translate,scale] duration-200 hover:opacity-90 active:scale-95')}
       style={{ backgroundColor: primary, color: readableTextOn(primary) }}
     >
       Login
@@ -131,11 +147,39 @@ function LoginLink() {
   );
 }
 
+/** True once the page has scrolled a little, so a sticky header can lift off the content with a stronger shadow. */
+function useScrolled(enabled: boolean): boolean {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    if (!enabled) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setScrolled(window.scrollY > 8);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update); // at most once per frame
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    frame = requestAnimationFrame(update); // pages restored mid-scroll start in the right state
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }, [enabled]);
+  return enabled && scrolled;
+}
+
 export default function StorefrontHeader({ totalItems, isAuthenticated }: HeaderProps) {
   const { design } = useStorefront();
   const { variant, sticky } = design.header;
+  const scrolled = useScrolled(sticky);
   const bar = cn(
-    'z-50 bg-white/85 backdrop-blur-xl border-b border-[#e2e8f0]/60 shadow-[0_1px_3px_0_rgba(9,20,38,0.06)]',
+    // The shadow and glass fade between "resting" and "scrolled" instead of snapping.
+    'z-50 border-b border-[#e2e8f0]/60 backdrop-blur-xl transition-[box-shadow,background-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
+    scrolled
+      ? 'bg-white/95 shadow-[0_8px_28px_-14px_rgba(9,20,38,0.28)]'
+      : 'bg-white/85 shadow-[0_1px_3px_0_rgba(9,20,38,0.06)]',
     sticky && 'sticky top-0',
   );
 

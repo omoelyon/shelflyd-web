@@ -3,10 +3,11 @@
 import { readableTextOn, type AnnouncementSection } from '@/lib/storefront/design';
 import { SfLink } from '../sf-link';
 import { useStorefront } from '../storefront-context';
+import { storePath } from './section-link';
 
 /** A thin full-width strip in the brand colour for a promo or notice ("Free delivery over ₦20,000"). */
 export default function AnnouncementBar({ section }: { section: AnnouncementSection }) {
-  const { design } = useStorefront();
+  const { design, slug } = useStorefront();
   const { text, link } = section.props;
   if (!text.trim()) return null;
   const style = { backgroundColor: design.theme.primary, color: readableTextOn(design.theme.primary) };
@@ -21,11 +22,11 @@ export default function AnnouncementBar({ section }: { section: AnnouncementSect
   }
   const external = /^https?:\/\//i.test(link);
   return external ? (
-    <a href={link} target="_blank" rel="noopener noreferrer" className={`${className} hover:opacity-90`} style={style}>
+    <a href={link} target="_blank" rel="noopener noreferrer" className={`${className} transition-opacity duration-200 hover:opacity-90`} style={style}>
       {content}
     </a>
   ) : (
-    <SfLink href={link} className={`${className} hover:opacity-90`} style={style}>
+    <SfLink href={storePath(slug, link)} className={`${className} transition-opacity duration-200 hover:opacity-90`} style={style}>
       {content}
     </SfLink>
   );

@@ -11,8 +11,9 @@ export interface StoreCategory {
 }
 
 export const storefrontApi = {
-  getInfo: async (slug: string): Promise<StorefrontInfo> => {
-    const res = await apiClient.get(`/storefront/${slug}`);
+  /** The store's details and published design. With a valid private preview token it returns the saved draft instead. */
+  getInfo: async (slug: string, previewToken?: string | null): Promise<StorefrontInfo> => {
+    const res = await apiClient.get(`/storefront/${slug}`, { params: previewToken ? { preview: previewToken } : undefined });
     return res.data;
   },
 

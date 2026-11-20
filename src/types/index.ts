@@ -125,6 +125,8 @@ export interface StorefrontInfo {
   themeColor: string | null;
   /** The published storefront design (see lib/storefront/design.ts); null until the seller publishes one. */
   design: unknown | null;
+  /** True when this response is a private draft preview (the design above is the unpublished draft). */
+  previewing?: boolean;
 }
 
 // ─── Category ────────────────────────────────────────────────────────────────

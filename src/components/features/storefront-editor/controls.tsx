@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 /** A titled group of controls in the editor's left column. */
 export function Panel({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
-    <section className="rounded-xl border bg-card p-4 space-y-4">
+    <section className="sf-rise rounded-xl border bg-card p-4 space-y-4">
       <div>
         <h2 className="text-sm font-semibold">{title}</h2>
         {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
@@ -78,7 +78,7 @@ export function Segmented<T extends string | number>({
             title={o.hint}
             onClick={() => onChange(o.value)}
             className={cn(
-              'rounded-lg border px-2 py-2 text-center text-xs font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50',
+              'sf-press rounded-lg border px-2 py-2 text-center text-xs font-medium outline-none transition-[color,background-color,border-color,box-shadow,transform] duration-200 ease-(--ease-out) focus-visible:ring-3 focus-visible:ring-ring/50',
               selected ? 'border-primary bg-primary/10 text-foreground ring-1 ring-primary' : 'bg-background text-muted-foreground hover:bg-muted hover:text-foreground',
             )}
           >

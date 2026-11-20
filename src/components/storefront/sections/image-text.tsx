@@ -1,9 +1,9 @@
 'use client';
 
-import Image from 'next/image';
 import { readableTextOn, type ImageTextSection } from '@/lib/storefront/design';
 import { cn } from '@/lib/utils';
 import { useStorefront } from '../storefront-context';
+import SafeImage from './safe-image';
 import SectionLink from './section-link';
 
 /** A photo beside a heading, some text and an optional button. On phones the photo comes first. */
@@ -22,7 +22,7 @@ export default function ImageText({ section }: { section: ImageTextSection }) {
       {buttonLabel.trim() && buttonLink.trim() && (
         <SectionLink
           href={buttonLink}
-          className="mt-5 inline-flex h-10 items-center rounded-lg px-5 text-sm font-medium shadow-sm transition-opacity hover:opacity-90"
+          className="mt-5 inline-flex h-10 items-center rounded-lg px-5 text-sm font-medium shadow-sm transition-[opacity,transform,translate,scale,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:opacity-95 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
           style={{ backgroundColor: primary, color: readableTextOn(primary) }}
         >
           {buttonLabel}
@@ -36,7 +36,7 @@ export default function ImageText({ section }: { section: ImageTextSection }) {
       <div className={cn('grid items-center gap-6 md:gap-10', hasImage && hasText && 'md:grid-cols-2')}>
         {hasImage && (
           <div className={cn('relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted', section.variant === 'right' && 'md:order-2')}>
-            <Image src={image} alt={heading.trim()} fill className="object-cover" unoptimized />
+            <SafeImage src={image} alt={heading.trim()} />
           </div>
         )}
         {text}

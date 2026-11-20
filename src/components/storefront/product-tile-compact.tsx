@@ -2,7 +2,9 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import type { CSSProperties } from 'react';
 import { Package } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { Product } from '@/types';
 import { SfLink } from './sf-link';
 import { useStorefront } from './storefront-context';
@@ -14,7 +16,7 @@ const STATUS_DOT: Partial<Record<Product['status'], { label: string; dot: string
 };
 
 /** The "compact" product look: a small, dense card so a big catalogue stays scannable. */
-export default function ProductTileCompact({ product }: { product: Product }) {
+export default function ProductTileCompact({ product, className, style }: { product: Product; className?: string; style?: CSSProperties }) {
   const { slug } = useStorefront();
   const [imageFailed, setImageFailed] = useState(false);
   const lowest = product.prices?.reduce((min, p) => (p.price < min.price ? p : min), product.prices[0]);
@@ -22,8 +24,8 @@ export default function ProductTileCompact({ product }: { product: Product }) {
   const soldOut = product.status === 'OUT_OF_STOCK';
 
   return (
-    <SfLink href={`/storefront/${slug}/products/${product.id}`} className="group block h-full">
-      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md">
+    <SfLink href={`/storefront/${slug}/products/${product.id}`} className={cn('group block h-full', className)} style={style}>
+      <div className="sf-lift flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card">
         <div className="relative aspect-square overflow-hidden bg-muted">
           {product.image && !imageFailed ? (
             <Image
@@ -32,7 +34,7 @@ export default function ProductTileCompact({ product }: { product: Product }) {
               fill
               unoptimized
               onError={() => setImageFailed(true)}
-              className={`object-cover transition-transform duration-300 group-hover:scale-105 ${soldOut ? 'opacity-50 grayscale' : ''}`}
+              className={`object-cover transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105 ${soldOut ? 'opacity-50 grayscale' : 'sf-img-in'}`}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/50">
@@ -41,7 +43,7 @@ export default function ProductTileCompact({ product }: { product: Product }) {
           )}
         </div>
         <div className="flex flex-1 flex-col p-2.5">
-          <h3 className="line-clamp-2 text-xs font-medium leading-snug group-hover:text-primary">{product.name}</h3>
+          <h3 className="line-clamp-2 text-xs font-medium leading-snug transition-colors duration-200 group-hover:text-primary">{product.name}</h3>
           <div className="mt-auto pt-1.5">
             <p className="text-xs font-semibold text-primary">
               {lowest ? `${lowest.currency} ${lowest.price.toLocaleString()}` : 'No price set'}

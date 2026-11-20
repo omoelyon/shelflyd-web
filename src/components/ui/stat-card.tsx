@@ -34,6 +34,7 @@ export default function StatCard({
 
   return (
     <div
+      data-slot="stat-card"
       className={cn(
         'bg-white rounded-2xl shadow-card-md flex items-center',
         isMd ? 'p-4 gap-3.5' : 'p-3 gap-3',

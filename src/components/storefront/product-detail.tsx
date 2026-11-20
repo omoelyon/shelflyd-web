@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ArrowLeft, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Check, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
 import { cartApi } from '@/lib/api/cart';
 import { useCartStore } from '@/stores/cart.store';
@@ -18,6 +18,8 @@ import { cn, formatStatus, getApiError } from '@/lib/utils';
 import { BuildSetButton } from '@/components/features/cart-sets/set-builder-dialog';
 import type { Product } from '@/types';
 import { useCartDrawer } from './cart-drawer-store';
+import { stagger } from './motion';
+import { useChangePulse } from './use-change-pulse';
 import { SfLink } from './sf-link';
 import { useStorefront } from './storefront-context';
 
@@ -40,12 +42,26 @@ export default function ProductDetail({ product }: { product: Product }) {
   // The preview starts on the first unit so the price shows; a live shopper still chooses one.
   const [selectedUnitId, setSelectedUnitId] = useState<string>(() => (preview && product.prices?.[0] ? String(product.prices[0].unit) : ''));
   const [quantity, setQuantity] = useState(1);
+  const qtyPulses = useChangePulse(quantity);
   const [note, setNote] = useState('');
   // SHF-16: fall back gracefully if the product's image URL doesn't actually resolve.
   const [imageFailed, setImageFailed] = useState(false);
   const id = product.id;
 
+  // After a successful add the button shows a brief "Added" tick, then goes back to normal. It stays clickable.
+  const [justAdded, setJustAdded] = useState(false);
+  const addedTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (addedTimer.current) window.clearTimeout(addedTimer.current);
+    },
+    [],
+  );
+
   const afterAdded = () => {
+    setJustAdded(true);
+    if (addedTimer.current) window.clearTimeout(addedTimer.current);
+    addedTimer.current = window.setTimeout(() => setJustAdded(false), 1600);
     toast.success('Added to cart!', { action: { label: 'View Cart', onClick: () => router.push(`/storefront/${slug}/cart`) } });
     setNote('');
     // With the slide-in cart, show the shopper what they just added.
@@ -95,14 +111,14 @@ export default function ProductDetail({ product }: { product: Product }) {
   const image = (
     <div
       className={cn(
-        'relative w-full overflow-hidden rounded-2xl bg-muted',
+        'sf-scale-in relative w-full overflow-hidden rounded-2xl bg-muted',
         RATIO_CLASS[imageRatio],
         // Beside the details the photo stays at the top instead of stretching to the height of a long column.
         !stacked && 'self-start',
       )}
     >
       {product.image && !imageFailed ? (
-        <Image src={product.image} alt={product.name} fill className="object-cover" unoptimized onError={() => setImageFailed(true)} />
+        <Image src={product.image} alt={product.name} fill className="sf-img-in object-cover" unoptimized onError={() => setImageFailed(true)} />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">No image</div>
       )}
@@ -110,7 +126,7 @@ export default function ProductDetail({ product }: { product: Product }) {
   );
 
   const heading = (
-    <div className={cn(stacked && 'text-center')}>
+    <div className={cn('sf-rise', stacked && 'text-center')} style={stagger(1)}>
       <div className={cn('flex items-center gap-2 mb-1', stacked && 'justify-center')}>
         {product.type && <Badge variant="outline">{product.type}</Badge>}
         <Badge
@@ -138,7 +154,7 @@ export default function ProductDetail({ product }: { product: Product }) {
 
       {/* Unit + price selection */}
       {product.prices?.length > 0 && (
-        <div className="space-y-3">
+        <div className="sf-rise space-y-3" style={stagger(2)}>
           <label className="text-sm font-medium">Select Unit</label>
           <Select value={selectedUnitId} onValueChange={(v) => setSelectedUnitId(v ?? '')}>
             <SelectTrigger>
@@ -156,7 +172,8 @@ export default function ProductDetail({ product }: { product: Product }) {
           </Select>
 
           {selectedPrice && (
-            <p className="text-2xl font-bold text-primary">
+            // Keyed by the unit so the price softly fades in again when the shopper switches unit.
+            <p key={selectedPrice.unit} className="sf-fade-in text-2xl font-bold tabular-nums text-primary">
               {selectedPrice.currency} {selectedPrice.price.toLocaleString()}
             </p>
           )}
@@ -164,21 +181,24 @@ export default function ProductDetail({ product }: { product: Product }) {
       )}
 
       {/* Quantity */}
-      <div className="flex items-center gap-3">
+      <div className="sf-rise flex items-center gap-3" style={stagger(3)}>
         <label className="text-sm font-medium">Qty:</label>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
+          <Button variant="outline" size="icon" className="active:scale-90" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
             -
           </Button>
-          <span className="w-8 text-center font-medium">{quantity}</span>
-          <Button variant="outline" size="icon" onClick={() => setQuantity((q) => q + 1)}>
+          {/* Keyed by the quantity so the number gives a tiny bump each time it changes. */}
+          <span key={qtyPulses} className={cn('w-8 text-center font-medium tabular-nums', qtyPulses > 0 && 'sf-bump')}>
+            {quantity}
+          </span>
+          <Button variant="outline" size="icon" className="active:scale-90" onClick={() => setQuantity((q) => q + 1)}>
             +
           </Button>
         </div>
       </div>
 
       {/* Note */}
-      <div className="space-y-1.5">
+      <div className="sf-rise space-y-1.5" style={stagger(4)}>
         <label className="text-sm font-medium">Note (optional)</label>
         <Textarea
           placeholder="Ripeness preference, delivery instructions for this item…"
@@ -190,16 +210,24 @@ export default function ProductDetail({ product }: { product: Product }) {
       </div>
 
       {/* Add to cart. In the preview it looks live but does nothing. */}
+      <div className="sf-rise" style={stagger(5)}>
       <Button
-        className="w-full bg-primary text-primary-foreground hover:opacity-90"
+        className="w-full bg-primary text-primary-foreground transition-[opacity,scale] duration-200 hover:opacity-90 active:scale-[0.98]"
         size="lg"
         disabled={!preview && (!selectedUnitId || !buyable || addToCart.isPending)}
         aria-disabled={preview || undefined}
         onClick={handleAddToCart}
       >
-        <ShoppingCart className="mr-2 h-4 w-4" />
-        {addToCart.isPending ? 'Adding...' : product.status === 'OUT_OF_STOCK' ? 'Sold out' : 'Add to Cart'}
+        {justAdded && !addToCart.isPending ? (
+          <Check className="sf-pop mr-2 h-4 w-4" aria-hidden="true" />
+        ) : (
+          <ShoppingCart className="mr-2 h-4 w-4" aria-hidden="true" />
+        )}
+        <span aria-live="polite">
+          {addToCart.isPending ? 'Adding...' : justAdded ? 'Added' : product.status === 'OUT_OF_STOCK' ? 'Sold out' : 'Add to Cart'}
+        </span>
       </Button>
+      </div>
       {buyable && product.prices?.length > 0 && (
         <div className="text-center">
           {preview ? (

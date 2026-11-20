@@ -14,6 +14,7 @@ import { useCartStore } from '@/stores/cart.store';
 import { toCartResponse, useGuestCartStore } from '@/stores/guest-cart.store';
 import { cartStockIssue } from '@/lib/cart-stock';
 import CartLines from '@/components/features/cart/cart-lines';
+import { useChangePulse } from './use-change-pulse';
 import type { CartProduct, CartResponse } from '@/types';
 
 /**
@@ -163,13 +164,17 @@ export function CartTotalBar({
   onNavigate?: () => void;
 }) {
   const { cart } = state;
+  // The total gives a small bump each time it changes (never on first render), so a quantity change is felt.
+  const totalPulses = useChangePulse(cart?.totalCost);
   if (!cart) return null;
   const primary = 'bg-primary text-primary-foreground hover:opacity-90';
   return (
     <div className="flex items-center justify-between gap-4">
       <div>
         <p className="text-sm text-muted-foreground">Total</p>
-        <p className="text-xl font-bold text-primary">₦{cart.totalCost.toLocaleString()}</p>
+        <p key={totalPulses} className={cn('text-xl font-bold tabular-nums text-primary', totalPulses > 0 && 'sf-bump')}>
+          ₦{cart.totalCost.toLocaleString()}
+        </p>
       </div>
       {state.isAuthenticated ? (
         state.stockIssue ? (

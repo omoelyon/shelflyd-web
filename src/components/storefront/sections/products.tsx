@@ -75,8 +75,8 @@ export default function Products({ section }: { section: ProductsSection }) {
       ) : (
         <>
           <div className={grid}>
-            {filtered.map((product) => (
-              <ProductTile key={product.id} product={product} look={section.variant} />
+            {filtered.map((product, i) => (
+              <ProductTile key={product.id} product={product} look={section.variant} index={i} />
             ))}
           </div>
 

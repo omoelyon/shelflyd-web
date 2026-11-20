@@ -87,7 +87,7 @@ export default function BrandControls({ design, onChange }: Props) {
               aria-pressed={theme.primary.toLowerCase() === hex}
               onClick={() => setColor(hex)}
               className={cn(
-                'h-7 w-7 rounded-full border-2 outline-none transition-transform focus-visible:ring-3 focus-visible:ring-ring/50',
+                'h-7 w-7 rounded-full border-2 outline-none transition-transform duration-300 ease-(--ease-spring) focus-visible:ring-3 focus-visible:ring-ring/50',
                 theme.primary.toLowerCase() === hex ? 'scale-110 border-foreground' : 'border-white shadow-sm hover:scale-105',
               )}
               style={{ backgroundColor: hex }}

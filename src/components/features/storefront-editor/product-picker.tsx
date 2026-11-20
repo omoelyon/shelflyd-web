@@ -51,7 +51,7 @@ export default function ProductPicker({ value, onChange, max }: Props) {
           {value.map((id, index) => {
             const name = byId.get(id)?.name ?? (isLoading ? 'Loading…' : 'Product no longer available');
             return (
-              <li key={id} className="flex items-center gap-1 rounded-lg border bg-background py-1 pl-2.5 pr-1">
+              <li key={id} className="animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 flex items-center gap-1 rounded-lg border bg-background py-1 pl-2.5 pr-1 duration-300 ease-(--ease-out)">
                 <span className="min-w-0 flex-1 truncate text-sm">{name}</span>
                 <Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label={`Move ${name} up`} disabled={index === 0} onClick={() => move(index, index - 1)}>
                   <ArrowUp />

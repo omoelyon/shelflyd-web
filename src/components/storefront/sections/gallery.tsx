@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import type { GallerySection } from '@/lib/storefront/design';
 import { cn } from '@/lib/utils';
+import { stagger } from '../motion';
+import SafeImage from './safe-image';
 
 /** A grid of square photos; tapping one opens it larger. */
 export default function Gallery({ section }: { section: GallerySection }) {
@@ -19,15 +20,15 @@ export default function Gallery({ section }: { section: GallerySection }) {
       {title.trim() && <h2 className="mb-6 text-xl font-semibold">{title}</h2>}
       <ul className={cn('grid gap-3', columns)}>
         {images.map((img, i) => (
-          <li key={`${img.url}-${i}`}>
+          <li key={`${img.url}-${i}`} className="sf-rise" style={stagger(i)}>
             <figure>
               <button
                 type="button"
                 onClick={() => setOpenIndex(i)}
                 aria-label={img.caption ? `Enlarge photo: ${img.caption}` : `Enlarge photo ${i + 1}`}
-                className="group relative block aspect-square w-full overflow-hidden rounded-xl bg-muted outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="group relative block aspect-square w-full overflow-hidden rounded-xl bg-muted outline-none transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <Image src={img.url} alt={img.caption} fill className="object-cover transition-transform duration-300 group-hover:scale-105" unoptimized />
+                <SafeImage src={img.url} alt={img.caption} className="transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105" />
               </button>
               {img.caption && <figcaption className="mt-1.5 text-xs text-muted-foreground">{img.caption}</figcaption>}
             </figure>
@@ -36,13 +37,13 @@ export default function Gallery({ section }: { section: GallerySection }) {
       </ul>
 
       <Dialog open={current != null} onOpenChange={(open) => !open && setOpenIndex(null)}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="duration-200 sm:max-w-3xl">
           <DialogTitle className="sr-only">{current?.caption || 'Photo'}</DialogTitle>
           <DialogDescription className="sr-only">An enlarged photo from the gallery.</DialogDescription>
           {current && (
             <div className="space-y-2">
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-muted">
-                <Image src={current.url} alt={current.caption} fill className="object-contain" unoptimized />
+                <SafeImage src={current.url} alt={current.caption} className="object-contain" />
               </div>
               {current.caption && <p className="text-sm text-muted-foreground">{current.caption}</p>}
             </div>

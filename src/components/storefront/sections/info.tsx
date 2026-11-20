@@ -39,7 +39,7 @@ export default function Info({ section }: { section: InfoSection }) {
             <Phone className={icon} aria-hidden="true" />
             <div>
               <p className="font-medium">Call</p>
-              <a href={`tel:${phone.replace(/\s+/g, '')}`} className="text-muted-foreground hover:text-foreground hover:underline">
+              <a href={`tel:${phone.replace(/\s+/g, '')}`} className="text-muted-foreground transition-colors duration-200 hover:text-foreground hover:underline">
                 {phone}
               </a>
             </div>
@@ -50,7 +50,7 @@ export default function Info({ section }: { section: InfoSection }) {
             <Mail className={icon} aria-hidden="true" />
             <div>
               <p className="font-medium">Email</p>
-              <a href={`mailto:${email}`} className="break-all text-muted-foreground hover:text-foreground hover:underline">
+              <a href={`mailto:${email}`} className="break-all text-muted-foreground transition-colors duration-200 hover:text-foreground hover:underline">
                 {email}
               </a>
             </div>

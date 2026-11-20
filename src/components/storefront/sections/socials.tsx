@@ -37,7 +37,7 @@ export default function Socials({ section }: { section: SocialsSection }) {
             <SectionLink
               href={l.href}
               aria-label={`${l.label} (opens in a new tab)`}
-              className="flex h-11 w-11 items-center justify-center rounded-full border bg-white text-muted-foreground outline-none transition-colors hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="flex h-11 w-11 items-center justify-center rounded-full border bg-white text-muted-foreground outline-none transition-[color,border-color,transform,translate,scale,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-sm active:scale-95 focus-visible:ring-3 focus-visible:ring-ring/50"
             >
               {l.icon}
             </SectionLink>

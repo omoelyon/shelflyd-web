@@ -41,6 +41,8 @@ export default function DashboardSidebar() {
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
 
+  const activeIndex = navItems.findIndex((item) => isActive(item.href, item.exact));
+
   const initials = user
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
     : '?';
@@ -48,7 +50,7 @@ export default function DashboardSidebar() {
   return (
     <aside
       className={cn(
-        'hidden md:flex flex-col bg-[#091426] transition-all duration-300 ease-in-out shrink-0 relative',
+        'hidden md:flex flex-col bg-[#091426] transition-[width] duration-300 ease-(--ease-in-out) shrink-0 relative',
         collapsed ? 'w-[60px]' : 'w-[220px]'
       )}
     >
@@ -88,29 +90,44 @@ export default function DashboardSidebar() {
             Main Menu
           </p>
         )}
-        {navItems.map(({ href, label, icon: Icon, exact }) => {
-          const active = isActive(href, exact);
-          return (
-            <Link
-              key={href}
-              href={href}
-              title={collapsed ? label : undefined}
-              className={cn(
-                'flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150 relative',
-                collapsed ? 'justify-center h-9 w-9 mx-auto' : 'px-3 py-2',
-                active
-                  ? 'bg-[#0058be] text-white shadow-[0_0_16px_rgba(0,88,190,0.30)]'
-                  : 'text-slate-400 hover:bg-white/[0.07] hover:text-slate-200'
-              )}
+        <div className="relative flex flex-col gap-0.5">
+          {/* The highlight glides to the active item instead of jumping (each row is 36px tall plus a 2px gap). */}
+          {activeIndex >= 0 && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute left-0 top-0 w-full transition-transform duration-300 ease-(--ease-in-out)"
+              style={{ transform: `translateY(${activeIndex * 38}px)` }}
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{label}</span>}
-              {active && !collapsed && (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white/60 shrink-0" />
-              )}
-            </Link>
-          );
-        })}
+              <span
+                className={cn(
+                  'block h-9 rounded-lg bg-[#0058be] shadow-[0_0_16px_rgba(0,88,190,0.30)] transition-[width,margin] duration-300 ease-(--ease-in-out)',
+                  collapsed ? 'mx-auto w-9' : 'w-full'
+                )}
+              />
+            </span>
+          )}
+          {navItems.map(({ href, label, icon: Icon, exact }) => {
+            const active = isActive(href, exact);
+            return (
+              <Link
+                key={href}
+                href={href}
+                title={collapsed ? label : undefined}
+                className={cn(
+                  'group/nav relative z-10 flex h-9 items-center gap-3 rounded-lg text-sm font-medium transition-[color,background-color,transform] duration-200 ease-(--ease-out) active:scale-[0.98]',
+                  collapsed ? 'mx-auto w-9 justify-center' : 'px-3',
+                  active ? 'text-white' : 'text-slate-400 hover:bg-white/[0.07] hover:text-slate-200'
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0 transition-transform duration-200 ease-(--ease-spring) group-hover/nav:scale-110" />
+                {!collapsed && <span>{label}</span>}
+                {active && !collapsed && (
+                  <span className="sf-pop ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-white/60" />
+                )}
+              </Link>
+            );
+          })}
+        </div>
       </nav>
 
       {/* User footer */}

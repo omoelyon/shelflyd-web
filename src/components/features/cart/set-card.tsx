@@ -62,7 +62,7 @@ export default function SetCard({ businessId, set, onEdit }: SetCardProps) {
     run(() => updateSet(group.groupId, { name: group.name, sets, items: toSetItems(lines) }), 'Could not update the number of sets.');
 
   return (
-    <section aria-label={`${group.name}, ${group.sets} ${group.sets === 1 ? 'set' : 'sets'}`} className="rounded-xl border bg-card p-3">
+    <section aria-label={`${group.name}, ${group.sets} ${group.sets === 1 ? 'set' : 'sets'}`} className="sf-rise rounded-xl border bg-card p-3">
       <div className="flex items-center justify-between gap-3">
         <h3 className="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
           <Layers className="h-4 w-4 shrink-0 text-[#0058be]" aria-hidden="true" />

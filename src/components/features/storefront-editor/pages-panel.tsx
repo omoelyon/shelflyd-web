@@ -24,6 +24,8 @@ interface PanelProps {
   current: EditorPage;
   onSelect: (page: EditorPage) => void;
   onChange: (design: StorefrontDesign) => void;
+  /** Someone who can look but not change the design: pages can still be opened, but not added. */
+  readOnly?: boolean;
 }
 
 function Entry({
@@ -46,7 +48,7 @@ function Entry({
         onClick={onClick}
         aria-current={selected ? 'true' : undefined}
         className={cn(
-          'flex w-full items-center gap-2.5 rounded-lg border px-2.5 py-2 text-left outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50',
+          'sf-press flex w-full items-center gap-2.5 rounded-lg border px-2.5 py-2 text-left outline-none transition-[color,background-color,border-color,box-shadow,transform] duration-200 ease-(--ease-out) focus-visible:ring-3 focus-visible:ring-ring/50',
           selected ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'bg-background hover:bg-muted',
         )}
       >
@@ -59,7 +61,7 @@ function Entry({
 }
 
 /** Pick which page to edit: Home, the seller's extra pages, then the product page and the cart. Also adds a page. */
-export function PagesPanel({ design, current, onSelect, onChange }: PanelProps) {
+export function PagesPanel({ design, current, onSelect, onChange, readOnly = false }: PanelProps) {
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState('');
   const full = design.pages.custom.length >= MAX_CUSTOM_PAGES;
@@ -121,7 +123,7 @@ export function PagesPanel({ design, current, onSelect, onChange }: PanelProps) 
         </form>
       ) : (
         <div>
-          <Button type="button" variant="outline" className="w-full" disabled={full} onClick={() => setAdding(true)}>
+          <Button type="button" variant="outline" className="w-full" disabled={full || readOnly} onClick={() => setAdding(true)}>
             <Plus />
             Add a page
           </Button>

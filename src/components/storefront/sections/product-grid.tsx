@@ -2,6 +2,7 @@
 
 import ProductCard from '@/components/features/products/product-card';
 import { cn } from '@/lib/utils';
+import type { CSSProperties } from 'react';
 import type { Product } from '@/types';
 import ProductTileCompact from '../product-tile-compact';
 import ProductTilePortrait from '../product-tile-portrait';
@@ -18,16 +19,22 @@ export function productGridClass(look: ProductLook, columns: 3 | 4): string {
 
 export const productSkeletonHeight = (look: ProductLook) => (look === 'portrait' ? 'h-80' : look === 'compact' ? 'h-48' : 'h-64');
 
-/** One product in the chosen look, linking to its storefront page (inert in the editor preview). */
-export function ProductTile({ product, look }: { product: Product; look: ProductLook }) {
+/**
+ * One product in the chosen look, linking to its storefront page (inert in the editor preview). `index` is its
+ * position in the grid: tiles rise in one after another, and since the list is keyed by product id, only tiles
+ * that are new to the screen (a category change, a search, the next page) play the entrance.
+ */
+export function ProductTile({ product, look, index = 0 }: { product: Product; look: ProductLook; index?: number }) {
   const { slug, preview } = useStorefront();
-  if (look === 'portrait') return <ProductTilePortrait product={product} />;
-  if (look === 'compact') return <ProductTileCompact product={product} />;
+  const motion = { className: 'sf-rise', style: { '--sf-i': index } as CSSProperties };
+  if (look === 'portrait') return <ProductTilePortrait product={product} {...motion} />;
+  if (look === 'compact') return <ProductTileCompact product={product} {...motion} />;
   return (
     <ProductCard
       product={product}
       href={`/storefront/${slug}/products/${product.id}`}
       onLinkClick={preview ? (e) => e.preventDefault() : undefined}
+      {...motion}
     />
   );
 }

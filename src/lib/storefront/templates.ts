@@ -55,6 +55,7 @@ export const TEMPLATES: StorefrontTemplate[] = [
       theme: { primary, radius: 'round', headingFont: 'manrope', bodyFont: 'inter' },
       header: { variant: 'classic', sticky: true },
       footer: { variant: 'light' },
+      seo: classicDesign().seo,
       pages: {
         ...classicDesign().pages,
         home: {
@@ -84,6 +85,7 @@ export const TEMPLATES: StorefrontTemplate[] = [
       theme: { primary, radius: 'sharp', headingFont: 'serif', bodyFont: 'inter' },
       header: { variant: 'centered', sticky: true },
       footer: { variant: 'light' },
+      seo: classicDesign().seo,
       pages: {
         ...classicDesign().pages,
         home: {
@@ -112,6 +114,7 @@ export const TEMPLATES: StorefrontTemplate[] = [
       theme: { primary, radius: 'soft', headingFont: 'manrope', bodyFont: 'inter' },
       header: { variant: 'classic', sticky: true },
       footer: { variant: 'dark' },
+      seo: classicDesign().seo,
       pages: {
         ...classicDesign().pages,
         home: {
@@ -120,6 +123,122 @@ export const TEMPLATES: StorefrontTemplate[] = [
             { id: 'products', type: 'products', variant: 'compact', props: { title: 'All products', columns: 4, showSearch: true, showSets: true } },
             info('Your street address, city', 'Mon–Sat 8am–6pm', '0800 000 0000'),
             about('Tell shoppers who you are and what you sell.'),
+          ],
+        },
+      },
+    }),
+  },
+  {
+    id: 'showcase',
+    name: 'Showcase',
+    tagline: 'A story first, then your best pieces, with reviews to build trust.',
+    bestFor: 'Makers, studios and brands',
+    build: (primary): StorefrontDesign => ({
+      version: DESIGN_VERSION,
+      template: 'showcase',
+      theme: { primary, radius: 'soft', headingFont: 'serif', bodyFont: 'inter' },
+      header: { variant: 'centered', sticky: true },
+      footer: { variant: 'dark' },
+      seo: classicDesign().seo,
+      pages: {
+        ...classicDesign().pages,
+        home: {
+          sections: [
+            {
+              id: 'hero',
+              type: 'hero',
+              variant: 'banner',
+              props: { heading: '', tagline: '', image: '', showOpenBadge: false, location: '' },
+            },
+            // Renders nothing until the seller picks products in the editor.
+            { id: 'featured', type: 'featured', variant: 'portrait', props: { title: 'Featured', productIds: [], columns: 3 } },
+            {
+              id: 'imageText',
+              type: 'imageText',
+              variant: 'left',
+              props: { heading: 'Made with care', body: 'Tell the story behind what you make and why it matters to you.', image: '', buttonLabel: '', buttonLink: '' },
+            },
+            {
+              id: 'testimonials',
+              type: 'testimonials',
+              variant: 'cards',
+              props: { title: 'What customers say', items: [{ quote: 'Add a kind word from a happy customer here.', name: 'Customer name' }] },
+            },
+            { id: 'products', type: 'products', variant: 'grid', props: { title: 'Everything', columns: 3, showSearch: true, showSets: false } },
+            // No button: a plain "/" link would leave the store on setups without store subdomains.
+            {
+              id: 'cta',
+              type: 'cta',
+              variant: 'band',
+              props: { heading: 'Ready to order?', text: 'Browse everything and check out in a minute.', buttonLabel: '', buttonLink: '' },
+            },
+          ],
+        },
+      },
+    }),
+  },
+  {
+    id: 'minimal',
+    name: 'Minimal',
+    tagline: 'Calm and spacious, with the photos doing the talking.',
+    bestFor: 'Small, curated collections',
+    build: (primary): StorefrontDesign => ({
+      version: DESIGN_VERSION,
+      template: 'minimal',
+      theme: { primary, radius: 'sharp', headingFont: 'serif', bodyFont: 'inter' },
+      header: { variant: 'centered', sticky: false },
+      footer: { variant: 'light' },
+      seo: classicDesign().seo,
+      pages: {
+        ...classicDesign().pages,
+        home: {
+          sections: [
+            {
+              id: 'hero',
+              type: 'hero',
+              variant: 'tinted',
+              props: { heading: '', tagline: '', image: '', showOpenBadge: false, location: '' },
+            },
+            { id: 'products', type: 'products', variant: 'portrait', props: { title: 'Shop', columns: 4, showSearch: false, showSets: false } },
+            { id: 'about', type: 'about', variant: 'plain', props: { title: 'About', body: 'A few words about you and what you make or sell.' } },
+          ],
+        },
+      },
+    }),
+  },
+  {
+    id: 'menu',
+    name: 'Menu',
+    tagline: 'Categories, hours and a clear menu, ready for hungry customers.',
+    bestFor: 'Restaurants and caterers',
+    build: (primary): StorefrontDesign => ({
+      version: DESIGN_VERSION,
+      template: 'menu',
+      theme: { primary, radius: 'round', headingFont: 'manrope', bodyFont: 'inter' },
+      header: { variant: 'classic', sticky: true },
+      footer: { variant: 'dark' },
+      seo: classicDesign().seo,
+      pages: {
+        ...classicDesign().pages,
+        home: {
+          sections: [
+            announcement('Order ahead and skip the queue'),
+            {
+              id: 'hero',
+              type: 'hero',
+              variant: 'tinted',
+              props: { heading: '', tagline: '', image: '', showOpenBadge: true, location: 'Your area, Lagos' },
+            },
+            { id: 'categories', type: 'categories', variant: 'chips', props: { title: '', showAll: true } },
+            { id: 'products', type: 'products', variant: 'grid', props: { title: 'Our menu', columns: 3, showSearch: true, showSets: true } },
+            info('Your street address, city', 'Mon–Sun 10am–10pm', '0800 000 0000'),
+            // Renders nothing until the seller adds profile links.
+            {
+              id: 'socials',
+              type: 'socials',
+              variant: 'row',
+              props: { title: 'Follow us', instagram: '', facebook: '', tiktok: '', x: '', youtube: '' },
+            },
           ],
         },
       },

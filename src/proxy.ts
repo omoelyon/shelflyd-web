@@ -64,6 +64,13 @@ export function proxy(request: NextRequest) {
   if (slug) {
     if (!pathname.startsWith('/auth') && !pathname.startsWith('/api')) {
       const url = request.nextUrl.clone();
+      // Storefront pages link to each other as /storefront/<slug>/... . On the storefront's own domain that prefix is
+      // already implied, so send those to the clean URL (acme.shelflyd.shop/cart) instead of doubling it up.
+      const prefix = `/storefront/${slug}`;
+      if (pathname === prefix || pathname.startsWith(`${prefix}/`)) {
+        url.pathname = pathname.slice(prefix.length) || '/';
+        return NextResponse.redirect(url, 308);
+      }
       url.pathname = `/storefront/${slug}${pathname === '/' ? '' : pathname}`;
       return NextResponse.rewrite(url);
     }

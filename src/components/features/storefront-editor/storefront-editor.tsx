@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, ExternalLink, Loader2, MoreHorizontal, RotateCcw, Save, Send } from 'lucide-react';
+import { AlertCircle, Check, ExternalLink, Loader2, Lock, MoreHorizontal, RotateCcw, Save, Send, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -13,12 +13,15 @@ import { settingsApi } from '@/lib/api/settings';
 import { storefrontDesignApi, type StorefrontDesignState } from '@/lib/api/storefront-design';
 import { normalizeDesign, type StorefrontDesign } from '@/lib/storefront/design';
 import { clientValidate, designsEqual } from '@/lib/storefront/editor-model';
+import { storefrontUrl } from '@/lib/storefront/url';
 import { cn, getApiError } from '@/lib/utils';
 import BrandControls from './brand-controls';
 import LivePreview from './live-preview';
 import { CartControls, ProductPageControls } from './pages-controls';
 import { CustomPageSettings, PagesPanel, isEditorPage, type EditorPage } from './pages-panel';
+import PreviewLinkDialog from './preview-link';
 import SectionListEditor from './section-list-editor';
+import SeoControls from './seo-controls';
 import TemplatePicker from './template-picker';
 
 const DESIGN_KEY = ['storefront-design'];
@@ -50,6 +53,16 @@ export default function StorefrontEditor() {
   const [edits, setEdits] = useState<StorefrontDesign | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  /** Which button just succeeded, so it can show a tick for a moment. */
+  const [done, setDone] = useState<'save' | 'publish' | null>(null);
+  const doneTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(doneTimer.current), []);
+  const markDone = (which: 'save' | 'publish') => {
+    setDone(which);
+    clearTimeout(doneTimer.current);
+    doneTimer.current = setTimeout(() => setDone(null), 1600);
+  };
   const [currentPage, setCurrentPage] = useState<EditorPage>('home');
   const isLarge = useIsLarge();
 
@@ -98,6 +111,7 @@ export default function StorefrontEditor() {
     mutationFn: () => storefrontDesignApi.saveDraft(working),
     onSuccess: (next) => {
       accept(next);
+      markDone('save');
       toast.success('Draft saved.');
     },
     onError: (err) => fail(err, 'Could not save your design.'),
@@ -113,6 +127,7 @@ export default function StorefrontEditor() {
       // Publishing also moves the business's brand colour, and shoppers' cached storefront is now out of date.
       qc.invalidateQueries({ queryKey: ['business-settings'] });
       qc.invalidateQueries({ queryKey: ['storefront'] });
+      markDone('publish');
       toast.success('Published. Shoppers now see this design.');
     },
     onError: (err) => fail(err, 'Could not publish your design.'),
@@ -133,6 +148,16 @@ export default function StorefrontEditor() {
   });
 
   const busy = save.isPending || publish.isPending || reset.isPending;
+
+  /** Saves the working draft for the preview-link dialog, which needs it saved; errors are shown by the mutation itself. */
+  const saveForLink = async () => {
+    if (!checked()) return;
+    try {
+      await save.mutateAsync();
+    } catch {
+      // already reported
+    }
+  };
   const hasUnpublished = !!state?.hasUnpublishedChanges;
   const canPublish = dirty || hasUnpublished;
 
@@ -163,14 +188,22 @@ export default function StorefrontEditor() {
   }
 
   const slug = business.data.slug;
-  const edit = (next: StorefrontDesign) => setEdits(next);
+  /** The server decides; this only keeps the screen honest about it. */
+  const canEdit = state?.canEdit !== false;
+  const edit = (next: StorefrontDesign) => {
+    if (canEdit) setEdits(next);
+  };
   // An extra page can disappear (deleted, or the design was reset): fall back to Home rather than editing nothing.
   const page: EditorPage = isEditorPage(working, currentPage) ? currentPage : 'home';
   const isCustomPage = page !== 'home' && page !== 'product' && page !== 'cart';
 
   const controls = (
     <div className="space-y-4">
-      <PagesPanel design={working} current={page} onSelect={setCurrentPage} onChange={edit} />
+      <PagesPanel design={working} current={page} onSelect={setCurrentPage} onChange={edit} readOnly={!canEdit} />
+      {/* Everything below is locked for someone who may look but not change the design. */}
+      <fieldset disabled={!canEdit} className="m-0 min-w-0 border-0 p-0">
+      {/* Keyed by page so switching pages cross-fades the controls instead of swapping them. */}
+      <div key={page} className="animate-in fade-in-0 slide-in-from-bottom-1 space-y-4 duration-300 ease-(--ease-out)">
       {page === 'home' && (
         <>
           <TemplatePicker
@@ -181,6 +214,12 @@ export default function StorefrontEditor() {
             }}
           />
           <BrandControls design={working} onChange={edit} />
+          <SeoControls
+            design={working}
+            onChange={edit}
+            slug={business.data.slug}
+            fallback={{ name: business.data.name, description: business.data.description ?? '', logo: business.data.logo }}
+          />
           <SectionListEditor key="home" design={working} onChange={edit} page="home" />
         </>
       )}
@@ -192,6 +231,8 @@ export default function StorefrontEditor() {
       )}
       {page === 'product' && <ProductPageControls design={working} onChange={edit} />}
       {page === 'cart' && <CartControls design={working} onChange={edit} />}
+      </div>
+      </fieldset>
     </div>
   );
 
@@ -203,7 +244,7 @@ export default function StorefrontEditor() {
           <p
             role="status"
             className={cn(
-              'mt-0.5 flex items-center gap-1.5 text-xs font-medium',
+              'mt-0.5 flex items-center gap-1.5 text-xs font-medium transition-colors duration-300',
               status.tone === 'live' && 'text-green-700',
               status.tone === 'pending' && 'text-amber-700',
               status.tone === 'none' && 'text-muted-foreground',
@@ -211,36 +252,36 @@ export default function StorefrontEditor() {
           >
             <span
               aria-hidden="true"
-              className={cn('h-2 w-2 shrink-0 rounded-full', status.tone === 'live' ? 'bg-green-600' : status.tone === 'pending' ? 'bg-amber-500' : 'bg-slate-400')}
+              className={cn('h-2 w-2 shrink-0 rounded-full transition-colors duration-300', status.tone === 'live' ? 'bg-green-600' : status.tone === 'pending' ? 'bg-amber-500' : 'bg-slate-400')}
             />
             {status.label}
             {dirty && <span className="font-normal text-muted-foreground"> · unsaved edits</span>}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <a href={`/storefront/${slug}`} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+          <a href={storefrontUrl(slug)} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
             <ExternalLink />
             View live store
           </a>
           <Button
             type="button"
             variant="outline"
-            disabled={!dirty || busy}
+            disabled={!canEdit || !dirty || busy}
             onClick={() => {
               if (checked()) save.mutate();
             }}
           >
-            {save.isPending ? <Loader2 className="animate-spin" /> : <Save />}
+            {save.isPending ? <Loader2 className="animate-spin" /> : done === 'save' ? <Check key="saved" className="sf-pop text-green-600" /> : <Save />}
             Save draft
           </Button>
           <Button
             type="button"
-            disabled={!canPublish || busy}
+            disabled={!canEdit || !canPublish || busy}
             onClick={() => {
               if (checked()) publish.mutate();
             }}
           >
-            {publish.isPending ? <Loader2 className="animate-spin" /> : <Send />}
+            {publish.isPending ? <Loader2 className="animate-spin" /> : done === 'publish' ? <Check key="published" className="sf-pop" /> : <Send />}
             Publish
           </Button>
           <DropdownMenu>
@@ -248,7 +289,11 @@ export default function StorefrontEditor() {
               <MoreHorizontal />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem disabled={!state?.draft && !state?.published} onClick={() => setConfirmReset(true)}>
+              <DropdownMenuItem disabled={!canEdit} onClick={() => setShareOpen(true)}>
+                <Share2 className="mr-2 h-4 w-4 text-muted-foreground" />
+                Share a draft preview
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled={!canEdit || (!state?.draft && !state?.published)} onClick={() => setConfirmReset(true)}>
                 <RotateCcw className="mr-2 h-4 w-4 text-muted-foreground" />
                 Reset to Classic
               </DropdownMenuItem>
@@ -257,8 +302,17 @@ export default function StorefrontEditor() {
         </div>
       </div>
 
+      {!canEdit && (
+        <div role="note" className="animate-in fade-in-0 slide-in-from-top-2 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-900">
+          <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>
+            You can look at this storefront design but not change it. Ask the business owner or a team admin if you need to make changes.
+          </span>
+        </div>
+      )}
+
       {problem && (
-        <div role="alert" className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+        <div role="alert" className="animate-in fade-in-0 slide-in-from-top-2 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{problem}</span>
         </div>
@@ -287,6 +341,17 @@ export default function StorefrontEditor() {
           </TabsContent>
         </Tabs>
       )}
+
+      <PreviewLinkDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        slug={slug}
+        state={state}
+        dirty={dirty}
+        onSave={saveForLink}
+        saving={save.isPending}
+        onState={(next) => qc.setQueryData(DESIGN_KEY, next)}
+      />
 
       <Dialog open={confirmReset} onOpenChange={(open) => !open && !reset.isPending && setConfirmReset(false)}>
         <DialogContent className="sm:max-w-md">

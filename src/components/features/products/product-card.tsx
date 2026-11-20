@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { Package } from 'lucide-react';
 import type { Product } from '@/types';
-import { formatStatus } from '@/lib/utils';
+import { cn, formatStatus } from '@/lib/utils';
 
 interface ProductCardProps {
   product: Product;
@@ -11,6 +11,9 @@ interface ProductCardProps {
   href?: string;
   /** Lets a host (the storefront editor preview) stop the link from navigating. */
   onLinkClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+  /** Extra classes / inline style for the link, so a host can add an entrance animation. */
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 const statusConfig: Record<Product['status'], { label: string; className: string }> = {
@@ -20,7 +23,7 @@ const statusConfig: Record<Product['status'], { label: string; className: string
   COMING_SOON: { label: 'Coming Soon', className: 'bg-blue-50 text-blue-700' },
 };
 
-export default function ProductCard({ product, href, onLinkClick }: ProductCardProps) {
+export default function ProductCard({ product, href, onLinkClick, className, style }: ProductCardProps) {
   // SHF-16: a product's image field being non-empty doesn't mean the URL actually
   // resolves (a dead/placeholder host, for one real example) — fall back to the same
   // "No image" state on load failure instead of a broken-image icon.
@@ -32,8 +35,8 @@ export default function ProductCard({ product, href, onLinkClick }: ProductCardP
   const status = statusConfig[product.status] ?? { label: formatStatus(product.status), className: 'bg-gray-100 text-gray-500' };
 
   return (
-    <Link href={href ?? `/products/${product.uuid}`} onClick={onLinkClick} className="block group">
-      <div className="bg-card rounded-2xl border border-border h-full flex flex-col overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:border-border/80">
+    <Link href={href ?? `/products/${product.uuid}`} onClick={onLinkClick} className={cn('block group', className)} style={style}>
+      <div className="sf-lift bg-card rounded-2xl border border-border h-full flex flex-col overflow-hidden">
         {/* Image */}
         <div className="relative h-48 bg-muted overflow-hidden">
           {product.image && !imageFailed ? (
@@ -41,7 +44,7 @@ export default function ProductCard({ product, href, onLinkClick }: ProductCardP
               src={product.image}
               alt={product.name}
               fill
-              className={`object-cover transition-transform duration-300 group-hover:scale-105 ${product.status === 'OUT_OF_STOCK' ? 'opacity-50 grayscale' : ''}`}
+              className={`object-cover transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105 ${product.status === 'OUT_OF_STOCK' ? 'opacity-50 grayscale' : 'sf-img-in'}`}
               unoptimized
               onError={() => setImageFailed(true)}
             />
@@ -58,7 +61,7 @@ export default function ProductCard({ product, href, onLinkClick }: ProductCardP
 
         {/* Content */}
         <div className="p-4 flex-1 flex flex-col">
-          <h3 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors duration-200">
             {product.name}
           </h3>
           {product.type && (

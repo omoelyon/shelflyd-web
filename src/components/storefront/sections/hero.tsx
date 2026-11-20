@@ -1,15 +1,19 @@
 'use client';
 
 import Image from 'next/image';
+import { useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { readableTextOn, type HeroSection } from '@/lib/storefront/design';
+import { stagger } from '../motion';
 import { useStorefront } from '../storefront-context';
 
 export default function Hero({ section }: { section: HeroSection }) {
   const { info, isLoading, design } = useStorefront();
   const primary = design.theme.primary;
+  // A banner photo that fails to load falls back to the plain brand-colour banner (remembered per URL).
+  const [failedImage, setFailedImage] = useState<string | null>(null);
 
   if (isLoading) {
     return section.variant === 'banner' ? (
@@ -28,13 +32,13 @@ export default function Hero({ section }: { section: HeroSection }) {
   const location = props.location.trim();
 
   if (section.variant === 'banner') {
-    const hasImage = !!props.image.trim();
+    const hasImage = !!props.image.trim() && failedImage !== props.image;
     const ink = hasImage ? '#ffffff' : readableTextOn(primary);
     return (
       <section aria-label={heading} className="relative flex min-h-[18rem] items-end overflow-hidden sm:min-h-[22rem]" style={{ backgroundColor: primary }}>
         {hasImage ? (
           <>
-            <Image src={props.image} alt="" fill className="object-cover" unoptimized priority />
+            <Image src={props.image} alt="" fill className="sf-img-in object-cover" unoptimized priority onError={() => setFailedImage(props.image)} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10" aria-hidden="true" />
           </>
         ) : (
@@ -42,15 +46,21 @@ export default function Hero({ section }: { section: HeroSection }) {
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20" aria-hidden="true" />
         )}
         <div className="relative mx-auto w-full max-w-7xl px-4 py-10" style={{ color: ink }}>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="sf-rise flex flex-wrap items-center gap-3">
             <h1 className="text-balance text-4xl font-bold sm:text-5xl">{heading}</h1>
             {props.showOpenBadge && <Badge className="bg-white/90 text-[#0b1220]">Open</Badge>}
           </div>
-          {tagline && <p className="mt-3 max-w-xl text-base opacity-90 sm:text-lg">{tagline}</p>}
+          {tagline && (
+            <div className="sf-rise mt-3" style={stagger(1)}>
+              <p className="max-w-xl text-base opacity-90 sm:text-lg">{tagline}</p>
+            </div>
+          )}
           {location && (
-            <div className="mt-3 flex items-center gap-1 text-sm opacity-90">
-              <MapPin className="h-4 w-4" aria-hidden="true" />
-              <span>{location}</span>
+            <div className="sf-rise mt-3" style={stagger(2)}>
+              <div className="flex items-center gap-1 text-sm opacity-90">
+                <MapPin className="h-4 w-4" aria-hidden="true" />
+                <span>{location}</span>
+              </div>
             </div>
           )}
         </div>
@@ -65,15 +75,15 @@ export default function Hero({ section }: { section: HeroSection }) {
         style={{ background: `${primary}15` }}
       >
         <div className="flex-1 text-center sm:text-left">
-          <div className="flex flex-wrap items-center gap-3 justify-center sm:justify-start mb-2">
+          <div className="sf-rise flex flex-wrap items-center gap-3 justify-center sm:justify-start mb-2">
             <h1 className="text-3xl font-bold">{heading}</h1>
             {props.showOpenBadge && (
               <Badge style={{ backgroundColor: primary, color: readableTextOn(primary) }}>Open</Badge>
             )}
           </div>
-          {tagline && <p className="text-muted-foreground max-w-xl">{tagline}</p>}
+          {tagline && <p className="sf-rise text-muted-foreground max-w-xl" style={stagger(1)}>{tagline}</p>}
           {location && (
-            <div className="flex items-center gap-1 mt-3 text-sm text-muted-foreground justify-center sm:justify-start">
+            <div className="sf-rise flex items-center gap-1 mt-3 text-sm text-muted-foreground justify-center sm:justify-start" style={stagger(2)}>
               <MapPin className="h-4 w-4" aria-hidden="true" />
               <span>{location}</span>
             </div>

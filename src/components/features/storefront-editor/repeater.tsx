@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Leaving, useLeaving } from './collapse';
 
 interface Props<T> {
   items: T[];
@@ -21,6 +22,7 @@ interface Props<T> {
  * card with move up/down and remove buttons, and "Add" stops at the limit.
  */
 export default function Repeater<T>({ items, onChange, max, create, noun, children }: Props<T>) {
+  const { leaving, leave } = useLeaving<number>();
   const replace = (index: number, patch: Partial<T>) => onChange(items.map((item, i) => (i === index ? { ...item, ...patch } : item)));
   const move = (from: number, to: number) => {
     if (to < 0 || to >= items.length) return;
@@ -30,8 +32,10 @@ export default function Repeater<T>({ items, onChange, max, create, noun, childr
   };
   return (
     <div className="space-y-2">
+      <div>
       {items.map((item, index) => (
-        <div key={index} className="space-y-3 rounded-lg border bg-muted/20 p-3">
+        <Leaving key={index} leaving={leaving === index}>
+        <div className="sf-rise space-y-3 rounded-lg border bg-muted/20 p-3" style={{ '--sf-i': 0 } as React.CSSProperties}>
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-medium text-muted-foreground">
               {noun} {index + 1}
@@ -57,7 +61,7 @@ export default function Repeater<T>({ items, onChange, max, create, noun, childr
                 variant="ghost"
                 className="h-7 w-7 text-destructive hover:text-destructive"
                 aria-label={`Remove ${noun.toLowerCase()} ${index + 1}`}
-                onClick={() => onChange(items.filter((_, i) => i !== index))}
+                onClick={() => leave(index, () => onChange(items.filter((_, i) => i !== index)))}
               >
                 <Trash2 />
               </Button>
@@ -65,7 +69,9 @@ export default function Repeater<T>({ items, onChange, max, create, noun, childr
           </div>
           {children(item, (patch) => replace(index, patch), index)}
         </div>
+        </Leaving>
       ))}
+      </div>
       <Button type="button" variant="outline" size="sm" className="w-full" disabled={items.length >= max} onClick={() => onChange([...items, create()])}>
         <Plus />
         Add {/^[aeiou]/i.test(noun) ? 'an' : 'a'} {noun.toLowerCase()}

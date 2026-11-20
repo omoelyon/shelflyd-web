@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import Image from 'next/image';
 import { Layers, Minus, Plus, Trash2, X } from 'lucide-react';
 import { atStockLimit, lineStock } from '@/lib/cart-stock';
@@ -79,6 +79,32 @@ export default function CartLines({
   const [selectError, setSelectError] = useState('');
   const [dialog, setDialog] = useState<DialogState>(null);
   const [builderEditing, setBuilderEditing] = useState<SetView | null>(null);
+
+  // Removing a line: it fades and slides out first, then the removal is sent. If the removal fails the line comes back.
+  const [leaving, setLeaving] = useState<Set<string>>(new Set());
+  const timers = useRef<number[]>([]);
+  useEffect(() => {
+    const pending = timers.current;
+    return () => pending.forEach((t) => window.clearTimeout(t));
+  }, []);
+  const removeWithExit = (product: CartProduct) => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      onRemove(product);
+      return;
+    }
+    const key = lineKey(product);
+    setLeaving((prev) => new Set(prev).add(key));
+    timers.current.push(window.setTimeout(() => onRemove(product), 200));
+    timers.current.push(
+      window.setTimeout(() => {
+        setLeaving((prev) => {
+          const next = new Set(prev);
+          next.delete(key);
+          return next;
+        });
+      }, 3500),
+    );
+  };
 
   const dismissHint = () => {
     try {
@@ -179,17 +205,23 @@ export default function CartLines({
 
       {sets.length > 0 && loose.length > 0 && <p className="pt-1 text-xs font-medium text-muted-foreground">Other items</p>}
 
-      {loose.map((product) => {
+      {loose.map((product, index) => {
         const ticked = selected.has(lineKey(product));
         const Row = selecting ? 'label' : 'div';
+        const exiting = leaving.has(lineKey(product));
         return (
           <Row
             key={lineKey(product)}
             className={cn(
-              'flex items-center gap-4 rounded-lg bg-muted/40 p-3',
+              'flex items-center gap-4 rounded-lg bg-muted/40 p-3 transition-shadow duration-200',
+              // New lines rise in; a line being removed fades and slides away (the animation class is dropped so the exit can run).
+              exiting
+                ? 'pointer-events-none -translate-x-3 opacity-0 transition-[opacity,translate] duration-200 ease-in'
+                : 'sf-rise',
               selecting && 'cursor-pointer',
               selecting && ticked && 'ring-2 ring-[#0058be]/50',
             )}
+            style={{ '--sf-i': index } as CSSProperties}
           >
             {selecting && (
               <input
@@ -245,7 +277,7 @@ export default function CartLines({
                     size="sm"
                     className="ml-1 text-destructive hover:text-destructive"
                     aria-label={`Remove ${product.name}`}
-                    onClick={() => onRemove(product)}
+                    onClick={() => removeWithExit(product)}
                     disabled={removePending}
                   >
                     <Trash2 className="h-3 w-3" />
