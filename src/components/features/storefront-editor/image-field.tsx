@@ -15,10 +15,12 @@ interface Props {
   label: string;
   value: string;
   onChange: (url: string) => void;
+  /** Shown while there is no image yet (e.g. what happens without one). */
+  emptyHint?: string;
 }
 
 /** Upload (or remove) one image. Stores the public URL the upload service returns. */
-export default function ImageField({ label, value, onChange }: Props) {
+export default function ImageField({ label, value, onChange, emptyHint }: Props) {
   const input = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +76,7 @@ export default function ImageField({ label, value, onChange }: Props) {
           {error}
         </p>
       )}
-      {!value && <p className="text-xs text-muted-foreground">Without a photo the banner uses your brand colour.</p>}
+      {!value && emptyHint && <p className="text-xs text-muted-foreground">{emptyHint}</p>}
     </div>
   );
 }

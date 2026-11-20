@@ -17,6 +17,15 @@ interface Props {
 }
 
 /**
+ * Templates only define the look and the home page. The seller's extra pages, product page and cart settings are
+ * theirs, so applying a template carries them over (and comparing designs below therefore ignores them too).
+ */
+function withSellerPages(current: StorefrontDesign, built: StorefrontDesign): StorefrontDesign {
+  const { product, cart, custom } = current.pages;
+  return { ...built, pages: { ...built.pages, product, cart, custom } };
+}
+
+/**
  * Cards for each ready-made template. Applying one rebuilds the layout with the seller's own brand colour; if that
  * would throw away edits (the design isn't exactly what the template produces) it asks first.
  */
@@ -25,10 +34,10 @@ export default function TemplatePicker({ design, onApply }: Props) {
   const [pending, setPending] = useState<StorefrontTemplate | null>(null);
 
   const choose = (t: StorefrontTemplate) => {
-    const built = t.build(primary);
+    const built = withSellerPages(design, t.build(primary));
     if (designsEqual(design, built)) return;
     // Switching from a layout that is still untouched (exactly some template) needs no warning.
-    const untouched = TEMPLATES.some((other) => designsEqual(design, other.build(primary)));
+    const untouched = TEMPLATES.some((other) => designsEqual(design, withSellerPages(design, other.build(primary))));
     if (untouched) onApply(built);
     else setPending(t);
   };
@@ -38,7 +47,7 @@ export default function TemplatePicker({ design, onApply }: Props) {
       <div className="grid grid-cols-2 gap-3">
         {TEMPLATES.map((t) => {
           const built = t.build(primary);
-          const current = designsEqual(design, built);
+          const current = designsEqual(design, withSellerPages(design, built));
           const based = !current && design.template === t.id;
           return (
             <button
@@ -69,7 +78,11 @@ export default function TemplatePicker({ design, onApply }: Props) {
           <DialogHeader>
             <DialogTitle>Replace your current layout?</DialogTitle>
             <DialogDescription>
-              {pending ? `Switching to ${pending.name} resets the layout and the text and photos in your sections. Your brand colour stays.` : ''}
+              {pending
+                ? `Switching to ${pending.name} resets the layout and the text and photos in your home page sections. Your brand colour${
+                    design.pages.custom.length > 0 ? ', extra pages' : ''
+                  } and cart and product page settings stay.`
+                : ''}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -79,7 +92,7 @@ export default function TemplatePicker({ design, onApply }: Props) {
             <Button
               type="button"
               onClick={() => {
-                if (pending) onApply(pending.build(primary));
+                if (pending) onApply(withSellerPages(design, pending.build(primary)));
                 setPending(null);
               }}
             >

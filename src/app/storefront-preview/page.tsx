@@ -7,16 +7,39 @@ import { storefrontApi } from '@/lib/api/storefront';
 import SectionList from '@/components/storefront/section-renderer';
 import StorefrontShell from '@/components/storefront/shell';
 import { StorefrontProvider, useStorefront } from '@/components/storefront/storefront-context';
-import { isPreviewMessage } from '@/components/features/storefront-editor/preview-protocol';
+import { ProductPagePreview, CartPreview } from '@/components/storefront/previews';
+import { isPreviewMessage, type PreviewPage } from '@/components/features/storefront-editor/preview-protocol';
 import { Skeleton } from '@/components/ui/skeleton';
 
-function PreviewBody() {
+function PreviewBody({ page }: { page: PreviewPage }) {
   const { design } = useStorefront();
-  return (
-    <StorefrontShell totalItems={0} isAuthenticated={false}>
+  let content: React.ReactNode;
+  if (page === 'product') {
+    content = <ProductPagePreview />;
+  } else if (page === 'cart') {
+    content = <CartPreview />;
+  } else if (page === 'home') {
+    content = (
       <div className="pb-10">
         <SectionList sections={design.pages.home.sections} />
       </div>
+    );
+  } else {
+    const custom = design.pages.custom.find((p) => `custom:${p.id}` === page);
+    content =
+      custom && custom.sections.length > 0 ? (
+        <div className="pb-10">
+          <SectionList sections={custom.sections} />
+        </div>
+      ) : (
+        <p className="mx-auto max-w-7xl px-4 py-16 text-center text-sm text-muted-foreground">
+          {custom ? 'This page has no sections yet. Add one in the editor.' : 'This page no longer exists.'}
+        </p>
+      );
+  }
+  return (
+    <StorefrontShell totalItems={0} isAuthenticated={false}>
+      {content}
     </StorefrontShell>
   );
 }
@@ -25,6 +48,7 @@ function PreviewPage() {
   const slug = useSearchParams().get('slug') ?? '';
   // The working design arrives from the editor that embeds this page; until then there is nothing to show.
   const [design, setDesign] = useState<unknown>(null);
+  const [page, setPage] = useState<PreviewPage>('home');
 
   const { data: info, isLoading } = useQuery({
     queryKey: ['storefront', slug],
@@ -35,7 +59,9 @@ function PreviewPage() {
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
       if (e.origin !== window.location.origin || e.source !== window.parent) return;
-      if (isPreviewMessage(e.data) && e.data.type === 'sf-design') setDesign(e.data.design);
+      if (!isPreviewMessage(e.data)) return;
+      if (e.data.type === 'sf-design') setDesign(e.data.design);
+      if (e.data.type === 'sf-page') setPage(e.data.page);
     };
     window.addEventListener('message', onMessage);
     // Ask the editor for the current design (it also pushes on its own whenever something changes).
@@ -56,13 +82,13 @@ function PreviewPage() {
     );
   }
   return (
-    <StorefrontProvider slug={slug} info={info} isLoading={isLoading} designOverride={design} preview>
-      <PreviewBody />
+    <StorefrontProvider slug={slug} info={info} isLoading={isLoading} designOverride={design} preview activePage={page}>
+      <PreviewBody page={page} />
     </StorefrontProvider>
   );
 }
 
-/** What the editor's iframe shows: the storefront home page rendered from a design sent by the editor (never saved here). */
+/** What the editor's iframe shows: a storefront page rendered from a design sent by the editor (never saved here). */
 export default function StorefrontPreviewPage() {
   return (
     <Suspense fallback={null}>

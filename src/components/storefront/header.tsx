@@ -7,8 +7,9 @@ import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { readableTextOn } from '@/lib/storefront/design';
+import { useCartDrawer } from './cart-drawer-store';
 import { SfLink } from './sf-link';
-import { useStorefront } from './storefront-context';
+import { useActivePage, useNavPages, useStorefront } from './storefront-context';
 
 interface HeaderProps {
   totalItems: number;
@@ -56,22 +57,63 @@ function Brand() {
 }
 
 function CartLink({ totalItems }: { totalItems: number }) {
-  const { slug, design } = useStorefront();
+  const { slug, design, preview } = useStorefront();
   const primary = design.theme.primary;
+  const inner = (
+    <div className="h-9 w-9 rounded-lg flex items-center justify-center text-[#64748b] hover:text-[#091426] hover:bg-[#eff4ff] transition-colors">
+      <ShoppingCart className="h-4.5 w-4.5" />
+      {totalItems > 0 && (
+        <Badge
+          className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+          style={{ backgroundColor: primary, color: readableTextOn(primary) }}
+        >
+          {totalItems > 9 ? '9+' : totalItems}
+        </Badge>
+      )}
+    </div>
+  );
+  // With the drawer style the cart slides in over the page instead of opening the cart page.
+  if (design.pages.cart.style === 'drawer' && !preview) {
+    return (
+      <button
+        type="button"
+        className="relative rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        aria-label="Open cart"
+        aria-haspopup="dialog"
+        onClick={() => useCartDrawer.getState().setOpen(true)}
+      >
+        {inner}
+      </button>
+    );
+  }
   return (
     <SfLink href={`/storefront/${slug}/cart`} className="relative" aria-label="Cart">
-      <div className="h-9 w-9 rounded-lg flex items-center justify-center text-[#64748b] hover:text-[#091426] hover:bg-[#eff4ff] transition-colors">
-        <ShoppingCart className="h-4.5 w-4.5" />
-        {totalItems > 0 && (
-          <Badge
-            className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
-            style={{ backgroundColor: primary, color: readableTextOn(primary) }}
-          >
-            {totalItems > 9 ? '9+' : totalItems}
-          </Badge>
-        )}
-      </div>
+      {inner}
     </SfLink>
+  );
+}
+
+/** Home plus the seller's extra pages. Renders nothing when there are none, so the header stays exactly as it was. */
+function NavLinks({ className, listClassName }: { className?: string; listClassName?: string }) {
+  const links = useNavPages();
+  const active = useActivePage();
+  if (links.length === 0) return null;
+  return (
+    <nav aria-label="Pages" className={className}>
+      <ul className={cn('flex items-center gap-1 overflow-x-auto', listClassName)}>
+        {links.map((l) => (
+          <li key={l.key} className="shrink-0">
+            <SfLink
+              href={l.href}
+              aria-current={active === l.key ? 'page' : undefined}
+              className="block whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium text-[#64748b] outline-none transition-colors hover:text-[#091426] focus-visible:ring-3 focus-visible:ring-ring/50 aria-[current=page]:bg-primary/10 aria-[current=page]:text-[#091426]"
+            >
+              {l.label}
+            </SfLink>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }
 
@@ -108,6 +150,7 @@ export default function StorefrontHeader({ totalItems, isAuthenticated }: Header
             {!isAuthenticated && <LoginLink />}
           </div>
         </div>
+        <NavLinks className="max-w-7xl mx-auto px-4 pb-1.5" listClassName="mx-auto w-max max-w-full" />
       </header>
     );
   }
@@ -125,12 +168,14 @@ export default function StorefrontHeader({ totalItems, isAuthenticated }: Header
             <ArrowLeft className="h-3.5 w-3.5" />
           </SfLink>
           <Brand />
+          <NavLinks className="ml-3 hidden md:block" />
         </div>
         <div className="flex items-center gap-3">
           <CartLink totalItems={totalItems} />
           {!isAuthenticated && <LoginLink />}
         </div>
       </div>
+      <NavLinks className="max-w-7xl mx-auto px-4 pb-1.5 md:hidden" />
     </header>
   );
 }

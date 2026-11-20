@@ -4,11 +4,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Monitor, Smartphone } from 'lucide-react';
 import type { StorefrontDesign } from '@/lib/storefront/design';
 import { cn } from '@/lib/utils';
-import { isPreviewMessage, type PreviewMessage } from './preview-protocol';
+import { isPreviewMessage, type PreviewMessage, type PreviewPage } from './preview-protocol';
 
 interface Props {
   slug: string;
   design: StorefrontDesign;
+  /** The page to show; the preview opens on the home page. */
+  page?: PreviewPage;
   className?: string;
 }
 
@@ -16,21 +18,35 @@ interface Props {
  * The storefront as shoppers will see it, rendered in an iframe so the layout reacts to the real width (phone or
  * desktop). The working design is pushed in with postMessage on every change; nothing is saved by previewing.
  */
-export default function LivePreview({ slug, design, className }: Props) {
+export default function LivePreview({ slug, design, page = 'home', className }: Props) {
   const frame = useRef<HTMLIFrameElement>(null);
   const latest = useRef(design);
+  const latestPage = useRef<PreviewPage>(page);
   const [device, setDevice] = useState<'phone' | 'desktop'>('desktop');
 
-  const send = useCallback((d: StorefrontDesign) => {
-    const message: PreviewMessage = { type: 'sf-design', design: d };
+  const post = useCallback((message: PreviewMessage) => {
     frame.current?.contentWindow?.postMessage(message, window.location.origin);
   }, []);
+
+  const send = useCallback(
+    (d: StorefrontDesign) => {
+      post({ type: 'sf-design', design: d });
+      post({ type: 'sf-page', page: latestPage.current });
+    },
+    [post],
+  );
 
   // Push every change to the page.
   useEffect(() => {
     latest.current = design;
     send(design);
   }, [design, send]);
+
+  // Switching page only needs the page message.
+  useEffect(() => {
+    latestPage.current = page;
+    post({ type: 'sf-page', page });
+  }, [page, post]);
 
   // The page announces itself when it loads (including after a reload) and gets the current design back.
   useEffect(() => {

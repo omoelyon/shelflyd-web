@@ -84,7 +84,85 @@ export interface InfoSection extends SectionBase {
   props: { address: string; hours: string; phone: string; email: string };
 }
 
-export type StorefrontSection = AnnouncementSection | HeroSection | ProductsSection | AboutSection | InfoSection;
+/** A hand-picked row of products (the seller chooses which, up to 12). */
+export interface FeaturedSection extends SectionBase {
+  type: 'featured';
+  variant: 'grid' | 'portrait' | 'compact';
+  props: { title: string; productIds: number[]; columns: 3 | 4 };
+}
+
+/** Category chips that filter the products section on the same page. Needs a products section on that page. */
+export interface CategoriesSection extends SectionBase {
+  type: 'categories';
+  variant: 'chips';
+  props: { title: string; showAll: boolean };
+}
+
+/** A photo next to a heading, a few lines and an optional button. */
+export interface ImageTextSection extends SectionBase {
+  type: 'imageText';
+  variant: 'left' | 'right';
+  props: { heading: string; body: string; image: string; buttonLabel: string; buttonLink: string };
+}
+
+export interface GalleryImage {
+  url: string;
+  caption: string;
+}
+export interface GallerySection extends SectionBase {
+  type: 'gallery';
+  variant: 'grid';
+  props: { title: string; images: GalleryImage[] };
+}
+
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+export interface FaqSection extends SectionBase {
+  type: 'faq';
+  variant: 'list';
+  props: { title: string; items: FaqItem[] };
+}
+
+export interface Testimonial {
+  quote: string;
+  name: string;
+}
+export interface TestimonialsSection extends SectionBase {
+  type: 'testimonials';
+  variant: 'cards';
+  props: { title: string; items: Testimonial[] };
+}
+
+/** A coloured band with a heading, a line of text and a button. */
+export interface CtaSection extends SectionBase {
+  type: 'cta';
+  variant: 'band';
+  props: { heading: string; text: string; buttonLabel: string; buttonLink: string };
+}
+
+/** Links to the business's social profiles (https URLs). */
+export interface SocialsSection extends SectionBase {
+  type: 'socials';
+  variant: 'row';
+  props: { title: string; instagram: string; facebook: string; tiktok: string; x: string; youtube: string };
+}
+
+export type StorefrontSection =
+  | AnnouncementSection
+  | HeroSection
+  | ProductsSection
+  | AboutSection
+  | InfoSection
+  | FeaturedSection
+  | CategoriesSection
+  | ImageTextSection
+  | GallerySection
+  | FaqSection
+  | TestimonialsSection
+  | CtaSection
+  | SocialsSection;
 export type SectionType = StorefrontSection['type'];
 
 export interface StorefrontDesign {
@@ -94,7 +172,48 @@ export interface StorefrontDesign {
   theme: StorefrontTheme;
   header: StorefrontHeader;
   footer: StorefrontFooter;
-  pages: { home: { sections: StorefrontSection[] } };
+  pages: StorefrontPages;
+}
+
+/** The product page: photo beside the details (split) or a big photo above them (stacked). */
+export interface ProductPageSettings {
+  layout: 'split' | 'stacked';
+  imageRatio: 'square' | 'portrait' | 'wide';
+}
+
+/** The cart: a full page (as always), or a side drawer that slides in when the shopper adds something. */
+export interface CartSettings {
+  style: 'page' | 'drawer';
+  /** A short note shown at the top of the cart, e.g. "Delivery takes 1–2 days". */
+  message: string;
+}
+
+/** An extra page the seller adds (About, Delivery, FAQ…), built from the same sections as the home page. */
+export interface CustomPage {
+  /** URL part: /storefront/<slug>/p/<id>. Lower-case letters, digits and dashes. */
+  id: string;
+  title: string;
+  /** Show a link to this page in the header. */
+  showInNav: boolean;
+  sections: StorefrontSection[];
+}
+
+export interface StorefrontPages {
+  home: { sections: StorefrontSection[] };
+  product: ProductPageSettings;
+  cart: CartSettings;
+  custom: CustomPage[];
+}
+
+/** Which page the editor/preview is looking at: the home page, or a custom page by id. */
+export type PageKey = 'home' | `custom:${string}`;
+
+export const MAX_CUSTOM_PAGES = 5;
+
+/** The sections of a page of the design (empty for a custom page that no longer exists). */
+export function sectionsForPage(d: StorefrontDesign, page: PageKey): StorefrontSection[] {
+  if (page === 'home') return d.pages.home.sections;
+  return d.pages.custom.find((p) => `custom:${p.id}` === page)?.sections ?? [];
 }
 
 // ─── Classic: the storefront as it was before designs existed ────────────────
@@ -115,6 +234,9 @@ export function classicDesign(primary: string = DEFAULT_PRIMARY): StorefrontDesi
           { id: 'products', type: 'products', variant: 'grid', props: { title: 'Products', columns: 4, showSearch: true, showSets: true } },
         ],
       },
+      product: { layout: 'split', imageRatio: 'square' },
+      cart: { style: 'page', message: '' },
+      custom: [],
     },
   };
 }
@@ -176,6 +298,107 @@ function normalizeSection(raw: unknown, index: number): StorefrontSection | null
         variant: 'strip',
         props: { address: str(props.address), hours: str(props.hours), phone: str(props.phone), email: str(props.email) },
       };
+    case 'featured':
+      return {
+        id,
+        hidden,
+        type: 'featured',
+        variant: oneOf(s.variant, ['grid', 'portrait', 'compact'] as const, 'grid'),
+        props: {
+          title: str(props.title, 'Featured'),
+          productIds: Array.isArray(props.productIds)
+            ? props.productIds.filter((n): n is number => typeof n === 'number' && Number.isFinite(n)).slice(0, 12)
+            : [],
+          columns: props.columns === 3 ? 3 : 4,
+        },
+      };
+    case 'categories':
+      return { id, hidden, type: 'categories', variant: 'chips', props: { title: str(props.title), showAll: bool(props.showAll, true) } };
+    case 'imageText':
+      return {
+        id,
+        hidden,
+        type: 'imageText',
+        variant: oneOf(s.variant, ['left', 'right'] as const, 'left'),
+        props: {
+          heading: str(props.heading),
+          body: str(props.body),
+          image: str(props.image),
+          buttonLabel: str(props.buttonLabel),
+          buttonLink: str(props.buttonLink),
+        },
+      };
+    case 'gallery':
+      return {
+        id,
+        hidden,
+        type: 'gallery',
+        variant: 'grid',
+        props: {
+          title: str(props.title),
+          images: Array.isArray(props.images)
+            ? props.images
+                .map((i) => ({ url: str(obj(i).url), caption: str(obj(i).caption) }))
+                .filter((i) => i.url)
+                .slice(0, 8)
+            : [],
+        },
+      };
+    case 'faq':
+      return {
+        id,
+        hidden,
+        type: 'faq',
+        variant: 'list',
+        props: {
+          title: str(props.title, 'Questions'),
+          items: Array.isArray(props.items)
+            ? props.items
+                .map((i) => ({ question: str(obj(i).question), answer: str(obj(i).answer) }))
+                .filter((i) => i.question)
+                .slice(0, 10)
+            : [],
+        },
+      };
+    case 'testimonials':
+      return {
+        id,
+        hidden,
+        type: 'testimonials',
+        variant: 'cards',
+        props: {
+          title: str(props.title, 'What customers say'),
+          items: Array.isArray(props.items)
+            ? props.items
+                .map((i) => ({ quote: str(obj(i).quote), name: str(obj(i).name) }))
+                .filter((i) => i.quote)
+                .slice(0, 6)
+            : [],
+        },
+      };
+    case 'cta':
+      return {
+        id,
+        hidden,
+        type: 'cta',
+        variant: 'band',
+        props: { heading: str(props.heading), text: str(props.text), buttonLabel: str(props.buttonLabel), buttonLink: str(props.buttonLink) },
+      };
+    case 'socials':
+      return {
+        id,
+        hidden,
+        type: 'socials',
+        variant: 'row',
+        props: {
+          title: str(props.title),
+          instagram: str(props.instagram),
+          facebook: str(props.facebook),
+          tiktok: str(props.tiktok),
+          x: str(props.x),
+          youtube: str(props.youtube),
+        },
+      };
     default:
       return null; // an unknown section type (e.g. from a newer version) is skipped, never crashes the page
   }
@@ -192,10 +415,24 @@ export function normalizeDesign(raw: unknown, fallbackPrimary?: string | null): 
   const theme = obj(d.theme);
   const header = obj(d.header);
   const footer = obj(d.footer);
-  const rawSections = obj(obj(d.pages).home).sections;
-  const sections = Array.isArray(rawSections)
-    ? rawSections.map(normalizeSection).filter((s): s is StorefrontSection => s !== null)
-    : base.pages.home.sections;
+  const rawPages = obj(d.pages);
+  const normalizeList = (raw: unknown): StorefrontSection[] =>
+    Array.isArray(raw) ? raw.map(normalizeSection).filter((x): x is StorefrontSection => x !== null) : [];
+  const rawSections = obj(rawPages.home).sections;
+  const sections = Array.isArray(rawSections) ? normalizeList(rawSections) : base.pages.home.sections;
+  const product = obj(rawPages.product);
+  const cart = obj(rawPages.cart);
+  const custom: CustomPage[] = Array.isArray(rawPages.custom)
+    ? rawPages.custom
+        .map((raw): CustomPage | null => {
+          const p = obj(raw);
+          const id = str(p.id);
+          if (!/^[a-z0-9-]{1,30}$/.test(id)) return null;
+          return { id, title: str(p.title, id), showInNav: bool(p.showInNav, true), sections: normalizeList(p.sections) };
+        })
+        .filter((p): p is CustomPage => p !== null)
+        .slice(0, MAX_CUSTOM_PAGES)
+    : [];
   return {
     version: DESIGN_VERSION,
     template: str(d.template, 'classic'),
@@ -207,7 +444,15 @@ export function normalizeDesign(raw: unknown, fallbackPrimary?: string | null): 
     },
     header: { variant: oneOf(header.variant, ['classic', 'centered'] as const, 'classic'), sticky: bool(header.sticky, true) },
     footer: { variant: oneOf(footer.variant, ['dark', 'light'] as const, 'dark') },
-    pages: { home: { sections } },
+    pages: {
+      home: { sections },
+      product: {
+        layout: oneOf(product.layout, ['split', 'stacked'] as const, 'split'),
+        imageRatio: oneOf(product.imageRatio, ['square', 'portrait', 'wide'] as const, 'square'),
+      },
+      cart: { style: oneOf(cart.style, ['page', 'drawer'] as const, 'page'), message: str(cart.message) },
+      custom,
+    },
   };
 }
 

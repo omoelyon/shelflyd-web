@@ -16,6 +16,8 @@ import { clientValidate, designsEqual } from '@/lib/storefront/editor-model';
 import { cn, getApiError } from '@/lib/utils';
 import BrandControls from './brand-controls';
 import LivePreview from './live-preview';
+import { CartControls, ProductPageControls } from './pages-controls';
+import { CustomPageSettings, PagesPanel, isEditorPage, type EditorPage } from './pages-panel';
 import SectionListEditor from './section-list-editor';
 import TemplatePicker from './template-picker';
 
@@ -48,6 +50,7 @@ export default function StorefrontEditor() {
   const [edits, setEdits] = useState<StorefrontDesign | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [currentPage, setCurrentPage] = useState<EditorPage>('home');
   const isLarge = useIsLarge();
 
   const themeColor = business.data?.themeColor;
@@ -161,12 +164,34 @@ export default function StorefrontEditor() {
 
   const slug = business.data.slug;
   const edit = (next: StorefrontDesign) => setEdits(next);
+  // An extra page can disappear (deleted, or the design was reset): fall back to Home rather than editing nothing.
+  const page: EditorPage = isEditorPage(working, currentPage) ? currentPage : 'home';
+  const isCustomPage = page !== 'home' && page !== 'product' && page !== 'cart';
 
   const controls = (
     <div className="space-y-4">
-      <TemplatePicker design={working} onApply={edit} />
-      <BrandControls design={working} onChange={edit} />
-      <SectionListEditor design={working} onChange={edit} />
+      <PagesPanel design={working} current={page} onSelect={setCurrentPage} onChange={edit} />
+      {page === 'home' && (
+        <>
+          <TemplatePicker
+            design={working}
+            onApply={(next) => {
+              edit(next);
+              setCurrentPage('home');
+            }}
+          />
+          <BrandControls design={working} onChange={edit} />
+          <SectionListEditor key="home" design={working} onChange={edit} page="home" />
+        </>
+      )}
+      {isCustomPage && (
+        <>
+          <CustomPageSettings design={working} page={page} onChange={edit} onDeleted={() => setCurrentPage('home')} />
+          <SectionListEditor key={page} design={working} onChange={edit} page={page} />
+        </>
+      )}
+      {page === 'product' && <ProductPageControls design={working} onChange={edit} />}
+      {page === 'cart' && <CartControls design={working} onChange={edit} />}
     </div>
   );
 
@@ -244,7 +269,7 @@ export default function StorefrontEditor() {
         <div className="grid gap-5 grid-cols-[400px_minmax(0,1fr)]">
           <div>{controls}</div>
           <div className="sticky top-[88px] h-[calc(100dvh-8rem)] self-start">
-            <LivePreview slug={slug} design={working} className="h-full" />
+            <LivePreview slug={slug} design={working} page={page} className="h-full" />
           </div>
         </div>
       ) : (
@@ -258,7 +283,7 @@ export default function StorefrontEditor() {
             {controls}
           </TabsContent>
           <TabsContent value="preview" className="pt-2">
-            <LivePreview slug={slug} design={working} className="h-[70dvh]" />
+            <LivePreview slug={slug} design={working} page={page} className="h-[70dvh]" />
           </TabsContent>
         </Tabs>
       )}

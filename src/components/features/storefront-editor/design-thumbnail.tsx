@@ -67,7 +67,83 @@ function Block({ section, design }: { section: StorefrontSection; design: Storef
           <Lines color={ink} widths={[90, 80, 60]} />
         </div>
       );
-    default:
+    case 'featured': {
+      const columns = section.variant === 'portrait' ? 3 : section.variant === 'compact' ? 4 : section.props.columns;
+      return (
+        <div style={{ padding: '8px 6px 4px' }}>
+          <div style={{ width: '34%', height: 5, background: '#0f172a', borderRadius: 2, opacity: 0.75, marginBottom: 5 }} />
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: 4 }}>
+            {Array.from({ length: columns }).map((_, i) => (
+              <div key={i} style={section.variant === 'portrait' ? { aspectRatio: '3 / 4', background: '#e2e8f0', borderRadius: r } : { ...card, aspectRatio: '1 / 1', background: '#e2e8f0' }} />
+            ))}
+          </div>
+        </div>
+      );
+    }
+    case 'categories':
+      return (
+        <div style={{ padding: '8px 6px 0', display: 'flex', gap: 3 }}>
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} style={{ width: 14, height: 6, borderRadius: 6, background: i === 0 ? primary : '#fff', border: i === 0 ? undefined : '1px solid #cbd5e1' }} />
+          ))}
+        </div>
+      );
+    case 'imageText':
+      return (
+        <div style={{ padding: '8px 6px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5, alignItems: 'center', direction: section.variant === 'right' ? 'rtl' : 'ltr' }}>
+          <div style={{ aspectRatio: '4 / 3', background: '#e2e8f0', borderRadius: r + 1 }} />
+          <div style={{ direction: 'ltr', display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <div style={{ width: '70%', height: 5, background: '#0f172a', borderRadius: 2, opacity: 0.75 }} />
+            <Lines color={ink} widths={[95, 70]} />
+          </div>
+        </div>
+      );
+    case 'gallery':
+      return (
+        <div style={{ padding: '8px 6px 0', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 3 }}>
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} style={{ aspectRatio: '1 / 1', background: '#e2e8f0', borderRadius: r }} />
+          ))}
+        </div>
+      );
+    case 'faq':
+      return (
+        <div style={{ margin: '8px 6px 0', ...card }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{ padding: '4px 5px', borderTop: i ? '1px solid #e2e8f0' : undefined, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ width: '60%', height: 3, background: ink, borderRadius: 2, opacity: 0.6 }} />
+              <div style={{ width: 4, height: 4, borderRight: `1px solid ${ink}`, borderBottom: `1px solid ${ink}`, transform: 'rotate(45deg)' }} />
+            </div>
+          ))}
+        </div>
+      );
+    case 'testimonials':
+      return (
+        <div style={{ padding: '8px 6px 0', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{ ...card, padding: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <div style={{ width: 6, height: 4, background: primary, borderRadius: 1, opacity: 0.8 }} />
+              <Lines color={ink} widths={[100, 80]} />
+            </div>
+          ))}
+        </div>
+      );
+    case 'cta':
+      return (
+        <div style={{ margin: '8px 6px 0', background: primary, borderRadius: r + 2, padding: '8px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+          <div style={{ width: '45%', height: 5, background: readableTextOn(primary), borderRadius: 2 }} />
+          <div style={{ width: 22, height: 6, background: readableTextOn(primary), borderRadius: r, opacity: 0.9 }} />
+        </div>
+      );
+    case 'socials':
+      return (
+        <div style={{ padding: '8px 6px 0', display: 'flex', gap: 4 }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{ width: 8, height: 8, borderRadius: 8, background: '#fff', border: '1px solid #cbd5e1' }} />
+          ))}
+        </div>
+      );
+    case 'info':
       return (
         <div style={{ margin: '6px 6px 0', ...card, padding: 5, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
           {[0, 1, 2].map((i) => (

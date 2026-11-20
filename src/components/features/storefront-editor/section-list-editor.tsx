@@ -1,13 +1,35 @@
 'use client';
 
 import { useState, type ComponentType } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown, Eye, EyeOff, FileText, ImageIcon, LayoutGrid, Megaphone, MapPin, Plus, Trash2 } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  CircleHelp,
+  Columns2,
+  Eye,
+  EyeOff,
+  FileText,
+  ImageIcon,
+  Images,
+  LayoutGrid,
+  MapPin,
+  Megaphone,
+  MessageSquareQuote,
+  MousePointerClick,
+  Plus,
+  Share2,
+  Star,
+  Tags,
+  Trash2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   SECTION_BLURB,
   SECTION_LABEL,
   addSection,
   addableTypes,
+  isRequiredSection,
   mapSection,
   moveSection,
   removeSection,
@@ -16,7 +38,7 @@ import {
   setHidden,
   MAX_SECTIONS,
 } from '@/lib/storefront/editor-model';
-import type { SectionType, StorefrontDesign } from '@/lib/storefront/design';
+import type { PageKey, SectionType, StorefrontDesign } from '@/lib/storefront/design';
 import { cn } from '@/lib/utils';
 import { Panel } from './controls';
 import SectionEditor from './section-editors';
@@ -27,34 +49,45 @@ const ICONS: Record<SectionType, ComponentType<{ className?: string }>> = {
   products: LayoutGrid,
   about: FileText,
   info: MapPin,
+  featured: Star,
+  categories: Tags,
+  imageText: Columns2,
+  gallery: Images,
+  faq: CircleHelp,
+  testimonials: MessageSquareQuote,
+  cta: MousePointerClick,
+  socials: Share2,
 };
 
 interface Props {
   design: StorefrontDesign;
   onChange: (design: StorefrontDesign) => void;
+  /** Which page's sections to edit; the home page by default. */
+  page?: PageKey;
 }
 
 /** The page's sections in order, with reorder, hide, delete and per-section editing, and a menu to add more. */
-export default function SectionListEditor({ design, onChange }: Props) {
-  const sections = sectionsOf(design);
+export default function SectionListEditor({ design, onChange, page = 'home' }: Props) {
+  const sections = sectionsOf(design, page);
+  const pageHasProducts = sections.some((s) => s.type === 'products' && !s.hidden);
   const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const addable = addableTypes(design);
+  const addable = addableTypes(design, page);
 
   const add = (type: SectionType) => {
-    const { design: next, id } = addSection(design, type);
+    const { design: next, id } = addSection(design, type, page);
     onChange(next);
     setOpenId(id);
     setAdding(false);
   };
 
   return (
-    <Panel title="Sections" description="What your home page shows, from top to bottom. Hidden sections stay saved but shoppers don’t see them.">
+    <Panel title="Sections" description={`What ${page === 'home' ? 'your home page' : 'this page'} shows, from top to bottom. Hidden sections stay saved but shoppers don’t see them.`}>
       <ol className="space-y-2">
         {sections.map((s, index) => {
           const Icon = ICONS[s.type];
           const open = openId === s.id;
-          const isProducts = s.type === 'products';
+          const required = isRequiredSection(s, page);
           const label = SECTION_LABEL[s.type];
           return (
             <li key={s.id} className={cn('rounded-lg border bg-background', s.hidden && 'opacity-70')}>
@@ -77,7 +110,7 @@ export default function SectionListEditor({ design, onChange }: Props) {
                   <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')} aria-hidden="true" />
                 </button>
                 <div className="flex shrink-0 items-center">
-                  <Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label={`Move ${label} up`} disabled={index === 0} onClick={() => onChange(moveSection(design, s.id, -1))}>
+                  <Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label={`Move ${label} up`} disabled={index === 0} onClick={() => onChange(moveSection(design, s.id, -1, page))}>
                     <ArrowUp />
                   </Button>
                   <Button
@@ -87,7 +120,7 @@ export default function SectionListEditor({ design, onChange }: Props) {
                     className="h-7 w-7"
                     aria-label={`Move ${label} down`}
                     disabled={index === sections.length - 1}
-                    onClick={() => onChange(moveSection(design, s.id, 1))}
+                    onClick={() => onChange(moveSection(design, s.id, 1, page))}
                   >
                     <ArrowDown />
                   </Button>
@@ -97,20 +130,20 @@ export default function SectionListEditor({ design, onChange }: Props) {
                     variant="ghost"
                     className="h-7 w-7"
                     aria-label={s.hidden ? `Show ${label}` : `Hide ${label}`}
-                    title={isProducts ? 'Your products always stay visible' : undefined}
-                    disabled={isProducts}
-                    onClick={() => onChange(setHidden(design, s.id, !s.hidden))}
+                    title={required ? 'Your products always stay visible' : undefined}
+                    disabled={required}
+                    onClick={() => onChange(setHidden(design, s.id, !s.hidden, page))}
                   >
                     {s.hidden ? <EyeOff /> : <Eye />}
                   </Button>
-                  {!isProducts && (
+                  {!required && (
                     <Button
                       type="button"
                       size="icon"
                       variant="ghost"
                       className="h-7 w-7 text-destructive hover:text-destructive"
                       aria-label={`Delete ${label}`}
-                      onClick={() => onChange(removeSection(design, s.id))}
+                      onClick={() => onChange(removeSection(design, s.id, page))}
                     >
                       <Trash2 />
                     </Button>
@@ -119,7 +152,7 @@ export default function SectionListEditor({ design, onChange }: Props) {
               </div>
               {open && (
                 <div id={`section-editor-${s.id}`} className="border-t p-3">
-                  <SectionEditor section={s} onChange={(next) => onChange(mapSection(design, s.id, () => next))} />
+                  <SectionEditor section={s} pageHasProducts={pageHasProducts} onChange={(next) => onChange(mapSection(design, s.id, () => next, page))} />
                 </div>
               )}
             </li>

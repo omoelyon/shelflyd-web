@@ -1,6 +1,15 @@
 import apiClient from './client';
 import type { StorefrontInfo, Product, PagedProducts, DeliveryLocation } from '@/types';
 
+/** A category this store's products use (for the category chips). */
+export interface StoreCategory {
+  id: number;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  productCount: number;
+}
+
 export const storefrontApi = {
   getInfo: async (slug: string): Promise<StorefrontInfo> => {
     const res = await apiClient.get(`/storefront/${slug}`);
@@ -11,6 +20,18 @@ export const storefrontApi = {
     const res = await apiClient.get(`/storefront/${slug}/products`, {
       params: { page, size, ...(category && { category }) },
     });
+    return res.data;
+  },
+
+  /** The categories this store's active products use. */
+  getCategories: async (slug: string): Promise<StoreCategory[]> => {
+    const res = await apiClient.get(`/storefront/${slug}/categories`);
+    return res.data;
+  },
+
+  /** Hand-picked products for a featured section, in the order of `ids` (unknown or removed ones are skipped). */
+  getFeatured: async (slug: string, ids: number[]): Promise<Product[]> => {
+    const res = await apiClient.get(`/storefront/${slug}/products/featured`, { params: { ids: ids.join(',') } });
     return res.data;
   },
 

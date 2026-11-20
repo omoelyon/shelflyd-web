@@ -5,25 +5,28 @@ import { useQuery } from '@tanstack/react-query';
 import { Package, Search } from 'lucide-react';
 import { storefrontApi } from '@/lib/api/storefront';
 import type { ProductsSection } from '@/lib/storefront/design';
-import ProductCard from '@/components/features/products/product-card';
-import ProductTileCompact from '../product-tile-compact';
-import ProductTilePortrait from '../product-tile-portrait';
 import SetsEntryRow from '@/components/features/cart-sets/sets-entry-row';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { useCategoryFilter } from '../category-filter';
 import { useStorefront } from '../storefront-context';
+import { ProductTile, productGridClass, productSkeletonHeight } from './product-grid';
 
 export default function Products({ section }: { section: ProductsSection }) {
-  const { slug, info, preview } = useStorefront();
+  const { slug, info } = useStorefront();
   const { title, columns, showSearch, showSets } = section.props;
-  const [page, setPage] = useState(0);
+  const { category } = useCategoryFilter();
+  // The page number belongs to the category it was chosen under, so picking another category starts again at page 1.
+  const [pageState, setPageState] = useState<{ category: number | null; page: number }>({ category: null, page: 0 });
+  const page = pageState.category === category ? pageState.page : 0;
+  const setPage = (update: (p: number) => number) => setPageState({ category, page: update(page) });
   const [search, setSearch] = useState('');
 
   const { data: productsPage, isLoading: prodLoading } = useQuery({
-    queryKey: ['storefront', slug, 'products', page],
-    queryFn: () => storefrontApi.getProducts(slug, page, 20),
+    queryKey: ['storefront', slug, 'products', page, category],
+    queryFn: () => storefrontApi.getProducts(slug, page, 20, category == null ? undefined : String(category)),
     enabled: !!slug,
   });
 
@@ -33,13 +36,8 @@ export default function Products({ section }: { section: ProductsSection }) {
       p.description?.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const grid =
-    section.variant === 'portrait'
-      ? cn('grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-8', columns === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4')
-      : section.variant === 'compact'
-        ? cn('grid grid-cols-2 md:grid-cols-3 gap-3', columns === 3 ? 'lg:grid-cols-4' : 'lg:grid-cols-5')
-        : cn('grid grid-cols-1 sm:grid-cols-2 gap-4', columns === 3 ? 'lg:grid-cols-3' : 'md:grid-cols-3 lg:grid-cols-4');
-  const skeletonHeight = section.variant === 'portrait' ? 'h-80' : section.variant === 'compact' ? 'h-48' : 'h-64';
+  const grid = productGridClass(section.variant, columns);
+  const skeletonHeight = productSkeletonHeight(section.variant);
 
   return (
     <section aria-label={title || 'Products'} className="max-w-7xl mx-auto px-4 pt-10">
@@ -70,25 +68,16 @@ export default function Products({ section }: { section: ProductsSection }) {
       ) : !filtered?.length ? (
         <div className="text-center py-16 space-y-3">
           <Package className="h-12 w-12 text-muted-foreground mx-auto" />
-          <p className="text-muted-foreground">{search ? 'No products match your search.' : 'No products listed yet.'}</p>
+          <p className="text-muted-foreground">
+            {search ? 'No products match your search.' : category != null ? 'No products in this category.' : 'No products listed yet.'}
+          </p>
         </div>
       ) : (
         <>
           <div className={grid}>
-            {filtered.map((product) =>
-              section.variant === 'portrait' ? (
-                <ProductTilePortrait key={product.id} product={product} />
-              ) : section.variant === 'compact' ? (
-                <ProductTileCompact key={product.id} product={product} />
-              ) : (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  href={`/storefront/${slug}/products/${product.id}`}
-                  onLinkClick={preview ? (e) => e.preventDefault() : undefined}
-                />
-              ),
-            )}
+            {filtered.map((product) => (
+              <ProductTile key={product.id} product={product} look={section.variant} />
+            ))}
           </div>
 
           {productsPage && productsPage.totalPages > 1 && (

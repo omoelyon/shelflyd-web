@@ -2,6 +2,7 @@
 
 import type { CSSProperties, ReactNode } from 'react';
 import { themeCssVars } from '@/lib/storefront/design';
+import CartDrawer from './cart-drawer';
 import StorefrontFooter from './footer';
 import StorefrontHeader from './header';
 import { useStorefront } from './storefront-context';
@@ -31,6 +32,7 @@ export default function StorefrontShell({ totalItems, isAuthenticated, children 
       <StorefrontHeader totalItems={totalItems} isAuthenticated={isAuthenticated} />
       <main className="flex-1">{children}</main>
       <StorefrontFooter />
+      <CartDrawer />
     </div>
   );
 }

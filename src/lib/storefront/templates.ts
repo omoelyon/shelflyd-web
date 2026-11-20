@@ -56,6 +56,7 @@ export const TEMPLATES: StorefrontTemplate[] = [
       header: { variant: 'classic', sticky: true },
       footer: { variant: 'light' },
       pages: {
+        ...classicDesign().pages,
         home: {
           sections: [
             announcement('Free delivery on orders over ₦20,000'),
@@ -84,6 +85,7 @@ export const TEMPLATES: StorefrontTemplate[] = [
       header: { variant: 'centered', sticky: true },
       footer: { variant: 'light' },
       pages: {
+        ...classicDesign().pages,
         home: {
           sections: [
             {
@@ -111,6 +113,7 @@ export const TEMPLATES: StorefrontTemplate[] = [
       header: { variant: 'classic', sticky: true },
       footer: { variant: 'dark' },
       pages: {
+        ...classicDesign().pages,
         home: {
           sections: [
             announcement('Welcome! Use the search to find what you need'),

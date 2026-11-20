@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { readableTextOn } from '@/lib/storefront/design';
-import { useStorefront } from './storefront-context';
+import { SfLink } from './sf-link';
+import { useNavPages, useStorefront } from './storefront-context';
 
 /** The footer always carries "Powered by Shelflyd"; a design can restyle it but never remove it. */
 export default function StorefrontFooter() {
   const { slug, info, design, preview } = useStorefront();
+  const navPages = useNavPages();
   const light = design.footer.variant === 'light';
   const primary = design.theme.primary;
   const logo = info?.logo;
@@ -34,6 +36,25 @@ export default function StorefrontFooter() {
             {info?.name ?? slug}
           </span>
         </div>
+        {navPages.length > 0 && (
+          <nav aria-label="Footer pages">
+            <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+              {navPages.map((l) => (
+                <li key={l.key}>
+                  <SfLink
+                    href={l.href}
+                    className={cn(
+                      'text-xs font-medium outline-none transition-colors focus-visible:underline',
+                      light ? 'text-slate-600 hover:text-[#091426]' : 'text-slate-400 hover:text-white',
+                    )}
+                  >
+                    {l.label}
+                  </SfLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
         <p className={cn('text-xs', light ? 'text-slate-500' : 'text-slate-500')}>
           Powered by{' '}
           <Link
