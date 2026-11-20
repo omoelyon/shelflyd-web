@@ -10,6 +10,7 @@ import { authApi } from '@/lib/api/auth';
 import { usersApi } from '@/lib/api/users';
 import { useAuthStore } from '@/stores/auth.store';
 import { mergeGuestCartIntoServer } from '@/lib/guest-cart-merge';
+import { afterAuthPath } from '@/lib/auth-redirect';
 import { loginSchema, type LoginFormValues } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,7 +64,8 @@ function LoginForm() {
       toast.success('Welcome back!');
       // A full page load, not a client-side navigation: it guarantees nothing from the previous account
       // (cached queries, component state) can carry over into the next session on this browser.
-      window.location.assign(from || '/dashboard');
+      // Back to where they were shopping (the store they were ordering from), never to a page they did not ask for.
+      window.location.assign(afterAuthPath(from));
     },
     onError: (error) => toast.error(getApiError(error, 'Invalid email or password.')),
   });

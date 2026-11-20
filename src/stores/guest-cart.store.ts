@@ -47,6 +47,8 @@ interface GuestCartState {
   addItem: (businessId: number, item: Omit<GuestCartItem, 'quantity'> & { quantity: number }) => void;
   removeItem: (businessId: number, productId: number, unitId: number) => void;
   decrementItem: (businessId: number, productId: number, unitId: number) => void;
+  /** Sets an ordinary line to exactly this many (at least 1). */
+  setItemQuantity: (businessId: number, productId: number, unitId: number, quantity: number) => void;
   createGroup: (businessId: number, input: GuestSetInput) => void;
   updateGroup: (businessId: number, groupId: number, input: GuestSetInput) => void;
   /** `ungroup` keeps the items as ordinary lines; `remove` drops them. */
@@ -117,6 +119,17 @@ export const useGuestCartStore = create<GuestCartState>()(
                 : c
             )
             .filter((c) => c.items.length > 0),
+        }));
+      },
+
+      setItemQuantity: (businessId, productId, unitId, quantity) => {
+        const next = Math.max(1, Math.floor(quantity));
+        set((state) => ({
+          carts: state.carts.map((c) =>
+            c.businessId === businessId
+              ? { ...c, items: c.items.map((i) => (i.groupId == null && i.productId === productId && i.unitId === unitId ? { ...i, quantity: next } : i)) }
+              : c
+          ),
         }));
       },
 

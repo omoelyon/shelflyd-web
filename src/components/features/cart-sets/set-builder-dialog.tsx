@@ -11,6 +11,7 @@ import { useCartSetsActions, useSetsVariant, type SetItemInput } from '@/lib/car
 import { cn, getApiError } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import QuantityField from '@/components/ui/quantity-field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -73,17 +74,7 @@ function Stepper({
   min?: number;
   label: string;
 }) {
-  return (
-    <div className="inline-flex items-center gap-1.5">
-      <Button type="button" variant="outline" size="icon" className="h-9 w-9" aria-label={`Decrease ${label}`} onClick={() => onChange(value - 1)} disabled={value <= min}>
-        <Minus className="h-4 w-4" />
-      </Button>
-      <span className="w-7 text-center text-sm font-medium tabular-nums" aria-live="polite">{value}</span>
-      <Button type="button" variant="outline" size="icon" className="h-9 w-9" aria-label={`Increase ${label}`} onClick={() => onChange(value + 1)}>
-        <Plus className="h-4 w-4" />
-      </Button>
-    </div>
-  );
+  return <QuantityField size="sm" value={value} onChange={onChange} label={label} min={min} />;
 }
 
 function Builder({ businessId, businessName, onOpenChange, editing, initialItem }: SetBuilderDialogProps) {

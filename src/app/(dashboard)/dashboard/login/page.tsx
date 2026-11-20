@@ -9,6 +9,7 @@ import { useSearchParams } from 'next/navigation';
 import { authApi } from '@/lib/api/auth';
 import { usersApi } from '@/lib/api/users';
 import { useAuthStore } from '@/stores/auth.store';
+import { safeReturnPath } from '@/lib/auth-redirect';
 import { mergeGuestCartIntoServer } from '@/lib/guest-cart-merge';
 import { loginSchema, type LoginFormValues } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
@@ -63,7 +64,7 @@ function DashboardLoginForm() {
       toast.success('Welcome back!');
       // A full page load, not a client-side navigation: it guarantees nothing from the previous account
       // (cached queries, component state) can carry over into the next session on this browser.
-      window.location.assign(from || '/dashboard');
+      window.location.assign(safeReturnPath(from) ?? '/dashboard');
     },
     onError: (error) => toast.error(getApiError(error, 'Invalid email or password.')),
   });

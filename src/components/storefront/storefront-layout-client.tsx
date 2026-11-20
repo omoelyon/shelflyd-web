@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { storefrontApi } from '@/lib/api/storefront';
 import { useCartStore } from '@/stores/cart.store';
@@ -10,6 +10,7 @@ import { cartApi } from '@/lib/api/cart';
 import { StorefrontProvider, readPreviewToken } from '@/components/storefront/storefront-context';
 import StorefrontShell from '@/components/storefront/shell';
 import { useHydrated } from '@/components/storefront/use-hydrated';
+import { rememberStore } from '@/lib/auth-redirect';
 
 interface Props {
   slug: string;
@@ -28,6 +29,9 @@ export default function StorefrontLayoutClient({ slug, children }: Props) {
   // Saved carts and the signed-in hint only exist in the browser, so the server and the first client render both show "none" and the real values appear right after hydration (no mismatch, no flicker).
   const hydrated = useHydrated();
   const totalItems = hydrated ? (isAuthenticated ? serverTotalItems : guestTotalItems) : 0;
+
+  // Remember which store this shopper is in, so signing in can bring them back to it (not drop them on the marketplace).
+  useEffect(() => rememberStore(slug), [slug]);
 
   // A private draft-preview link carries ?preview=<token>; it is read once and remembered for the session.
   const [previewToken] = useState(() => readPreviewToken(slug));

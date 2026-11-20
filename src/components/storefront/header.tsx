@@ -12,6 +12,7 @@ import { useCartDrawer } from './cart-drawer-store';
 import { useChangePulse } from './use-change-pulse';
 import { useHydrated } from './use-hydrated';
 import { SfLink } from './sf-link';
+import { loginHref } from '@/lib/auth-redirect';
 import { useActivePage, useNavPages, useStorefront } from './storefront-context';
 
 interface HeaderProps {
@@ -139,6 +140,12 @@ function LoginLink() {
   return (
     <SfLink
       href="/auth/login"
+      // Sign in, then come straight back to the page (and store) they were on.
+      onClick={(e) => {
+        if (e.defaultPrevented) return;
+        e.preventDefault();
+        window.location.assign(loginHref());
+      }}
       className={cn(buttonVariants({ size: 'sm' }), 'shadow-sm transition-[opacity,transform,translate,scale] duration-200 hover:opacity-90 active:scale-95')}
       style={{ backgroundColor: primary, color: readableTextOn(primary) }}
     >

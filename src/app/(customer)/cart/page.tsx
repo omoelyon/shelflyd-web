@@ -28,6 +28,7 @@ export default function CartPage() {
   const guestCarts = useGuestCartStore((s) => s.carts);
   const removeGuestItem = useGuestCartStore((s) => s.removeItem);
   const decrementGuestItem = useGuestCartStore((s) => s.decrementItem);
+  const setGuestItemQuantity = useGuestCartStore((s) => s.setItemQuantity);
   const addGuestItem = useGuestCartStore((s) => s.addItem);
   const qc = useQueryClient();
 
@@ -75,6 +76,26 @@ export default function CartPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['carts'] }),
     onError: (error) => toast.error(getApiError(error, 'Could not update quantity.')),
   });
+
+  // Typing an exact number sends only the difference: add the extra, or take the surplus off.
+  const setQuantityMutation = useMutation({
+    mutationFn: ({ product, quantity }: { product: CartResponse['products'][number]; quantity: number }) => {
+      const delta = quantity - product.quantity;
+      const line = { productId: product.productId, unitId: product.unitId };
+      return delta > 0 ? cartApi.add({ ...line, quantity: delta }) : cartApi.remove({ ...line, quantity: -delta });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['carts'] }),
+    onError: (error) => toast.error(getApiError(error, 'Could not update quantity.')),
+  });
+
+  const handleSetQuantity = (businessId: number, product: CartResponse['products'][number], quantity: number) => {
+    if (quantity === product.quantity) return;
+    if (isAuthenticated) {
+      setQuantityMutation.mutate({ product, quantity });
+    } else {
+      setGuestItemQuantity(businessId, product.productId, product.unitId, quantity);
+    }
+  };
 
   const handleRemove = (businessId: number, productId: number, unitId: number) => {
     if (isAuthenticated) {
@@ -169,6 +190,8 @@ export default function CartPage() {
                 onIncrement={(product) => handleIncrement(cart.businessId, product)}
                 onDecrement={(product) => handleDecrement(cart.businessId, product.productId, product.unitId)}
                 onRemove={(product) => handleRemove(cart.businessId, product.productId, product.unitId)}
+                onSetQuantity={(product, quantity) => handleSetQuantity(cart.businessId, product, quantity)}
+                setQuantityPending={setQuantityMutation.isPending}
                 incrementPending={incrementMutation.isPending}
                 decrementPending={decrementMutation.isPending}
                 removePending={removeProductMutation.isPending}

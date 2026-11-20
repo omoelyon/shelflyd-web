@@ -28,6 +28,7 @@ export function useStorefrontCart(slug: string, enabled = true) {
   const setCarts = useCartStore((s) => s.setCarts);
   const removeGuestItem = useGuestCartStore((s) => s.removeItem);
   const decrementGuestItem = useGuestCartStore((s) => s.decrementItem);
+  const setGuestItemQuantity = useGuestCartStore((s) => s.setItemQuantity);
   const addGuestItem = useGuestCartStore((s) => s.addItem);
 
   const { data: info } = useQuery({
@@ -73,6 +74,26 @@ export function useStorefrontCart(slug: string, enabled = true) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['carts'] }),
     onError: (error) => toast.error(getApiError(error, 'Could not update quantity.')),
   });
+
+  // Typing an exact number sends only the difference: add the extra, or take the surplus off.
+  const setQuantityMutation = useMutation({
+    mutationFn: ({ product, quantity }: { product: CartProduct; quantity: number }) => {
+      const delta = quantity - product.quantity;
+      const line = { productId: product.productId, unitId: product.unitId };
+      return delta > 0 ? cartApi.add({ ...line, quantity: delta }) : cartApi.remove({ ...line, quantity: -delta });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['carts'] }),
+    onError: (error) => toast.error(getApiError(error, 'Could not update quantity.')),
+  });
+
+  const onSetQuantity = (product: CartProduct, quantity: number) => {
+    if (quantity === product.quantity) return;
+    if (isAuthenticated) {
+      setQuantityMutation.mutate({ product, quantity });
+    } else if (info) {
+      setGuestItemQuantity(info.id, product.productId, product.unitId, quantity);
+    }
+  };
 
   const onRemove = (product: CartProduct) => {
     if (isAuthenticated) {
@@ -123,6 +144,8 @@ export function useStorefrontCart(slug: string, enabled = true) {
     isEmpty: !cart || cart.products.length === 0,
     stockIssue: cart ? cartStockIssue(cart) : null,
     onRemove,
+    onSetQuantity,
+    setQuantityPending: setQuantityMutation.isPending,
     onIncrement,
     onDecrement,
     onSignInToCheckout,
@@ -145,6 +168,8 @@ export function CartLinesList({ state }: { state: StorefrontCartState }) {
       onIncrement={state.onIncrement}
       onDecrement={state.onDecrement}
       onRemove={state.onRemove}
+      onSetQuantity={state.onSetQuantity}
+      setQuantityPending={state.setQuantityPending}
       incrementPending={state.incrementPending}
       decrementPending={state.decrementPending}
       removePending={state.removePending}

@@ -10,6 +10,7 @@ import { authApi } from '@/lib/api/auth';
 import { usersApi } from '@/lib/api/users';
 import { useAuthStore } from '@/stores/auth.store';
 import { mergeGuestCartIntoServer } from '@/lib/guest-cart-merge';
+import { afterAuthPath } from '@/lib/auth-redirect';
 import { registerSchema, type RegisterFormValues } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -103,7 +104,7 @@ function RegisterForm() {
       await mergeGuestCartIntoServer();
       toast.success(`Welcome to Shelflyd, ${firstName}!`);
       // Full page load, as on login: nothing from a previous session can carry over.
-      window.location.assign(seller ? '/dashboard/register-business' : from || '/');
+      window.location.assign(seller ? '/dashboard/register-business' : afterAuthPath(from));
     },
     onError: (error) => toast.error(getApiError(error, 'Registration failed.')),
   });

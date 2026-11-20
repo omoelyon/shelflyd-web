@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BuildSetButton } from '@/components/features/cart-sets/set-builder-dialog';
 import ProductGallery from '@/components/features/products/product-gallery';
+import QuantityField from '@/components/ui/quantity-field';
 import { marketplaceViewPath, useTrackProductView } from '@/lib/use-track-product-view';
 import { productImages } from '@/lib/product-images';
 
@@ -170,15 +171,8 @@ export default function ProductDetailPage({ params }: Props) {
         {/* Quantity */}
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium">Qty:</label>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
-              -
-            </Button>
-            <span className="w-8 text-center font-medium">{quantity}</span>
-            <Button variant="outline" size="icon" onClick={() => setQuantity((q) => q + 1)}>
-              +
-            </Button>
-          </div>
+          {/* Step with the buttons, or just type the amount. */}
+          <QuantityField value={quantity} onChange={setQuantity} label="quantity" />
         </div>
 
         {/* Note */}

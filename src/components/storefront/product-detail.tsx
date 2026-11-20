@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import QuantityField from '@/components/ui/quantity-field';
 import { cn, formatStatus, getApiError } from '@/lib/utils';
 import { BuildSetButton } from '@/components/features/cart-sets/set-builder-dialog';
 import ProductGallery from '@/components/features/products/product-gallery';
@@ -21,7 +22,6 @@ import { storefrontViewPath, useTrackProductView } from '@/lib/use-track-product
 import type { Product } from '@/types';
 import { useCartDrawer } from './cart-drawer-store';
 import { stagger } from './motion';
-import { useChangePulse } from './use-change-pulse';
 import { SfLink } from './sf-link';
 import { useStorefront } from './storefront-context';
 
@@ -42,7 +42,6 @@ export default function ProductDetail({ product }: { product: Product }) {
   // The preview starts on the first unit so the price shows; a live shopper still chooses one.
   const [selectedUnitId, setSelectedUnitId] = useState<string>(() => (preview && product.prices?.[0] ? String(product.prices[0].unit) : ''));
   const [quantity, setQuantity] = useState(1);
-  const qtyPulses = useChangePulse(quantity);
   const [note, setNote] = useState('');
   const id = product.id;
   // The editor's preview shows sample data, so it never counts as a visit.
@@ -178,18 +177,8 @@ export default function ProductDetail({ product }: { product: Product }) {
       {/* Quantity */}
       <div className="sf-rise flex items-center gap-3" style={stagger(3)}>
         <label className="text-sm font-medium">Qty:</label>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="active:scale-90" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
-            -
-          </Button>
-          {/* Keyed by the quantity so the number gives a tiny bump each time it changes. */}
-          <span key={qtyPulses} className={cn('w-8 text-center font-medium tabular-nums', qtyPulses > 0 && 'sf-bump')}>
-            {quantity}
-          </span>
-          <Button variant="outline" size="icon" className="active:scale-90" onClick={() => setQuantity((q) => q + 1)}>
-            +
-          </Button>
-        </div>
+        {/* Step with the buttons, or just type the amount. */}
+        <QuantityField value={quantity} onChange={setQuantity} label="quantity" />
       </div>
 
       {/* Note */}

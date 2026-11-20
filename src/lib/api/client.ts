@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { loginHref } from '@/lib/auth-redirect';
 
 // SHF-15: no Authorization header is attached here — the session lives only in the
 // httpOnly cookie set by /api/auth/set-cookie. Every request below is same-origin
@@ -16,7 +17,8 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
-      window.location.href = '/auth/login';
+      // Back to this page after signing in again (loginHref leaves the address alone on the login pages themselves).
+      window.location.href = loginHref();
     }
     return Promise.reject(error);
   }

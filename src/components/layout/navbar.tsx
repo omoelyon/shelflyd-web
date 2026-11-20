@@ -17,6 +17,7 @@ import { useGuestCartStore } from '@/stores/guest-cart.store';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { loginHref } from '@/lib/auth-redirect';
 import { useMyBusiness } from '@/hooks/use-my-business';
 
 const navLinks = [
@@ -153,7 +154,7 @@ export default function Navbar() {
                 variant="ghost"
                 size="sm"
                 className="text-[#64748b] hover:text-[#091426] hover:bg-[#eff4ff]"
-                onClick={() => router.push('/auth/login')}
+                onClick={() => router.push(loginHref())}
               >
                 Sign In
               </Button>
@@ -207,7 +208,7 @@ export default function Navbar() {
                       <Button
                         variant="outline"
                         className="w-full border-white/20 text-white bg-transparent hover:bg-white/8"
-                        onClick={() => { router.push('/auth/login'); setMobileOpen(false); }}
+                        onClick={() => { router.push(loginHref()); setMobileOpen(false); }}
                       >
                         Sign In
                       </Button>

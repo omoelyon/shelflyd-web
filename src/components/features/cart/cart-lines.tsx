@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Layers, Minus, Plus, Trash2, X } from 'lucide-react';
 import { atStockLimit, lineStock } from '@/lib/cart-stock';
 import { Button } from '@/components/ui/button';
+import QuantityField from '@/components/ui/quantity-field';
 import { cn } from '@/lib/utils';
 import { splitCart, useSetsVariant, type SetView } from '@/lib/cart-sets';
 import { BuildSetButton, SetBuilderDialog } from '@/components/features/cart-sets/set-builder-dialog';
@@ -45,6 +46,9 @@ interface CartLinesProps {
   onIncrement: (product: CartProduct) => void;
   onDecrement: (product: CartProduct) => void;
   onRemove: (product: CartProduct) => void;
+  /** When given, a line's number can be typed as well as stepped; called with the exact quantity wanted. */
+  onSetQuantity?: (product: CartProduct, quantity: number) => void;
+  setQuantityPending?: boolean;
   incrementPending?: boolean;
   decrementPending?: boolean;
   removePending?: boolean;
@@ -64,6 +68,8 @@ export default function CartLines({
   onIncrement,
   onDecrement,
   onRemove,
+  onSetQuantity,
+  setQuantityPending,
   incrementPending,
   decrementPending,
   removePending,
@@ -251,27 +257,43 @@ export default function CartLines({
               <p className="font-semibold text-primary">₦{product.totalPrice.toLocaleString()}</p>
               {!selecting && (
                 <div className="mt-1.5 flex items-center justify-end gap-1">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-6 w-6"
-                    aria-label={`Decrease ${product.name}`}
-                    onClick={() => onDecrement(product)}
-                    disabled={isAuthenticated && decrementPending}
-                  >
-                    <Minus className="h-3 w-3" />
-                  </Button>
-                  <span className="w-6 text-center text-sm font-medium tabular-nums">{product.quantity}</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-6 w-6"
-                    aria-label={`Increase ${product.name}`}
-                    onClick={() => onIncrement(product)}
-                    disabled={(isAuthenticated && incrementPending) || atStockLimit(product)}
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
+                  {onSetQuantity ? (
+                    // Type the amount (saved when they leave the box) or step with the buttons.
+                    <QuantityField
+                      size="sm"
+                      live={false}
+                      label={`quantity of ${product.name}`}
+                      value={product.quantity}
+                      max={product.availableQuantity != null ? Math.max(1, Math.floor(product.availableQuantity)) : undefined}
+                      pending={setQuantityPending || (isAuthenticated && (incrementPending || decrementPending))}
+                      disabled={isAuthenticated && (setQuantityPending || incrementPending || decrementPending)}
+                      onChange={(n) => onSetQuantity(product, n)}
+                    />
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-6 w-6"
+                        aria-label={`Decrease ${product.name}`}
+                        onClick={() => onDecrement(product)}
+                        disabled={isAuthenticated && decrementPending}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="w-6 text-center text-sm font-medium tabular-nums">{product.quantity}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-6 w-6"
+                        aria-label={`Increase ${product.name}`}
+                        onClick={() => onIncrement(product)}
+                        disabled={(isAuthenticated && incrementPending) || atStockLimit(product)}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
