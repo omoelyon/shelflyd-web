@@ -7,6 +7,10 @@ import { formatStatus } from '@/lib/utils';
 
 interface ProductCardProps {
   product: Product;
+  /** Where the card links. Defaults to the marketplace product page; storefronts pass their own themed page. */
+  href?: string;
+  /** Lets a host (the storefront editor preview) stop the link from navigating. */
+  onLinkClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 const statusConfig: Record<Product['status'], { label: string; className: string }> = {
@@ -16,7 +20,7 @@ const statusConfig: Record<Product['status'], { label: string; className: string
   COMING_SOON: { label: 'Coming Soon', className: 'bg-blue-50 text-blue-700' },
 };
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, href, onLinkClick }: ProductCardProps) {
   // SHF-16: a product's image field being non-empty doesn't mean the URL actually
   // resolves (a dead/placeholder host, for one real example) — fall back to the same
   // "No image" state on load failure instead of a broken-image icon.
@@ -28,7 +32,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const status = statusConfig[product.status] ?? { label: formatStatus(product.status), className: 'bg-gray-100 text-gray-500' };
 
   return (
-    <Link href={`/products/${product.uuid}`} className="block group">
+    <Link href={href ?? `/products/${product.uuid}`} onClick={onLinkClick} className="block group">
       <div className="bg-card rounded-2xl border border-border h-full flex flex-col overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:border-border/80">
         {/* Image */}
         <div className="relative h-48 bg-muted overflow-hidden">

@@ -13,7 +13,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Store, MapPin, ArrowRight, Landmark, CalendarClock } from 'lucide-react';
+import { Store, MapPin, ArrowRight, Landmark, CalendarClock, Paintbrush } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
@@ -111,6 +111,28 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
           <ThemeColorPicker business={business} />
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Storefront design */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Storefront design</CardTitle>
+          <CardDescription>
+            Choose a template and customise your store: colours, fonts, banner and sections.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            href="/dashboard/storefront"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#091426] text-white text-sm font-medium hover:bg-[#091426]/90 transition-colors"
+          >
+            <Paintbrush className="h-4 w-4" />
+            Design your storefront
+            <ArrowRight className="h-4 w-4 ml-1" />
+          </Link>
         </CardContent>
       </Card>
 

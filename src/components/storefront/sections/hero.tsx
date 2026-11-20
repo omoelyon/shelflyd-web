@@ -32,15 +32,18 @@ export default function Hero({ section }: { section: HeroSection }) {
     const ink = hasImage ? '#ffffff' : readableTextOn(primary);
     return (
       <section aria-label={heading} className="relative flex min-h-[18rem] items-end overflow-hidden sm:min-h-[22rem]" style={{ backgroundColor: primary }}>
-        {hasImage && (
+        {hasImage ? (
           <>
             <Image src={props.image} alt="" fill className="object-cover" unoptimized priority />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10" aria-hidden="true" />
           </>
+        ) : (
+          // No photo: a soft light-to-dark wash so the plain brand colour still looks designed
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20" aria-hidden="true" />
         )}
         <div className="relative mx-auto w-full max-w-7xl px-4 py-10" style={{ color: ink }}>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-4xl font-bold sm:text-5xl">{heading}</h1>
+            <h1 className="text-balance text-4xl font-bold sm:text-5xl">{heading}</h1>
             {props.showOpenBadge && <Badge className="bg-white/90 text-[#0b1220]">Open</Badge>}
           </div>
           {tagline && <p className="mt-3 max-w-xl text-base opacity-90 sm:text-lg">{tagline}</p>}

@@ -64,7 +64,11 @@ export interface HeroSection extends SectionBase {
 
 export interface ProductsSection extends SectionBase {
   type: 'products';
-  variant: 'grid';
+  /**
+   * grid: image-led cards with description and price (the classic look). portrait: tall 3:4 photos with just the
+   * name and price, no card chrome (fashion/beauty). compact: small dense cards for catalogues with many products.
+   */
+  variant: 'grid' | 'portrait' | 'compact';
   props: { title: string; columns: 3 | 4; showSearch: boolean; showSets: boolean };
 }
 
@@ -154,7 +158,7 @@ function normalizeSection(raw: unknown, index: number): StorefrontSection | null
         id,
         hidden,
         type: 'products',
-        variant: 'grid',
+        variant: oneOf(s.variant, ['grid', 'portrait', 'compact'] as const, 'grid'),
         props: {
           title: str(props.title, 'Products'),
           columns: props.columns === 3 ? 3 : 4,
