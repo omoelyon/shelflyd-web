@@ -122,6 +122,17 @@ Add `*.shelflyd.com` as a wildcard domain in your project settings.
 
 > Subdomain routing does not work on `localhost`. Test storefront pages locally via `/businesses/{id}`.
 
+### Custom domains (production only)
+
+Sellers can open their store at their own domain (for example `shop.theirbrand.com`). This is switched on in production only:
+
+```env
+# Frontend (Vercel, production): serve sellers' own domains.
+NEXT_PUBLIC_CUSTOM_DOMAINS_ENABLED=true
+```
+
+The backend has its own switch (`DOMAINS_ENABLED=true`). While either is off (local, staging) nothing about custom domains shows in the dashboard and the proxy does not look anything up. When on, `src/proxy.ts` asks the API (`GET /domains/resolve?host=`) which store a host belongs to, caches the answer briefly, and rewrites the request to `/storefront/[slug]` just like a `slug.shelflyd.shop` subdomain. Hosts that are not ours and not connected redirect to the marketplace. Hosting-provider addresses (`*.vercel.app`, `*.railway.app`) and `localhost` are never looked up.
+
 ---
 
 ## Authentication

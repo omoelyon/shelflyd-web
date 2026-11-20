@@ -35,7 +35,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = seo.title.trim() || info.name || FALLBACK_TITLE;
   const description = seo.description.trim() || info.description?.trim() || FALLBACK_DESCRIPTION;
   const image = seo.image.trim() || info.logo || null;
-  const siteUrl = `https://${slug}.${STOREFRONT_DOMAIN}`;
+  // A store with its own live domain is canonical at that address; its shelflyd.shop address is the fallback.
+  const siteUrl = info.customDomain ? `https://${info.customDomain}` : `https://${slug}.${STOREFRONT_DOMAIN}`;
 
   return {
     metadataBase: new URL(siteUrl),

@@ -14,6 +14,7 @@ import { storefrontDesignApi, type StorefrontDesignState } from '@/lib/api/store
 import { normalizeDesign, type StorefrontDesign } from '@/lib/storefront/design';
 import { clientValidate, designsEqual } from '@/lib/storefront/editor-model';
 import { storefrontUrl } from '@/lib/storefront/url';
+import { useStoreDomain } from '@/components/features/domains/use-store-domain';
 import { cn, getApiError } from '@/lib/utils';
 import BrandControls from './brand-controls';
 import LivePreview from './live-preview';
@@ -67,6 +68,7 @@ export default function StorefrontEditor() {
   const isLarge = useIsLarge();
 
   const themeColor = business.data?.themeColor;
+  const customDomain = useStoreDomain();
   const state: StorefrontDesignState | undefined = designState.data;
 
   /** What is saved on the server for the editor to start from: the draft, else the live design, else Classic. */
@@ -259,7 +261,7 @@ export default function StorefrontEditor() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <a href={storefrontUrl(slug)} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+          <a href={storefrontUrl(slug, '', customDomain)} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
             <ExternalLink />
             View live store
           </a>

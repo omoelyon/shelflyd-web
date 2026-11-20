@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import type { StorefrontDesign } from '@/lib/storefront/design';
 import { LIMITS, setSeo } from '@/lib/storefront/editor-model';
 import { storefrontUrl } from '@/lib/storefront/url';
+import { useStoreDomain } from '@/components/features/domains/use-store-domain';
 import { Field, Panel } from './controls';
 import ImageField from './image-field';
 
@@ -20,10 +21,11 @@ interface Props {
 /** How the store looks in search results and when its link is shared, with a live preview of both. */
 export default function SeoControls({ design, onChange, slug, fallback }: Props) {
   const { seo } = design;
+  const customDomain = useStoreDomain();
   const title = seo.title.trim() || fallback.name;
   const description = seo.description.trim() || fallback.description.trim();
   const image = seo.image.trim() || fallback.logo || '';
-  const address = storefrontUrl(slug).replace(/^https?:\/\//, '');
+  const address = storefrontUrl(slug, '', customDomain).replace(/^https?:\/\//, '');
   const domain = address.split('/')[0];
 
   return (

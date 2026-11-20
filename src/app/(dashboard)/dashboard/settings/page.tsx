@@ -13,12 +13,15 @@ import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Store, MapPin, ArrowRight, Landmark, CalendarClock, Paintbrush } from 'lucide-react';
+import { Store, MapPin, ArrowRight, Landmark, CalendarClock, Paintbrush, Globe } from 'lucide-react';
+import { useDomainState } from '@/components/features/domains/use-store-domain';
 import Link from 'next/link';
 
 export default function SettingsPage() {
   const loadFromBusiness = useThemeStore((s) => s.loadFromBusiness);
   const qc = useQueryClient();
+  // The custom-domain card only appears where custom domains are switched on (production).
+  const { data: domainState } = useDomainState();
 
   const { data: business, isLoading, isError } = useQuery({
     queryKey: ['business-settings'],
@@ -135,6 +138,32 @@ export default function SettingsPage() {
           </Link>
         </CardContent>
       </Card>
+
+      {domainState?.enabled && (
+        <>
+          <Separator />
+
+          {/* Custom domain */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Custom domain</CardTitle>
+              <CardDescription>
+                Open your store at your own web address, like shop.yourbrand.com. Connect one you own, or buy a new one.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link
+                href="/dashboard/settings/domain"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#091426] text-white text-sm font-medium hover:bg-[#091426]/90 transition-colors"
+              >
+                <Globe className="h-4 w-4" />
+                {domainState.domain ? 'Manage your domain' : 'Set up a domain'}
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </Link>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <Separator />
 

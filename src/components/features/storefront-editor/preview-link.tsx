@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { storefrontDesignApi, type StorefrontDesignState } from '@/lib/api/storefront-design';
 import { storefrontUrl } from '@/lib/storefront/url';
+import { useStoreDomain } from '@/components/features/domains/use-store-domain';
 import { getApiError } from '@/lib/utils';
 
 interface Props {
@@ -29,9 +30,10 @@ interface Props {
 /** Share a private link to the SAVED draft, so a partner or friend can look at it before it goes live. */
 export default function PreviewLinkDialog({ open, onOpenChange, slug, state, dirty, onSave, saving, onState }: Props) {
   const [confirmRotate, setConfirmRotate] = useState(false);
+  const customDomain = useStoreDomain();
   const token = state?.previewToken ?? null;
   const hasDraft = !!state?.draft;
-  const link = token ? `${storefrontUrl(slug)}?preview=${encodeURIComponent(token)}` : '';
+  const link = token ? `${storefrontUrl(slug, '', customDomain)}?preview=${encodeURIComponent(token)}` : '';
 
   const fail = (err: unknown, fallback: string) => toast.error(getApiError(err, fallback));
 

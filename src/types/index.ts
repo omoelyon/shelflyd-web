@@ -127,6 +127,8 @@ export interface StorefrontInfo {
   design: unknown | null;
   /** True when this response is a private draft preview (the design above is the unpublished draft). */
   previewing?: boolean;
+  /** The store's own live domain (e.g. "shop.theirbrand.com"), or null/absent when it only has its Shelflyd address. */
+  customDomain?: string | null;
 }
 
 // ─── Category ────────────────────────────────────────────────────────────────
@@ -609,6 +611,101 @@ export interface ProductAnalytics {
   previousViews: number;
   daily: ProductVisitDay[];
   products: ProductVisitStat[];
+}
+
+// ─── Custom domains ───────────────────────────────────────────────────────────
+
+export type CustomDomainSource = 'CONNECTED' | 'PURCHASED';
+export type CustomDomainStatus = 'AWAITING_VERIFICATION' | 'AWAITING_DNS' | 'ACTIVE';
+
+/** One DNS record the seller has to add at their domain provider. */
+export interface DnsRecord {
+  type: string;
+  name: string;
+  value: string;
+  note: string | null;
+}
+
+export interface CustomDomain {
+  hostname: string;
+  source: CustomDomainSource;
+  status: CustomDomainStatus;
+  /** The ownership (TXT) record; null once ownership is proven, or for bought domains. */
+  verification: DnsRecord | null;
+  /** Records that point the domain at the store; empty for bought domains (Shelflyd sets them up). */
+  routing: DnsRecord[];
+  /** What is still missing, in plain words; null when nothing is wrong. */
+  message: string | null;
+  lastCheckedAt: string | null;
+  activatedAt: string | null;
+  /** When a bought domain's registration ends. */
+  expiresAt: string | null;
+}
+
+export type DomainPurchaseStatus = 'PENDING_PAYMENT' | 'PAID' | 'REGISTERED' | 'FAILED';
+
+export interface DomainPurchaseStatusInfo {
+  reference: string;
+  domain: string;
+  status: DomainPurchaseStatus;
+  amountNgn: number;
+  message: string | null;
+}
+
+export interface DomainState {
+  /** False where custom domains are switched off (staging): show nothing about them. */
+  enabled: boolean;
+  /** Only the business owner may connect, buy or remove a domain. */
+  canManage: boolean;
+  /** Whether Shelflyd issues HTTPS for the domain itself. */
+  automaticHttps: boolean;
+  domain: CustomDomain | null;
+  /** Whether the "Buy a domain" search (names and prices) is available. */
+  searchEnabled: boolean;
+  /** Whether paying for and registering a domain is allowed. Search can be on while this is off. */
+  purchasingEnabled: boolean;
+  /** The most recent domain purchase, when one is in flight or just failed. */
+  purchase: DomainPurchaseStatusInfo | null;
+}
+
+export interface DomainSearchResult {
+  domain: string;
+  available: boolean;
+  priceNgn: number;
+  years: number;
+}
+
+export interface DomainSearchResponse {
+  query: string;
+  searchEnabled: boolean;
+  purchasingEnabled: boolean;
+  results: DomainSearchResult[];
+}
+
+/** The owner details registered with the domain (they appear in the domain's public WHOIS record). */
+export interface DomainContact {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface PurchaseDomainRequest {
+  domain: string;
+  years: number;
+  contact: DomainContact;
+}
+
+export interface PurchaseDomainResponse {
+  reference: string;
+  /** The Paystack page to send the seller to for payment. */
+  authorizationUrl: string;
+  amountNgn: number;
 }
 
 // ─── API Error ────────────────────────────────────────────────────────────────
