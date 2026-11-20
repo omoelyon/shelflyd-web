@@ -179,6 +179,8 @@ export interface Product extends BaseEntity {
   prices: PriceDetail[];  // backend field name: "prices" (PriceDetail shape)
   /** Units in stock, when the seller tracks it and the backend includes it in the list response. */
   stock?: number | null;
+  /** True while the seller has hidden the product from shoppers. Only the seller's own list can contain hidden products. */
+  hidden?: boolean;
 }
 
 export interface CreateProductRequest {
@@ -214,6 +216,8 @@ export interface UpdateProductRequest {
   /** Photos in order, cover first (at most 5). When sent it replaces the whole list; send [] to remove them all. */
   images?: string[];
   status?: ProductStatus;
+  /** Hide the product from shoppers (true) or show it again (false). Leave out to keep it as it is. */
+  hidden?: boolean;
 }
 
 // ─── Cart ─────────────────────────────────────────────────────────────────────
@@ -571,6 +575,40 @@ export interface EarningRow {
 export interface RevenueDataPoint {
   date: string;    // "YYYY-MM-DD"
   revenue: number;
+}
+
+// ─── Product visit analytics ─────────────────────────────────────────────────
+
+export interface ProductVisitDay {
+  date: string; // "YYYY-MM-DD", Lagos time
+  views: number;
+  /** The most visited product that day; null when nobody visited. */
+  top: { productId: number; name: string; views: number } | null;
+}
+
+export interface ProductVisitStat {
+  productId: number;
+  name: string;
+  image: string | null;
+  /** False once the seller has removed the product. */
+  available: boolean;
+  /** True while the seller has the product hidden from shoppers. */
+  hidden: boolean;
+  views: number;
+  previousViews: number;
+  /** One number per day of the period, oldest first. */
+  series: number[];
+}
+
+export interface ProductAnalytics {
+  from: string;
+  to: string;
+  days: number;
+  totalViews: number;
+  /** Views in the equally long period just before this one. */
+  previousViews: number;
+  daily: ProductVisitDay[];
+  products: ProductVisitStat[];
 }
 
 // ─── API Error ────────────────────────────────────────────────────────────────

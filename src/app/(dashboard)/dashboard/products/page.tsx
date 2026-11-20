@@ -19,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -39,8 +40,8 @@ import EmptyState from '@/components/ui/empty-state';
 import StatusBadge from '@/components/ui/status-badge';
 import PaginationControls from '@/components/ui/pagination-controls';
 import { toast } from 'sonner';
-import { getApiError, formatStatus } from '@/lib/utils';
-import { Plus, Package, Boxes, Tag, Trash2, Pencil, ArrowLeftRight, AlertCircle } from 'lucide-react';
+import { cn, getApiError, formatStatus } from '@/lib/utils';
+import { Plus, Package, Boxes, Tag, Trash2, Pencil, ArrowLeftRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 import ProductImagesField from '@/components/features/products/product-images-field';
 import { productImages } from '@/lib/product-images';
@@ -57,6 +58,8 @@ export default function DashboardProductsPage() {
   const [editImages, setEditImages] = useState<string[]>([]);
   const [editPhotosTouched, setEditPhotosTouched] = useState(false);
   const [editImageUploading, setEditImageUploading] = useState(false);
+  // Whether the product is hidden from shoppers; sent only when the seller changed it.
+  const [editHidden, setEditHidden] = useState(false);
 
   // Delete dialog
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
@@ -144,6 +147,17 @@ export default function DashboardProductsPage() {
     onError: (error) => toast.error(getApiError(error, 'Failed to update product.')),
   });
 
+  // Hide a product from shoppers, or show it again, straight from the product card.
+  const visibilityMutation = useMutation({
+    mutationFn: ({ id, hidden }: { id: number; hidden: boolean; name: string }) => productsApi.update(id, { hidden }),
+    onSuccess: (_product, { hidden, name }) => {
+      toast.success(hidden ? `“${name}” is hidden from shoppers.` : `“${name}” is visible in your store again.`);
+      qc.invalidateQueries({ queryKey: ['business-products'] });
+      qc.invalidateQueries({ queryKey: ['storefront-editor', 'my-products'] });
+    },
+    onError: (error) => toast.error(getApiError(error, 'Could not change whether this product is shown.')),
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: number) => productsApi.delete(id),
     onSuccess: () => {
@@ -215,6 +229,7 @@ export default function DashboardProductsPage() {
     setEditProduct(product);
     setEditImages(productImages(product));
     setEditPhotosTouched(false);
+    setEditHidden(product.hidden ?? false);
     resetEdit({
       name: product.name,
       type: product.type ?? '',
@@ -331,6 +346,20 @@ export default function DashboardProductsPage() {
           )}
         />
       </div>
+
+      <div className="flex items-center justify-between gap-4 rounded-xl border border-[rgba(9,20,38,0.1)] bg-[#f8f9ff] px-3.5 py-3">
+        <div className="min-w-0">
+          <Label htmlFor="product-visible" className="text-sm font-medium text-[#091426]">
+            Show in your store
+          </Label>
+          <p className="mt-0.5 text-xs text-[#64748b]">
+            {editHidden
+              ? 'Hidden: shoppers can’t see or buy this product. It stays here and you can show it again any time.'
+              : 'Shoppers can see and buy this product. Turn off to hide it without deleting it.'}
+          </p>
+        </div>
+        <Switch id="product-visible" checked={!editHidden} onCheckedChange={(visible) => setEditHidden(!visible)} aria-label="Show this product in your store" />
+      </div>
     </>
   );
 
@@ -373,12 +402,21 @@ export default function DashboardProductsPage() {
               <div key={product.id} className="bg-white rounded-2xl shadow-card-md overflow-hidden">
                 {/* Product image */}
                 <div className="relative h-36 bg-[#f8f9ff]">
+                  {product.hidden && (
+                    <span
+                      title="Hidden from shoppers"
+                      className="absolute left-2 top-2 z-10 inline-flex items-center gap-1 rounded-full bg-[#091426] px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm"
+                    >
+                      <EyeOff className="h-3 w-3" />
+                      Hidden
+                    </span>
+                  )}
                   {productImages(product)[0] ? (
                     <Image
                       src={productImages(product)[0]}
                       alt={product.name}
                       fill
-                      className="object-cover"
+                      className={cn('object-cover transition-opacity duration-300', product.hidden && 'opacity-45 grayscale')}
                       unoptimized
                     />
                   ) : (
@@ -396,6 +434,16 @@ export default function DashboardProductsPage() {
                   )}
                   {/* Edit / Delete overlay buttons */}
                   <div className="absolute top-2 right-2 flex gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => visibilityMutation.mutate({ id: product.id, hidden: !product.hidden, name: product.name })}
+                      disabled={visibilityMutation.isPending && visibilityMutation.variables?.id === product.id}
+                      className="h-7 w-7 rounded-lg bg-white/90 backdrop-blur-sm shadow-sm flex items-center justify-center text-[#091426] hover:bg-white transition-colors disabled:opacity-60"
+                      title={product.hidden ? 'Show to shoppers' : 'Hide from shoppers'}
+                      aria-label={product.hidden ? `Show ${product.name} to shoppers` : `Hide ${product.name} from shoppers`}
+                    >
+                      {product.hidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                    </button>
                     <button
                       onClick={() => openEditDialog(product)}
                       className="h-7 w-7 rounded-lg bg-white/90 backdrop-blur-sm shadow-sm flex items-center justify-center text-[#091426] hover:bg-white transition-colors"
@@ -531,7 +579,11 @@ export default function DashboardProductsPage() {
               void _ignored;
               updateMutation.mutate({
                 id: editProduct.id,
-                data: { ...fields, ...(editPhotosTouched ? { images: editImages } : {}) },
+                data: {
+                  ...fields,
+                  ...(editPhotosTouched ? { images: editImages } : {}),
+                  ...(editHidden !== (editProduct.hidden ?? false) ? { hidden: editHidden } : {}),
+                },
               });
             })}
             className="space-y-4 mt-2"

@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BuildSetButton } from '@/components/features/cart-sets/set-builder-dialog';
 import ProductGallery from '@/components/features/products/product-gallery';
+import { marketplaceViewPath, useTrackProductView } from '@/lib/use-track-product-view';
 import { productImages } from '@/lib/product-images';
 
 interface Props {
@@ -41,6 +42,9 @@ export default function ProductDetailPage({ params }: Props) {
     queryKey: ['product', uuid],
     queryFn: () => productsApi.getByUuid(uuid),
   });
+
+  // Count the visit once the product has actually loaded (an unknown product is not a visit).
+  useTrackProductView(product ? marketplaceViewPath(uuid) : null);
 
   const addToCart = useMutation({
     mutationFn: () =>

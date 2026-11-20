@@ -14,6 +14,7 @@ import {
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import PageHeader from '@/components/ui/page-header';
+import ProductVisits from '@/components/features/analytics/product-visits';
 import StatCard from '@/components/ui/stat-card';
 import {
   TrendingUp,
@@ -67,7 +68,7 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Analytics"
-        subtitle="Revenue trends and order breakdown"
+        subtitle="Revenue, orders and which products shoppers visit"
       />
 
       {/* ── Revenue chart ── */}
@@ -162,6 +163,9 @@ export default function AnalyticsPage() {
           </ResponsiveContainer>
         )}
       </div>
+
+      {/* ── Product visits ── */}
+      <ProductVisits />
 
       {/* ── KPI bento ── */}
       {statsLoading ? (

@@ -7,6 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { businessesApi } from '@/lib/api/businesses';
 
+/** Marks a product the seller has hidden: it can still be picked, but shoppers won't see it until it is shown again. */
+function HiddenPill({ note }: { note?: string }) {
+  return (
+    <span title={note} className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+      Hidden
+    </span>
+  );
+}
+
 interface Props {
   value: number[];
   onChange: (ids: number[]) => void;
@@ -53,6 +62,7 @@ export default function ProductPicker({ value, onChange, max }: Props) {
             return (
               <li key={id} className="animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 flex items-center gap-1 rounded-lg border bg-background py-1 pl-2.5 pr-1 duration-300 ease-(--ease-out)">
                 <span className="min-w-0 flex-1 truncate text-sm">{name}</span>
+                {byId.get(id)?.hidden && <HiddenPill note="Shoppers won’t see this product while it is hidden" />}
                 <Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label={`Move ${name} up`} disabled={index === 0} onClick={() => move(index, index - 1)}>
                   <ArrowUp />
                 </Button>
@@ -95,6 +105,7 @@ export default function ProductPicker({ value, onChange, max }: Props) {
                 >
                   <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
                   <span className="truncate">{p.name}</span>
+                  {p.hidden && <HiddenPill />}
                 </button>
               </li>
             ))}

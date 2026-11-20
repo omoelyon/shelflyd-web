@@ -17,6 +17,7 @@ import { cn, formatStatus, getApiError } from '@/lib/utils';
 import { BuildSetButton } from '@/components/features/cart-sets/set-builder-dialog';
 import ProductGallery from '@/components/features/products/product-gallery';
 import { productImages } from '@/lib/product-images';
+import { storefrontViewPath, useTrackProductView } from '@/lib/use-track-product-view';
 import type { Product } from '@/types';
 import { useCartDrawer } from './cart-drawer-store';
 import { stagger } from './motion';
@@ -44,6 +45,8 @@ export default function ProductDetail({ product }: { product: Product }) {
   const qtyPulses = useChangePulse(quantity);
   const [note, setNote] = useState('');
   const id = product.id;
+  // The editor's preview shows sample data, so it never counts as a visit.
+  useTrackProductView(preview ? null : storefrontViewPath(slug, id));
 
   // After a successful add the button shows a brief "Added" tick, then goes back to normal. It stays clickable.
   const [justAdded, setJustAdded] = useState(false);
