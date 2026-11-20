@@ -170,7 +170,10 @@ export interface Product extends BaseEntity {
   type: string;
   description: string;
   category: number;
+  /** The cover photo (always the first of `images`); kept for everything that shows a single picture. */
   image: string;
+  /** Every photo in order, cover first, at most MAX_PRODUCT_IMAGES. Use `productImages(product)` to read it safely. */
+  images?: string[];
   status: ProductStatus;
   businessId: number;
   prices: PriceDetail[];  // backend field name: "prices" (PriceDetail shape)
@@ -184,6 +187,8 @@ export interface CreateProductRequest {
   description?: string;
   category?: number;
   image?: string;
+  /** Photos in order, cover first (at most 5). When sent it replaces the whole list. */
+  images?: string[];
   status?: ProductStatus;
   priceDetails?: PriceDetail[];
 }
@@ -194,6 +199,7 @@ export interface QuickProductRequest {
   description?: string;
   category?: number;
   image?: string;
+  images?: string[];
   unitName: string;
   price: number;
   stock?: number;
@@ -205,6 +211,8 @@ export interface UpdateProductRequest {
   description?: string;
   category?: number;
   image?: string;
+  /** Photos in order, cover first (at most 5). When sent it replaces the whole list; send [] to remove them all. */
+  images?: string[];
   status?: ProductStatus;
 }
 

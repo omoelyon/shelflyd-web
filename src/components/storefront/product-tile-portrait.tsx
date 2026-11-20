@@ -5,6 +5,7 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { productImages } from '@/lib/product-images';
 import type { Product } from '@/types';
 import { SfLink } from './sf-link';
 import { useStorefront } from './storefront-context';
@@ -16,6 +17,9 @@ import { useStorefront } from './storefront-context';
 export default function ProductTilePortrait({ product, className, style }: { product: Product; className?: string; style?: CSSProperties }) {
   const { slug } = useStorefront();
   const [imageFailed, setImageFailed] = useState(false);
+  // With two or more photos, the second fades in over the cover on hover (never on touch screens) or keyboard focus.
+  const second = productImages(product)[1];
+  const [secondFailed, setSecondFailed] = useState(false);
   const lowest = product.prices?.reduce((min, p) => (p.price < min.price ? p : min), product.prices[0]);
   const soldOut = product.status === 'OUT_OF_STOCK';
 
@@ -23,14 +27,28 @@ export default function ProductTilePortrait({ product, className, style }: { pro
     <SfLink href={`/storefront/${slug}/products/${product.id}`} className={cn('group block', className)} style={style}>
       <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-muted">
         {product.image && !imageFailed ? (
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            unoptimized
-            onError={() => setImageFailed(true)}
-            className={`object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105 ${soldOut ? 'opacity-60 grayscale' : 'sf-img-in'}`}
-          />
+          <div className={cn('absolute inset-0', soldOut && 'opacity-60 grayscale')}>
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              unoptimized
+              onError={() => setImageFailed(true)}
+              className="sf-img-in object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
+            />
+            {second && !secondFailed && (
+              <Image
+                src={second}
+                alt=""
+                aria-hidden="true"
+                fill
+                unoptimized
+                loading="lazy"
+                onError={() => setSecondFailed(true)}
+                className="object-cover opacity-0 transition-[opacity,scale] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] [@media(hover:hover)]:group-hover:opacity-100 group-focus-visible:opacity-100 group-hover:scale-105"
+              />
+            )}
+          </div>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground/50">
             <Package className="h-8 w-8" aria-hidden="true" />

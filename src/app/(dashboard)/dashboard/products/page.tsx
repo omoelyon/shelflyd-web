@@ -1,11 +1,10 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { businessesApi } from '@/lib/api/businesses';
 import { productsApi } from '@/lib/api/products';
-import { uploadsApi } from '@/lib/api/uploads';
 import { pricingApi } from '@/lib/api/pricing';
 import { inventoryApi } from '@/lib/api/inventory';
 import { categoriesApi } from '@/lib/api/categories';
@@ -41,9 +40,11 @@ import StatusBadge from '@/components/ui/status-badge';
 import PaginationControls from '@/components/ui/pagination-controls';
 import { toast } from 'sonner';
 import { getApiError, formatStatus } from '@/lib/utils';
-import { Plus, Package, Boxes, Tag, Trash2, ImageIcon, Pencil, ArrowLeftRight, AlertCircle } from 'lucide-react';
+import { Plus, Package, Boxes, Tag, Trash2, Pencil, ArrowLeftRight, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
-import type { Product, PriceDetail } from '@/types';
+import ProductImagesField from '@/components/features/products/product-images-field';
+import { productImages } from '@/lib/product-images';
+import type { Product, PriceDetail, UpdateProductRequest } from '@/types';
 
 export default function DashboardProductsPage() {
   const router = useRouter();
@@ -51,9 +52,11 @@ export default function DashboardProductsPage() {
 
   // Edit dialog
   const [editProduct, setEditProduct] = useState<Product | null>(null);
-  const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
+  // The photos are managed outside the form: they are only sent when the seller actually changed them,
+  // so editing the name or price can never wipe a product's photos by accident.
+  const [editImages, setEditImages] = useState<string[]>([]);
+  const [editPhotosTouched, setEditPhotosTouched] = useState(false);
   const [editImageUploading, setEditImageUploading] = useState(false);
-  const editFileInputRef = useRef<HTMLInputElement>(null);
 
   // Delete dialog
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
@@ -128,13 +131,14 @@ export default function DashboardProductsPage() {
   // ── Mutations ────────────────────────────────────────────────────────────────
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: CreateProductFormValues }) =>
+    mutationFn: ({ id, data }: { id: number; data: UpdateProductRequest }) =>
       productsApi.update(id, data),
     onSuccess: () => {
       toast.success('Product updated!');
       qc.invalidateQueries({ queryKey: ['business-products'] });
       setEditProduct(null);
-      setEditImagePreview(null);
+      setEditImages([]);
+      setEditPhotosTouched(false);
       resetEdit();
     },
     onError: (error) => toast.error(getApiError(error, 'Failed to update product.')),
@@ -207,57 +211,31 @@ export default function DashboardProductsPage() {
     onError: (error) => toast.error(getApiError(error, 'Failed to add category.')),
   });
 
-  // ── Image upload helpers ─────────────────────────────────────────────────────
-
-  const handleEditImageFile = async (file: File) => {
-    setEditImagePreview(URL.createObjectURL(file));
-    setEditImageUploading(true);
-    try {
-      const url = await uploadsApi.uploadFile(file);
-      setEditValue('image', url);
-      toast.success('Image uploaded');
-    } catch (err) {
-      toast.error(getApiError(err, "The photo didn't upload. Try again."));
-      setEditImagePreview(null);
-    } finally {
-      setEditImageUploading(false);
-    }
-  };
-
   const openEditDialog = (product: Product) => {
     setEditProduct(product);
-    setEditImagePreview(product.image ?? null);
+    setEditImages(productImages(product));
+    setEditPhotosTouched(false);
     resetEdit({
       name: product.name,
       type: product.type ?? '',
       description: product.description ?? '',
       category: product.category ?? undefined,
-      image: product.image ?? '',
       status: product.status,
     });
   };
 
   // ── Product form body (edit dialog) ─────────────────────────────────────────
 
-  const ProductFormFields = ({
+  // A plain function (not a component) so the photo manager inside keeps its state while the form re-renders.
+  const renderProductFormFields = ({
     reg,
     ctrl,
     errs,
-    preview,
-    uploading,
-    inputRef,
-    onFileChange,
-    onRemoveImage,
     onNewCategory,
   }: {
     reg: typeof registerEdit;
     ctrl: typeof controlEdit;
     errs: typeof editErrors;
-    preview: string | null;
-    uploading: boolean;
-    inputRef: React.RefObject<HTMLInputElement | null>;
-    onFileChange: (file: File) => void;
-    onRemoveImage: () => void;
     onNewCategory: () => void;
   }) => (
     <>
@@ -320,59 +298,17 @@ export default function DashboardProductsPage() {
         <Textarea placeholder="Describe the product…" {...reg('description')} rows={2} />
       </div>
 
-      {/* Image upload zone */}
+      {/* Photos */}
       <div className="space-y-1.5">
-        <Label className="text-sm font-medium text-[#091426]">Product Image</Label>
-        <input type="hidden" {...reg('image')} />
-        <div
-          className="rounded-xl border-2 border-dashed border-[rgba(9,20,38,0.15)] p-4 flex flex-col items-center gap-2 cursor-pointer hover:border-[#0058be]/50 hover:bg-[#f8f9ff] transition-all"
-          onClick={() => inputRef.current?.click()}
-        >
-          {preview ? (
-            <div className="relative w-full h-32">
-              <Image
-                src={preview}
-                alt="Preview"
-                fill
-                className="object-contain rounded-lg"
-                unoptimized
-              />
-            </div>
-          ) : (
-            <>
-              <ImageIcon className="h-8 w-8 text-[#94a3b8]" />
-              <p className="text-sm text-[#64748b] text-center">
-                Click to upload an image
-                <br />
-                <span className="text-xs">PNG, JPG, WebP — max 5 MB</span>
-              </p>
-            </>
-          )}
-          {uploading && (
-            <p className="text-xs text-[#0058be] animate-pulse">Uploading…</p>
-          )}
-        </div>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onFileChange(file);
+        <Label className="text-sm font-medium text-[#091426]">Product photos</Label>
+        <ProductImagesField
+          value={editImages}
+          onChange={(urls) => {
+            setEditImages(urls);
+            setEditPhotosTouched(true);
           }}
+          onBusyChange={setEditImageUploading}
         />
-        {preview && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="text-destructive hover:text-destructive"
-            onClick={onRemoveImage}
-          >
-            Remove image
-          </Button>
-        )}
       </div>
 
       <div className="space-y-1.5">
@@ -437,9 +373,9 @@ export default function DashboardProductsPage() {
               <div key={product.id} className="bg-white rounded-2xl shadow-card-md overflow-hidden">
                 {/* Product image */}
                 <div className="relative h-36 bg-[#f8f9ff]">
-                  {product.image ? (
+                  {productImages(product)[0] ? (
                     <Image
-                      src={product.image}
+                      src={productImages(product)[0]}
                       alt={product.name}
                       fill
                       className="object-cover"
@@ -449,6 +385,14 @@ export default function DashboardProductsPage() {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <Package className="h-10 w-10 text-[#cbd5e1]" />
                     </div>
+                  )}
+                  {productImages(product).length > 1 && (
+                    <span
+                      aria-label={`${productImages(product).length - 1} more ${productImages(product).length - 1 === 1 ? 'photo' : 'photos'}`}
+                      className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm"
+                    >
+                      +{productImages(product).length - 1}
+                    </span>
                   )}
                   {/* Edit / Delete overlay buttons */}
                   <div className="absolute top-2 right-2 flex gap-1.5">
@@ -572,7 +516,7 @@ export default function DashboardProductsPage() {
       <Dialog
         open={!!editProduct}
         onOpenChange={(open) => {
-          if (!open) { setEditProduct(null); setEditImagePreview(null); resetEdit(); }
+          if (!open) { setEditProduct(null); setEditImages([]); setEditPhotosTouched(false); resetEdit(); }
         }}
       >
         <DialogContent className="max-w-lg">
@@ -582,25 +526,22 @@ export default function DashboardProductsPage() {
           <form
             onSubmit={handleSubmitEdit((d) => {
               if (!editProduct) return;
-              updateMutation.mutate({ id: editProduct.id, data: d });
+              // Photos travel separately from the form fields, and only when the seller changed them (an empty list removes them all).
+              const { images: _ignored, ...fields } = d;
+              void _ignored;
+              updateMutation.mutate({
+                id: editProduct.id,
+                data: { ...fields, ...(editPhotosTouched ? { images: editImages } : {}) },
+              });
             })}
             className="space-y-4 mt-2"
           >
-            <ProductFormFields
-              reg={registerEdit}
-              ctrl={controlEdit}
-              errs={editErrors}
-              preview={editImagePreview}
-              uploading={editImageUploading}
-              inputRef={editFileInputRef}
-              onFileChange={handleEditImageFile}
-              onRemoveImage={() => {
-                setEditImagePreview(null);
-                setEditValue('image', '');
-                if (editFileInputRef.current) editFileInputRef.current.value = '';
-              }}
-              onNewCategory={() => setCategoryDialogTarget('edit')}
-            />
+            {renderProductFormFields({
+              reg: registerEdit,
+              ctrl: controlEdit,
+              errs: editErrors,
+              onNewCategory: () => setCategoryDialogTarget('edit'),
+            })}
             <div className="flex justify-end gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => setEditProduct(null)}>
                 Cancel

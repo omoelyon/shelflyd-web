@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_PRODUCT_IMAGES } from '@/lib/product-images';
 
 export const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -58,7 +59,8 @@ export const createProductSchema = z.object({
   type: z.string().optional(),
   description: z.string().optional(),
   category: z.number().optional(),
-  image: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  /** Photos in order, cover first. The edit form sends them only when the seller changed them. */
+  images: z.array(z.string().url('Must be a valid URL')).max(MAX_PRODUCT_IMAGES).optional(),
   status: z.enum(['COMING_SOON', 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK']).optional(),
 });
 
@@ -66,7 +68,7 @@ export const quickProductSchema = z.object({
   name: z.string().trim().min(1, 'Give your product a name'),
   description: z.string().max(500, 'Keep the description under 500 characters').optional(),
   category: z.number().optional(),
-  image: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  images: z.array(z.string().url('Must be a valid URL')).max(MAX_PRODUCT_IMAGES).optional(),
   unitName: z.string().trim().min(1, 'Say how it is sold, like Bag or Kg'),
   price: z.number({ message: 'Enter a price' }).positive('Price must be more than 0'),
   stock: z.number({ message: 'Enter a number' }).min(0, 'Stock cannot be negative').optional(),

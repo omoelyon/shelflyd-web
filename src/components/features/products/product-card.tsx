@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Package } from 'lucide-react';
 import type { Product } from '@/types';
 import { cn, formatStatus } from '@/lib/utils';
+import { productImages } from '@/lib/product-images';
 
 interface ProductCardProps {
   product: Product;
@@ -28,6 +29,10 @@ export default function ProductCard({ product, href, onLinkClick, className, sty
   // resolves (a dead/placeholder host, for one real example) — fall back to the same
   // "No image" state on load failure instead of a broken-image icon.
   const [imageFailed, setImageFailed] = useState(false);
+  // With two or more photos, the second fades in over the cover on hover (never on touch screens) or keyboard focus.
+  const second = productImages(product)[1];
+  const [secondFailed, setSecondFailed] = useState(false);
+  const soldOut = product.status === 'OUT_OF_STOCK';
   const lowestPrice = product.prices?.reduce(
     (min, p) => (p.price < min.price ? p : min),
     product.prices[0]
@@ -40,14 +45,29 @@ export default function ProductCard({ product, href, onLinkClick, className, sty
         {/* Image */}
         <div className="relative h-48 bg-muted overflow-hidden">
           {product.image && !imageFailed ? (
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              className={`object-cover transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105 ${product.status === 'OUT_OF_STOCK' ? 'opacity-50 grayscale' : 'sf-img-in'}`}
-              unoptimized
-              onError={() => setImageFailed(true)}
-            />
+            // Sold-out photos are dimmed together, so the hover photo is dimmed the same way as the cover.
+            <div className={cn('absolute inset-0', soldOut && 'opacity-50 grayscale')}>
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                className="sf-img-in object-cover transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
+                unoptimized
+                onError={() => setImageFailed(true)}
+              />
+              {second && !secondFailed && (
+                <Image
+                  src={second}
+                  alt=""
+                  aria-hidden="true"
+                  fill
+                  unoptimized
+                  loading="lazy"
+                  onError={() => setSecondFailed(true)}
+                  className="object-cover opacity-0 transition-[opacity,scale] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] [@media(hover:hover)]:group-hover:opacity-100 group-focus-visible:opacity-100 group-hover:scale-105"
+                />
+              )}
+            </div>
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground/50">
               <Package className="h-8 w-8" />

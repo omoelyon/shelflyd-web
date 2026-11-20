@@ -1,22 +1,21 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { AlertTriangle, ArrowLeft, CheckCircle2, ImagePlus, Loader2, Store, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Loader2, Store } from 'lucide-react';
 import { productsApi } from '@/lib/api/products';
 import { categoriesApi } from '@/lib/api/categories';
-import { uploadsApi } from '@/lib/api/uploads';
 import { quickProductSchema, type QuickProductFormValues } from '@/lib/validations';
 import { getApiError } from '@/lib/utils';
 import { useMyBusiness } from '@/hooks/use-my-business';
 import PageHeader from '@/components/ui/page-header';
 import ProductPreviewCard from '@/components/features/products/product-preview-card';
+import ProductImagesField from '@/components/features/products/product-images-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,12 +25,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/u
 import type { Product } from '@/types';
 
 const UNIT_SUGGESTIONS = ['Piece', 'Kg', 'Bag', 'Carton', 'Litre', 'Pack', 'Dozen', 'Bunch'];
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 const defaultValues: Partial<QuickProductFormValues> = {
   name: '',
   description: '',
-  image: '',
+  images: [],
   unitName: '',
 };
 
@@ -52,10 +50,7 @@ export default function NewProductPage() {
   const [published, setPublished] = useState<Product | null>(null);
   const [publishedHadStock, setPublishedHadStock] = useState(false);
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [priceText, setPriceText] = useState('');
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
@@ -85,6 +80,7 @@ export default function NewProductPage() {
   const unitName = watch('unitName');
   const price = watch('price');
   const stock = watch('stock');
+  const images = watch('images') ?? [];
 
   const publishMutation = useMutation({
     mutationFn: productsApi.createQuick,
@@ -110,41 +106,9 @@ export default function NewProductPage() {
     onError: (error) => toast.error(getApiError(error, "We couldn't add that category.")),
   });
 
-  const handleImageFile = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast.error('Choose a PNG, JPG, or WebP image.');
-      return;
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      toast.error('That image is over 5 MB. Choose a smaller one.');
-      return;
-    }
-    const localPreview = URL.createObjectURL(file);
-    setImagePreview(localPreview);
-    setImageUploading(true);
-    try {
-      const url = await uploadsApi.uploadFile(file);
-      setValue('image', url, { shouldValidate: true });
-    } catch (err) {
-      toast.error(getApiError(err, "The photo didn't upload. Try again."));
-      setImagePreview(null);
-      setValue('image', '', { shouldValidate: true });
-    } finally {
-      setImageUploading(false);
-    }
-  };
-
-  const removeImage = () => {
-    setImagePreview(null);
-    setValue('image', '', { shouldValidate: true });
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
   const startAnother = () => {
     reset(defaultValues);
     setPriceText('');
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
     setPublished(null);
   };
 
@@ -153,7 +117,7 @@ export default function NewProductPage() {
       name: values.name.trim(),
       description: values.description?.trim() || undefined,
       category: values.category,
-      image: values.image || undefined,
+      images: values.images && values.images.length > 0 ? values.images : undefined,
       unitName: values.unitName.trim(),
       price: values.price,
       stock: values.stock,
@@ -235,77 +199,14 @@ export default function NewProductPage() {
                 Product details
               </h2>
 
-              {/* Photo */}
+              {/* Photos */}
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-[#091426]">Photo</Label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/gif"
-                  className="sr-only"
-                  tabIndex={-1}
-                  aria-label="Upload a product photo"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleImageFile(file);
-                  }}
+                <Label className="text-sm font-medium text-[#091426]">Photos</Label>
+                <ProductImagesField
+                  value={images}
+                  onChange={(urls) => setValue('images', urls, { shouldValidate: true })}
+                  onBusyChange={setImageUploading}
                 />
-                {imagePreview ? (
-                  <div className="relative h-48 rounded-xl overflow-hidden bg-[#f8f9ff] border border-[rgba(9,20,38,0.1)]">
-                    <Image src={imagePreview} alt="Product photo preview" fill className="object-contain" unoptimized />
-                    {imageUploading && (
-                      <div className="absolute inset-0 bg-white/70 flex items-center justify-center gap-2 text-sm text-[#0058be]">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Uploading
-                      </div>
-                    )}
-                    {!imageUploading && (
-                      <button
-                        type="button"
-                        onClick={removeImage}
-                        aria-label="Remove photo"
-                        className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/95 shadow-sm flex items-center justify-center text-[#091426] hover:bg-white"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => fileInputRef.current?.click()}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        fileInputRef.current?.click();
-                      }
-                    }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      setDragActive(true);
-                    }}
-                    onDragLeave={() => setDragActive(false)}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      setDragActive(false);
-                      const file = e.dataTransfer.files?.[0];
-                      if (file) handleImageFile(file);
-                    }}
-                    className={`rounded-xl border-2 border-dashed p-6 flex flex-col items-center gap-2 text-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0058be]/50 ${
-                      dragActive
-                        ? 'border-[#0058be] bg-[#eff4ff]'
-                        : 'border-[rgba(9,20,38,0.15)] hover:border-[#0058be]/50 hover:bg-[#f8f9ff]'
-                    }`}
-                  >
-                    <span className="h-11 w-11 rounded-full bg-[#eff4ff] flex items-center justify-center">
-                      <ImagePlus className="h-5 w-5 text-[#0058be]" />
-                    </span>
-                    <p className="text-sm font-medium text-[#091426]">Add a photo</p>
-                    <p className="text-xs text-[#64748b]">Drag one here or click to browse. PNG, JPG, or WebP, up to 5 MB.</p>
-                  </div>
-                )}
-                <p className="text-xs text-[#64748b]">Clear photos help products sell.</p>
               </div>
 
               {/* Name */}
@@ -504,7 +405,7 @@ export default function NewProductPage() {
                     Publishing
                   </>
                 ) : imageUploading ? (
-                  'Uploading photo'
+                  'Uploading photos'
                 ) : (
                   'Publish product'
                 )}
@@ -518,7 +419,8 @@ export default function NewProductPage() {
             <ProductPreviewCard
               name={name ?? ''}
               description={description}
-              imageUrl={imagePreview}
+              imageUrl={images[0] ?? null}
+              extraPhotos={Math.max(images.length - 1, 0)}
               price={typeof price === 'number' ? price : undefined}
               unitName={unitName}
               stock={typeof stock === 'number' && !Number.isNaN(stock) ? stock : undefined}

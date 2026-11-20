@@ -6,6 +6,8 @@ interface ProductPreviewCardProps {
   name: string;
   description?: string;
   imageUrl?: string | null;
+  /** How many more photos the product has besides the cover, shown as a small "+N" on the photo. */
+  extraPhotos?: number;
   price?: number;
   unitName?: string;
   /** Units in stock, if the seller tracks it. 0 shows as out of stock. */
@@ -20,6 +22,7 @@ export default function ProductPreviewCard({
   name,
   description,
   imageUrl,
+  extraPhotos = 0,
   price,
   unitName,
   stock,
@@ -45,6 +48,14 @@ export default function ProductPreviewCard({
             <Package className="h-8 w-8" />
             <span className="text-xs">Your photo appears here</span>
           </div>
+        )}
+        {showImage && extraPhotos > 0 && (
+          <span
+            aria-label={`${extraPhotos} more ${extraPhotos === 1 ? 'photo' : 'photos'}`}
+            className="absolute bottom-2.5 left-2.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm"
+          >
+            +{extraPhotos}
+          </span>
         )}
         <span
           className={`absolute top-2.5 right-2.5 text-[10px] font-medium px-2 py-0.5 rounded-full ${

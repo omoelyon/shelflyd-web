@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { ArrowLeft, Check, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
 import { cartApi } from '@/lib/api/cart';
@@ -16,14 +15,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { cn, formatStatus, getApiError } from '@/lib/utils';
 import { BuildSetButton } from '@/components/features/cart-sets/set-builder-dialog';
+import ProductGallery from '@/components/features/products/product-gallery';
+import { productImages } from '@/lib/product-images';
 import type { Product } from '@/types';
 import { useCartDrawer } from './cart-drawer-store';
 import { stagger } from './motion';
 import { useChangePulse } from './use-change-pulse';
 import { SfLink } from './sf-link';
 import { useStorefront } from './storefront-context';
-
-const RATIO_CLASS = { square: 'aspect-square', portrait: 'aspect-[3/4]', wide: 'aspect-video' } as const;
 
 /**
  * The body of a storefront product page: photo, name, status, unit and price, quantity, note and the add-to-cart
@@ -44,8 +43,6 @@ export default function ProductDetail({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
   const qtyPulses = useChangePulse(quantity);
   const [note, setNote] = useState('');
-  // SHF-16: fall back gracefully if the product's image URL doesn't actually resolve.
-  const [imageFailed, setImageFailed] = useState(false);
   const id = product.id;
 
   // After a successful add the button shows a brief "Added" tick, then goes back to normal. It stays clickable.
@@ -108,21 +105,16 @@ export default function ProductDetail({ product }: { product: Product }) {
     afterAdded();
   };
 
+  // The gallery shows every photo (a photo that fails to load falls back to a neutral block there). Beside the details
+  // the photo stays at the top instead of stretching to the height of a long column.
   const image = (
-    <div
-      className={cn(
-        'sf-scale-in relative w-full overflow-hidden rounded-2xl bg-muted',
-        RATIO_CLASS[imageRatio],
-        // Beside the details the photo stays at the top instead of stretching to the height of a long column.
-        !stacked && 'self-start',
-      )}
-    >
-      {product.image && !imageFailed ? (
-        <Image src={product.image} alt={product.name} fill className="sf-img-in object-cover" unoptimized onError={() => setImageFailed(true)} />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">No image</div>
-      )}
-    </div>
+    <ProductGallery
+      images={productImages(product)}
+      alt={product.name}
+      ratio={imageRatio}
+      inert={preview}
+      className={cn('sf-scale-in', !stacked && 'self-start')}
+    />
   );
 
   const heading = (
