@@ -18,6 +18,7 @@ import StoreLinkCard, { StoreLinkCardSkeleton } from '@/components/features/dash
 import AttentionCard from '@/components/features/dashboard/attention-card';
 import OrdersAtAGlance from '@/components/features/dashboard/orders-at-a-glance';
 import { SubscriptionBanner, PayoutReminder } from '@/components/features/dashboard/dashboard-banners';
+import BriefCard from '@/components/features/analytics/brief-card';
 
 export default function DashboardPage() {
   const loadFromBusiness = useThemeStore((s) => s.loadFromBusiness);
@@ -66,6 +67,9 @@ export default function DashboardPage() {
     <div className="space-y-5">
       {/* ── Most urgent first: trial ending, grace period, or lapsed ── */}
       <SubscriptionBanner subscription={subscription} />
+
+      {/* ── Yesterday at a glance: numbers vs the same weekday last week, what needs doing, what is running out ── */}
+      <BriefCard />
 
       {/* ── Business profile banner ── */}
       {/* The dashboard layout only renders this page once it's confirmed the

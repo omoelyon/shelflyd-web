@@ -277,7 +277,15 @@ export default function ProductImagesField({ value, onChange, disabled = false, 
             </span>
             <span className="text-sm font-medium text-[#091426]">Add photo</span>
             <span className="text-[11px] leading-tight text-[#64748b]">
-              {total === 0 ? 'Drag photos here or click to browse' : 'PNG, JPG or WebP, up to 5 MB'}
+              {total === 0 ? (
+                <>
+                  {/* Phones can't drag files, so they get the wording that matches what they can do. */}
+                  <span className="sm:hidden">Tap to choose photos</span>
+                  <span className="hidden sm:inline">Drag photos here or click to browse</span>
+                </>
+              ) : (
+                'PNG, JPG or WebP, up to 5 MB'
+              )}
             </span>
           </button>
         )}

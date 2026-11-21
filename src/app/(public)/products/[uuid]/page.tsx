@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { BuildSetButton } from '@/components/features/cart-sets/set-builder-dialog';
 import ProductGallery from '@/components/features/products/product-gallery';
 import QuantityField from '@/components/ui/quantity-field';
+import { defaultUnit, formatMoney } from '@/lib/money';
 import { marketplaceViewPath, useTrackProductView } from '@/lib/use-track-product-view';
 import { productImages } from '@/lib/product-images';
 
@@ -43,6 +44,9 @@ export default function ProductDetailPage({ params }: Props) {
     queryKey: ['product', uuid],
     queryFn: () => productsApi.getByUuid(uuid),
   });
+  // Until the shopper picks a unit, the product's base unit is used, so the price shows straight away.
+  const baseUnit = defaultUnit(product?.prices);
+  const unitId = selectedUnitId || (baseUnit ? String(baseUnit.unit) : '');
 
   // Count the visit once the product has actually loaded (an unknown product is not a visit).
   useTrackProductView(product ? marketplaceViewPath(uuid) : null);
@@ -51,7 +55,7 @@ export default function ProductDetailPage({ params }: Props) {
     mutationFn: () =>
       cartApi.add({
         productId: product!.id,
-        unitId: Number(selectedUnitId),
+        unitId: Number(unitId),
         quantity,
         note: note.trim() || undefined,
       }),
@@ -81,7 +85,7 @@ export default function ProductDetailPage({ params }: Props) {
     return <div className="text-center py-24 text-muted-foreground">Product not found.</div>;
   }
 
-  const selectedPrice = product.prices?.find((p) => p.unit === Number(selectedUnitId));
+  const selectedPrice = product.prices?.find((p) => p.unit === Number(unitId));
 
   const handleAddToCart = () => {
     if (isAuthenticated) {
@@ -91,7 +95,7 @@ export default function ProductDetailPage({ params }: Props) {
     if (!selectedPrice) return;
     addGuestItem(product.businessId, {
       productId: product.id,
-      unitId: Number(selectedUnitId),
+      unitId: Number(unitId),
       quantity,
       name: product.name,
       type: product.type,
@@ -145,16 +149,16 @@ export default function ProductDetailPage({ params }: Props) {
         {product.prices?.length > 0 && (
           <div className="space-y-3">
             <label className="text-sm font-medium">Select Unit</label>
-            <Select value={selectedUnitId} onValueChange={(v) => setSelectedUnitId(v ?? '')}>
+            <Select value={unitId} onValueChange={(v) => setSelectedUnitId(v ?? '')}>
               <SelectTrigger>
                 <SelectValue placeholder="Choose a unit...">
-                  {selectedPrice ? `${selectedPrice.unitName} — ${selectedPrice.currency} ${selectedPrice.price.toLocaleString()}` : undefined}
+                  {selectedPrice ? `${selectedPrice.unitName} — ${formatMoney(selectedPrice.price, selectedPrice.currency)}` : undefined}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {product.prices.map((p) => (
                   <SelectItem key={p.unit} value={String(p.unit)}>
-                    {p.unitName} — {p.currency} {p.price.toLocaleString()}
+                    {p.unitName} — {formatMoney(p.price, p.currency)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -162,7 +166,7 @@ export default function ProductDetailPage({ params }: Props) {
 
             {selectedPrice && (
               <p className="text-2xl font-bold text-primary">
-                {selectedPrice.currency} {selectedPrice.price.toLocaleString()}
+                {formatMoney(selectedPrice.price, selectedPrice.currency)}
               </p>
             )}
           </div>
@@ -179,7 +183,7 @@ export default function ProductDetailPage({ params }: Props) {
         <div className="space-y-1.5">
           <label className="text-sm font-medium">Note (optional)</label>
           <Textarea
-            placeholder="Ripeness preference, delivery instructions for this item…"
+            placeholder="Anything the seller should know, like size, flavour or a delivery note"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             maxLength={500}
@@ -191,7 +195,7 @@ export default function ProductDetailPage({ params }: Props) {
         <Button
           className="w-full bg-primary text-primary-foreground hover:opacity-90"
           size="lg"
-          disabled={!selectedUnitId || (product.status !== 'IN_STOCK' && product.status !== 'LOW_STOCK') || addToCart.isPending}
+          disabled={!unitId || (product.status !== 'IN_STOCK' && product.status !== 'LOW_STOCK') || addToCart.isPending}
           onClick={handleAddToCart}
         >
           <ShoppingCart className="mr-2 h-4 w-4" />
@@ -202,7 +206,7 @@ export default function ProductDetailPage({ params }: Props) {
             <BuildSetButton
               businessId={product.businessId}
               label="Add to a set"
-              initialItem={{ productId: product.id, unitId: selectedUnitId ? Number(selectedUnitId) : product.prices[0].unit }}
+              initialItem={{ productId: product.id, unitId: unitId ? Number(unitId) : product.prices[0].unit }}
             />
           </div>
         )}

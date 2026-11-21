@@ -11,7 +11,8 @@ import SellerStatusBadge from '@/components/features/orders/seller-status-badge'
 import SellerOrderActions from '@/components/features/orders/seller-order-actions';
 import { displayOrderStatus } from '@/lib/order-status';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Package, MapPin, Calendar, Hash, Truck, ExternalLink, User, Phone, KeyRound } from 'lucide-react';
+import { ArrowLeft, Package, MapPin, Calendar, Hash, Truck, ExternalLink, User, Phone, KeyRound, FileText } from 'lucide-react';
+import { SELLER_DOCUMENTS } from '@/components/features/documents/format';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
@@ -115,54 +116,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
       {order.orderType === 'PICKUP' && order.status === 'PROCESSING' && (
         <Suspense>
-          <ConfirmPickupCard orderId={orderId} />
+          <PickupConfirmSlot orderId={orderId} ready={!!order.readyForPickupAt} />
         </Suspense>
       )}
-
-      {/* Order details */}
-      <div className="bg-white rounded-2xl shadow-card-md p-5">
-        <h2 className="font-semibold text-sm text-[#091426] font-heading mb-4">Details</h2>
-
-        <div className="space-y-3">
-          <DetailRow icon={Hash} label="Order ID" value={`#${order.id}`} />
-          <DetailRow icon={Truck} label="Order Type" value={order.orderType} />
-          <DetailRow
-            icon={Calendar}
-            label="Created"
-            value={formattedDate}
-          />
-          {order.updatedAt && (
-            <DetailRow
-              icon={Calendar}
-              label="Last Updated"
-              value={format(new Date(order.updatedAt.replace(' ', 'T')), 'dd MMM yyyy, HH:mm')}
-            />
-          )}
-          {order.orderType === 'DELIVERY' && deliveryLocation && (
-            <DetailRow
-              icon={MapPin}
-              label="Delivery Zone"
-              value={`${deliveryLocation.location} — ₦${deliveryLocation.amount.toLocaleString()}`}
-            />
-          )}
-          {order.orderType === 'DELIVERY' && !deliveryLocation && order.deliveryLocationId && (
-            <DetailRow icon={MapPin} label="Delivery Location ID" value={String(order.deliveryLocationId)} />
-          )}
-          {order.orderType === 'DELIVERY' && order.deliveryContactName && (
-            <DetailRow icon={User} label="Recipient" value={order.deliveryContactName} />
-          )}
-          {order.orderType === 'DELIVERY' && order.deliveryContactPhone && (
-            <DetailRow icon={Phone} label="Recipient Phone" value={order.deliveryContactPhone} />
-          )}
-          {order.orderType === 'DELIVERY' && order.deliveryAddressLine && (
-            <DetailRow
-              icon={MapPin}
-              label="Delivery Address"
-              value={[order.deliveryAddressLine, order.deliveryCity, order.deliveryState].filter(Boolean).join(', ')}
-            />
-          )}
-        </div>
-      </div>
 
       {/* Courier tracking */}
       {shipment && (
@@ -280,7 +236,88 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           );
         })()}
       </div>
+
+      {/* Order details: reference info, after what needs packing */}
+      <div className="bg-white rounded-2xl shadow-card-md p-5">
+        <h2 className="font-semibold text-sm text-[#091426] font-heading mb-4">Details</h2>
+
+        <div className="space-y-3">
+          <DetailRow icon={Hash} label="Order ID" value={`#${order.id}`} />
+          <DetailRow icon={Truck} label="Order Type" value={order.orderType} />
+          <DetailRow
+            icon={Calendar}
+            label="Created"
+            value={formattedDate}
+          />
+          {order.updatedAt && (
+            <DetailRow
+              icon={Calendar}
+              label="Last Updated"
+              value={format(new Date(order.updatedAt.replace(' ', 'T')), 'dd MMM yyyy, HH:mm')}
+            />
+          )}
+          {order.orderType === 'DELIVERY' && deliveryLocation && (
+            <DetailRow
+              icon={MapPin}
+              label="Delivery Zone"
+              value={`${deliveryLocation.location} — ₦${deliveryLocation.amount.toLocaleString()}`}
+            />
+          )}
+          {order.orderType === 'DELIVERY' && !deliveryLocation && order.deliveryLocationId && (
+            <DetailRow icon={MapPin} label="Delivery Location ID" value={String(order.deliveryLocationId)} />
+          )}
+          {order.orderType === 'DELIVERY' && order.deliveryContactName && (
+            <DetailRow icon={User} label="Recipient" value={order.deliveryContactName} />
+          )}
+          {order.orderType === 'DELIVERY' && order.deliveryContactPhone && (
+            <DetailRow icon={Phone} label="Recipient Phone" value={order.deliveryContactPhone} />
+          )}
+          {order.orderType === 'DELIVERY' && order.deliveryAddressLine && (
+            <DetailRow
+              icon={MapPin}
+              label="Delivery Address"
+              value={[order.deliveryAddressLine, order.deliveryCity, order.deliveryState].filter(Boolean).join(', ')}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Documents: receipt, invoice, delivery note, and a credit note once the order is cancelled */}
+      <div className="bg-white rounded-2xl shadow-card-md p-5">
+        <h2 className="font-semibold text-sm text-[#091426] font-heading">Documents</h2>
+        <p className="mt-1 text-xs text-[#64748b]">Open one to print it or save it as a PDF for your records or the buyer.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {SELLER_DOCUMENTS.filter((d) => d.type !== 'credit-note' || order.status === 'CANCELLED').map((d) => (
+            <Link key={d.type} href={`/dashboard/orders/${orderId}/document?type=${d.type}`} title={d.hint}>
+              <Button variant="outline" size="sm" className="text-xs">
+                <FileText className="h-3.5 w-3.5 mr-1.5" />
+                {d.label}
+              </Button>
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
+  );
+}
+
+/**
+ * Where the pickup code goes. Before the order is marked ready it's a single line ("Buyer here to collect?") so the
+ * items to prepare stay near the top; once it's ready, or when a scanned pass brings a code in the address, it's open.
+ */
+function PickupConfirmSlot({ orderId, ready }: { orderId: number; ready: boolean }) {
+  const params = useSearchParams();
+  const [open, setOpen] = useState(false);
+  if (ready || open || params.get('pickup')) return <ConfirmPickupCard orderId={orderId} />;
+  return (
+    <button
+      type="button"
+      onClick={() => setOpen(true)}
+      className="flex w-full items-center gap-2 rounded-2xl bg-white p-4 text-left text-sm text-[#334155] shadow-card-md transition-colors hover:bg-[#f8f9ff]"
+    >
+      <KeyRound className="h-4 w-4 shrink-0 text-[#0058be]" aria-hidden="true" />
+      <span className="flex-1">Buyer here to collect? Enter their pickup code</span>
+    </button>
   );
 }
 

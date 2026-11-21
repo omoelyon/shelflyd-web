@@ -180,7 +180,7 @@ export default function ProductGallery({ images, alt, ratio = 'square', classNam
                   dim,
                 )}
               >
-                <SafeImage src={src} alt={i === current ? alt : ''} priority={i === 0} />
+                <SafeImage src={src} alt={i === current ? alt : ''} priority={i === 0} sizes="(min-width: 768px) 50vw, 100vw" />
               </span>
             ))}
           </button>
@@ -224,7 +224,7 @@ export default function ProductGallery({ images, alt, ratio = 'square', classNam
                     'focus-visible:ring-2 focus-visible:ring-ring',
                   )}
                 >
-                  <SafeImage src={src} alt="" className={dim} />
+                  <SafeImage src={src} alt="" className={dim} sizes="80px" />
                 </button>
               );
             })}

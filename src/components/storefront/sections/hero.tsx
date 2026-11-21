@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { canOptimizeImage } from '@/lib/image';
 import { useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +39,7 @@ export default function Hero({ section }: { section: HeroSection }) {
       <section aria-label={heading} className="relative flex min-h-[18rem] items-end overflow-hidden sm:min-h-[22rem]" style={{ backgroundColor: primary }}>
         {hasImage ? (
           <>
-            <Image src={props.image} alt="" fill className="sf-img-in object-cover" unoptimized priority onError={() => setFailedImage(props.image)} />
+            <Image src={props.image} alt="" fill sizes="100vw" className="sf-img-in object-cover" unoptimized={!canOptimizeImage(props.image)} priority onError={() => setFailedImage(props.image)} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10" aria-hidden="true" />
           </>
         ) : (

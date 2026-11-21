@@ -8,7 +8,8 @@ import { ordersApi } from '@/lib/api/orders';
 import { deliveryApi } from '@/lib/api/delivery';
 import { businessesApi } from '@/lib/api/businesses';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OrderItemsList } from '@/components/features/orders/set-summary';
@@ -17,7 +18,7 @@ import BuyerCancelledCard from '@/components/features/orders/buyer-cancelled-car
 import { displayOrderStatus } from '@/lib/order-status';
 import { orderStatusColors } from '@/lib/constants/status-colors';
 import { useReorder } from '@/hooks/use-reorder';
-import { ChevronLeft, ChevronRight, Package, MapPin, Store, RotateCcw, Truck, ExternalLink, Download, Ticket, CheckCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Package, MapPin, Store, RotateCcw, Truck, ExternalLink, Download, Ticket, CheckCircle, FileText } from 'lucide-react';
 import type { ShipmentStatus } from '@/types';
 
 const shipmentStatusLabel: Record<ShipmentStatus, string> = {
@@ -117,6 +118,13 @@ export default function OrderDetailPage({ params }: Props) {
           </Badge>
         </div>
         <div className="flex items-center gap-3 shrink-0">
+          <Link
+            href={`/account/orders/${orderId}/receipt`}
+            className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'h-8 text-xs')}
+          >
+            <FileText className="h-3.5 w-3.5 mr-1.5" />
+            Receipt
+          </Link>
           <Button
             variant="outline"
             size="sm"

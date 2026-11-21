@@ -384,10 +384,15 @@
   .sf-reveal.is-armed:not(.is-in) .sf-rise { animation-play-state: running; }
 }
 
-/* Dashboard: each page fades and rises in when you navigate; stat tiles arrive one after another. */
-.dash-page > * { animation: sf-rise 320ms var(--ease-out) both; }
-.dash-page [data-slot="stat-card"] { animation: sf-rise var(--dur-slow) var(--ease-out) both; animation-delay: 80ms; }
-.dash-page [data-slot="stat-card"]:nth-child(2) { animation-delay: 130ms; }
-.dash-page [data-slot="stat-card"]:nth-child(3) { animation-delay: 180ms; }
-.dash-page [data-slot="stat-card"]:nth-child(4) { animation-delay: 230ms; }
-.dash-page [data-slot="stat-card"]:nth-child(n+5) { animation-delay: 280ms; }
+/* Dashboard: sellers switch between these pages all day, so the entrance is a short, small settle rather than a
+   show: content is readable almost at once, and stat tiles follow each other closely. */
+@keyframes sf-settle {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+.dash-page > * { animation: sf-settle 200ms var(--ease-out) both; }
+.dash-page [data-slot="stat-card"] { animation: sf-settle 220ms var(--ease-out) both; animation-delay: 30ms; }
+.dash-page [data-slot="stat-card"]:nth-child(2) { animation-delay: 60ms; }
+.dash-page [data-slot="stat-card"]:nth-child(3) { animation-delay: 90ms; }
+.dash-page [data-slot="stat-card"]:nth-child(4) { animation-delay: 120ms; }
+.dash-page [data-slot="stat-card"]:nth-child(n+5) { animation-delay: 150ms; }

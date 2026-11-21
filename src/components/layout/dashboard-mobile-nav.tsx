@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
+  Boxes,
   ShoppingBag,
   BarChart3,
   Paintbrush,
@@ -15,9 +16,10 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/dashboard',           label: 'Home',     icon: LayoutDashboard, exact: true },
   { href: '/dashboard/products',  label: 'Products', icon: Package },
+  { href: '/dashboard/inventory', label: 'Stock',    icon: Boxes },
   { href: '/dashboard/orders',    label: 'Orders',   icon: ShoppingBag },
   { href: '/dashboard/analytics', label: 'Insights', icon: BarChart3 },
-  // Short label so six items still fit on a 360px screen; the page itself is titled "Storefront".
+  // Finance has no tab here (it is linked from Insights); short labels so seven items still fit on a 360px screen; the page itself is titled "Storefront".
   { href: '/dashboard/storefront', label: 'Store',    icon: Paintbrush },
   { href: '/dashboard/settings',  label: 'Settings', icon: Settings },
 ];

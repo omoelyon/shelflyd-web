@@ -8,51 +8,70 @@ import PageHeader from '@/components/ui/page-header';
 import EmptyState from '@/components/ui/empty-state';
 import SellerStatusBadge from '@/components/features/orders/seller-status-badge';
 import { cn } from '@/lib/utils';
+import { formatMoney } from '@/lib/money';
 import PaginationControls from '@/components/ui/pagination-controls';
-import { ShoppingBag, ArrowRight } from 'lucide-react';
+import { ShoppingBag, ChevronRight, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import type { OrderStatus } from '@/types';
+import type { Order } from '@/types';
 
-const FILTERS: { value: 'ALL' | OrderStatus; label: string }[] = [
-  { value: 'ALL', label: 'All' },
-  { value: 'PROCESSING', label: 'Processing' },
-  { value: 'DISPATCHED', label: 'Dispatched' },
+type Filter = 'OPEN' | 'PROCESSING' | 'DISPATCHED' | 'COMPLETED' | 'CANCELLED' | 'ALL';
+
+// "Needs action" first: it's what a seller opens this page for. Filtering happens on the server, so it covers every
+// order, not just the ones on the page.
+const FILTERS: { value: Filter; label: string }[] = [
+  { value: 'OPEN', label: 'Needs action' },
+  { value: 'PROCESSING', label: 'Preparing' },
+  { value: 'DISPATCHED', label: 'On the way' },
   { value: 'COMPLETED', label: 'Completed' },
   { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'ALL', label: 'All' },
 ];
+
+const fulfilment = (order: Order) => (order.orderType === 'DELIVERY' ? 'Delivery' : 'Pickup');
+
+function summaryLine(order: Order): string {
+  const parts = [fulfilment(order)];
+  if (order.itemCount != null) parts.push(`${order.itemCount} ${order.itemCount === 1 ? 'item' : 'items'}`);
+  if (order.itemsTotal != null) parts.push(formatMoney(order.itemsTotal));
+  if (order.createdAt) parts.push(format(new Date(order.createdAt.replace(' ', 'T')), 'd MMM, HH:mm'));
+  return parts.join(' · ');
+}
 
 export default function DashboardOrdersPage() {
   const [page, setPage] = useState(0);
-  const [filter, setFilter] = useState<'ALL' | OrderStatus>('ALL');
+  const [filter, setFilter] = useState<Filter>('OPEN');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['business-orders', page],
-    queryFn: () => businessesApi.getOrders(page, 15),
+    queryKey: ['business-orders', 'list', filter, page],
+    queryFn: () => businessesApi.getOrders(page, 15, filter),
   });
 
-  // The filter applies to the page of orders that is loaded.
-  const orders = (data?.content ?? []).filter((o) => filter === 'ALL' || o.status === filter);
+  const orders = data?.content ?? [];
+  const total = data?.totalElements ?? 0;
+  const subtitle =
+    filter === 'OPEN'
+      ? total === 0
+        ? 'Nothing waiting on you'
+        : `${total} ${total === 1 ? 'order needs' : 'orders need'} your attention`
+      : `${total} ${total === 1 ? 'order' : 'orders'}`;
+
+  const choose = (next: Filter) => {
+    setFilter(next);
+    setPage(0);
+  };
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Orders"
-        subtitle={`${data?.totalElements ?? 0} total orders`}
-      />
+      <PageHeader title="Orders" subtitle={isLoading ? undefined : subtitle} />
 
-      {/* Orders card */}
       <div className="bg-white rounded-2xl shadow-card-md overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#f1f5f9]">
-          <p className="font-semibold text-sm text-[#091426] font-heading">Order History</p>
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto px-4 pt-4" role="group" aria-label="Filter orders by status">
+        <div className="flex gap-2 overflow-x-auto px-4 pt-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Show orders">
           {FILTERS.map((f) => (
             <button
               key={f.value}
               type="button"
-              onClick={() => setFilter(f.value)}
+              onClick={() => choose(f.value)}
               aria-pressed={filter === f.value}
               className={cn(
                 'shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
@@ -71,48 +90,41 @@ export default function DashboardOrdersPage() {
                 <Skeleton key={i} className="h-20 rounded-xl" />
               ))}
             </div>
-          ) : !data?.content?.length ? (
-            <EmptyState
-              icon={ShoppingBag}
-              title="No orders yet"
-              subtitle="Orders will appear here once customers check out."
-            />
           ) : orders.length === 0 ? (
-            <p className="py-8 text-center text-sm text-[#64748b]">No {FILTERS.find((f) => f.value === filter)?.label.toLowerCase()} orders on this page.</p>
+            filter === 'OPEN' ? (
+              <EmptyState icon={CheckCircle2} title="You’re all caught up" subtitle="New orders that need preparing or sending show up here." />
+            ) : filter === 'ALL' ? (
+              <EmptyState icon={ShoppingBag} title="No orders yet" subtitle="Orders will appear here once customers check out." />
+            ) : (
+              <p className="py-8 text-center text-sm text-[#64748b]">No {FILTERS.find((f) => f.value === filter)?.label.toLowerCase()} orders.</p>
+            )
           ) : (
-            <div className="space-y-2">
-              {orders.map((order) => {
-                return (
-                  <div
-                    key={order.id}
-                    className="flex items-center justify-between p-4 rounded-xl bg-[#f8f9ff] hover:bg-[#eff4ff] transition-colors gap-4"
+            <ul className="space-y-2">
+              {orders.map((order) => (
+                <li key={order.id}>
+                  {/* The whole row opens the order: a big tap target on phones. */}
+                  <Link
+                    href={`/dashboard/orders/${order.id}`}
+                    className="group flex items-center justify-between gap-3 rounded-xl bg-[#f8f9ff] p-4 transition-colors hover:bg-[#eff4ff] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#0058be]/40"
                   >
-                    <div className="space-y-0.5 min-w-0">
-                      <p className="font-semibold text-sm text-[#091426]">Order #{order.id}</p>
-                      <p className="text-xs text-[#64748b]">
-                        {order.orderType}
-                        {order.createdAt && (
-                          <> · {format(new Date(order.createdAt.replace(' ', 'T')), 'dd MMM yyyy, HH:mm')}</>
-                        )}
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="truncate text-sm font-semibold text-[#091426]">
+                        Order #{order.id}
+                        {order.buyerName && <span className="font-normal text-[#334155]"> · {order.buyerName}</span>}
                       </p>
+                      <p className="text-xs leading-snug text-[#64748b] sm:truncate">{summaryLine(order)}</p>
                     </div>
-
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex shrink-0 items-center gap-2">
                       {order.stockShortfall && order.status === 'PROCESSING' && (
-                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-800">Stock short</span>
+                        <span className="hidden rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-800 sm:inline">Stock short</span>
                       )}
                       <SellerStatusBadge order={order} />
-                      <Link
-                        href={`/dashboard/orders/${order.id}`}
-                        className="flex items-center gap-1 text-xs text-[#0058be] hover:text-[#0046a0] font-medium transition-colors"
-                      >
-                        Details <ArrowRight className="h-3 w-3" />
-                      </Link>
+                      <ChevronRight className="h-4 w-4 text-[#94a3b8] transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </div>

@@ -10,7 +10,6 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useMyBusiness } from '@/hooks/use-my-business';
 
 // Kept in one place so the pricing shown here matches the subscription backend (SUBSCRIPTION_PRICE_NAIRA).
-const MONTHLY_PRICE = '₦20,000';
 
 const steps = [
   {
@@ -31,7 +30,7 @@ const steps = [
 ];
 
 const sellerPerks = [
-  `Free for your first 30 days, then ${MONTHLY_PRICE} a month`,
+  'Free to use: no monthly fee for now',
   'Your own storefront link you can share anywhere',
   'Customers pay securely with Paystack — your earnings go straight to your bank account',
   'Manage products, stock, and orders from one dashboard, and invite your team',
@@ -42,6 +41,9 @@ export default function LandingPage() {
     queryKey: ['categories'],
     queryFn: categoriesApi.list,
   });
+  // Only categories that have something in them: a wall of "0 items" tells shoppers there is nothing to buy.
+  const shownCategories = (categories ?? []).filter((c) => c.productCount > 0);
+
 
   const { isAuthenticated } = useAuthStore();
   const { hasBusiness } = useMyBusiness();
@@ -76,7 +78,7 @@ export default function LandingPage() {
         <div className="relative max-w-5xl mx-auto text-center space-y-8">
           <div className="inline-flex items-center gap-2 bg-white/10 text-white/80 border border-white/15 rounded-full px-4 py-1.5 text-sm font-medium backdrop-blur-sm">
             <Sparkles className="h-3.5 w-3.5 text-[#60a5fa]" />
-            Africa&apos;s Multi-Tenant Marketplace
+            Shop local businesses online
           </div>
 
           <h1 className="text-5xl md:text-[4.5rem] font-bold text-white leading-[1.05] tracking-tight font-heading">
@@ -120,7 +122,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Categories ── */}
+      {/* ── Categories (left out entirely until at least one has products) ── */}
+      {(catsLoading || shownCategories.length > 0) && (
       <section className="bg-[#eff4ff] py-16 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="mb-10 text-center">
@@ -134,9 +137,9 @@ export default function LandingPage() {
                 <Skeleton key={i} className="h-28 rounded-2xl" />
               ))}
             </div>
-          ) : categories && categories.length > 0 ? (
+          ) : shownCategories.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              {categories.map((cat) => (
+              {shownCategories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/products?category=${encodeURIComponent(cat.name)}`}
@@ -150,13 +153,14 @@ export default function LandingPage() {
                   <span className="text-sm font-semibold text-[#0b1c30] text-center leading-tight">
                     {cat.name}
                   </span>
-                  <span className="text-[11px] text-[#64748b]">{cat.productCount} items</span>
+                  <span className="text-[11px] text-[#64748b]">{cat.productCount} {cat.productCount === 1 ? 'item' : 'items'}</span>
                 </Link>
               ))}
             </div>
           ) : null}
         </div>
       </section>
+      )}
 
       {/* ── Featured Businesses ── */}
       <section className="py-16 px-4 bg-[#f8f9ff]">
@@ -197,13 +201,13 @@ export default function LandingPage() {
                 <p className="text-white/65 text-base leading-relaxed">
                   {isAuthenticated && hasBusiness
                     ? 'Jump into your seller dashboard to manage products, orders, and payments.'
-                    : `Get your own branded storefront and start selling today. Free for 30 days, then ${MONTHLY_PRICE} a month.`}
+                    : 'Get your own branded storefront and start selling today. It’s free for now.'}
                 </p>
                 <Link
                   href={sellHref}
                   className="inline-flex items-center justify-center gap-2 rounded-lg font-semibold bg-white text-[#091426] hover:bg-white/90 h-12 px-7 text-base shadow-lg transition-all"
                 >
-                  {isAuthenticated && hasBusiness ? 'Go to Dashboard' : 'Start your free month'} <ArrowRight className="h-4 w-4" />
+                  {isAuthenticated && hasBusiness ? 'Go to Dashboard' : 'Start selling free'} <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
 

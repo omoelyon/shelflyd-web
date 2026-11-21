@@ -2,10 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, ShoppingCart, Store } from 'lucide-react';
+import { ArrowLeft, LogOut, Package, ShoppingCart, Store, UserCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useAuthStore } from '@/stores/auth.store';
 import { cn } from '@/lib/utils';
 import { readableTextOn } from '@/lib/storefront/design';
 import { useCartDrawer } from './cart-drawer-store';
@@ -154,6 +162,53 @@ function LoginLink() {
   );
 }
 
+/**
+ * The signed-in shopper's menu: who they are, their orders, and sign out. Orders open the shopper's account pages,
+ * which are also served on the store's own address, so the sign-in carries over.
+ */
+function AccountMenu() {
+  const { preview } = useStorefront();
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const initials = user ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() : '';
+
+  const signOut = async () => {
+    await fetch('/api/auth/clear-cookie', { method: 'POST' });
+    logout();
+    // A full reload so nothing from this account (its cart, its orders) stays in memory.
+    window.location.reload();
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        type="button"
+        disabled={preview}
+        aria-label="Your account"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eff4ff] text-xs font-semibold text-[#091426] outline-none transition-[background-color,transform,scale] duration-200 hover:bg-[#dce9ff] focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-95"
+      >
+        {initials || <UserCircle className="h-4.5 w-4.5" aria-hidden="true" />}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <div className="mb-1 px-2 py-1.5">
+          <p className="truncate text-sm font-semibold text-[#0b1c30]">{[user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Signed in'}</p>
+          {user?.email && <p className="truncate text-xs text-muted-foreground">{user.email}</p>}
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => window.location.assign('/account/orders')}>
+          <Package className="mr-2 h-4 w-4 text-muted-foreground" />
+          My orders
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={signOut} variant="destructive">
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 /** True once the page has scrolled a little, so a sticky header can lift off the content with a stronger shadow. */
 function useScrolled(enabled: boolean): boolean {
   const [scrolled, setScrolled] = useState(false);
@@ -198,7 +253,7 @@ export default function StorefrontHeader({ totalItems, isAuthenticated }: Header
           <Brand />
           <div className="flex shrink-0 items-center justify-end gap-3">
             <CartLink totalItems={totalItems} />
-            {!isAuthenticated && <LoginLink />}
+            {isAuthenticated ? <AccountMenu /> : <LoginLink />}
           </div>
         </div>
         <NavLinks className="max-w-7xl mx-auto px-4 pb-1.5" listClassName="mx-auto w-max max-w-full" />
@@ -223,7 +278,7 @@ export default function StorefrontHeader({ totalItems, isAuthenticated }: Header
         </div>
         <div className="flex items-center gap-3">
           <CartLink totalItems={totalItems} />
-          {!isAuthenticated && <LoginLink />}
+          {isAuthenticated ? <AccountMenu /> : <LoginLink />}
         </div>
       </div>
       <NavLinks className="max-w-7xl mx-auto px-4 pb-1.5 md:hidden" />

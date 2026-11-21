@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import PageHeader from '@/components/ui/page-header';
 import { toast } from 'sonner';
 import { cn, getApiError } from '@/lib/utils';
-import { CalendarClock, CreditCard, Receipt } from 'lucide-react';
+import { CalendarClock, CreditCard, Gift, Receipt } from 'lucide-react';
 import type { Subscription, SubscriptionCharge, SubscriptionState } from '@/types';
 
 const stateStyle: Record<SubscriptionState, { label: string; className: string }> = {
@@ -129,6 +129,23 @@ function SubscriptionContent() {
       <p className="text-sm text-muted-foreground">
         Subscription details are only available to the business owner.
       </p>
+    );
+  }
+
+  if (sub.billingEnabled === false) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Gift className="h-4 w-4 text-[#0058be]" aria-hidden="true" />
+            Shelflyd is free for now
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>There’s no monthly fee. You don’t need to add a card or pay anything, and your storefront stays live.</p>
+          <p>Your customers still pay through Paystack as usual, and your earnings go to your payout account.</p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -273,7 +290,7 @@ export default function SubscriptionPage() {
     <div className="space-y-6 max-w-2xl">
       <PageHeader
         title="Subscription"
-        subtitle="Your Shelflyd plan keeps your storefront live. Pay each month, or add a card to renew automatically."
+        subtitle="Your Shelflyd plan and any payments for it."
       />
       <Suspense fallback={<Skeleton className="h-40 rounded-xl" />}>
         <SubscriptionContent />

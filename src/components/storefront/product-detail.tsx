@@ -18,6 +18,7 @@ import { cn, formatStatus, getApiError } from '@/lib/utils';
 import { BuildSetButton } from '@/components/features/cart-sets/set-builder-dialog';
 import ProductGallery from '@/components/features/products/product-gallery';
 import { productImages } from '@/lib/product-images';
+import { defaultUnit, formatMoney } from '@/lib/money';
 import { storefrontViewPath, useTrackProductView } from '@/lib/use-track-product-view';
 import type { Product } from '@/types';
 import { useCartDrawer } from './cart-drawer-store';
@@ -40,7 +41,11 @@ export default function ProductDetail({ product }: { product: Product }) {
   const updateCart = useCartStore((s) => s.updateCart);
   const addGuestItem = useGuestCartStore((s) => s.addItem);
   // The preview starts on the first unit so the price shows; a live shopper still chooses one.
-  const [selectedUnitId, setSelectedUnitId] = useState<string>(() => (preview && product.prices?.[0] ? String(product.prices[0].unit) : ''));
+  const [selectedUnitId, setSelectedUnitId] = useState<string>(() => {
+    // Start on the base unit so the price shows straight away (the shopper can still switch).
+    const unit = defaultUnit(product.prices);
+    return unit ? String(unit.unit) : '';
+  });
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
   const id = product.id;
@@ -153,13 +158,13 @@ export default function ProductDetail({ product }: { product: Product }) {
           <Select value={selectedUnitId} onValueChange={(v) => setSelectedUnitId(v ?? '')}>
             <SelectTrigger>
               <SelectValue placeholder="Choose a unit...">
-                {selectedPrice ? `${selectedPrice.unitName} — ${selectedPrice.currency} ${selectedPrice.price.toLocaleString()}` : undefined}
+                {selectedPrice ? `${selectedPrice.unitName} — ${formatMoney(selectedPrice.price, selectedPrice.currency)}` : undefined}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {product.prices.map((p) => (
                 <SelectItem key={p.unit} value={String(p.unit)}>
-                  {p.unitName} — {p.currency} {p.price.toLocaleString()}
+                  {p.unitName} — {formatMoney(p.price, p.currency)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -168,7 +173,7 @@ export default function ProductDetail({ product }: { product: Product }) {
           {selectedPrice && (
             // Keyed by the unit so the price softly fades in again when the shopper switches unit.
             <p key={selectedPrice.unit} className="sf-fade-in text-2xl font-bold tabular-nums text-primary">
-              {selectedPrice.currency} {selectedPrice.price.toLocaleString()}
+              {formatMoney(selectedPrice.price, selectedPrice.currency)}
             </p>
           )}
         </div>
@@ -185,7 +190,7 @@ export default function ProductDetail({ product }: { product: Product }) {
       <div className="sf-rise space-y-1.5" style={stagger(4)}>
         <label className="text-sm font-medium">Note (optional)</label>
         <Textarea
-          placeholder="Ripeness preference, delivery instructions for this item…"
+          placeholder="Anything the seller should know, like size, flavour or a delivery note"
           value={note}
           onChange={(e) => setNote(e.target.value)}
           maxLength={500}

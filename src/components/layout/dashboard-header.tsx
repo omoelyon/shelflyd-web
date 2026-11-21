@@ -18,8 +18,25 @@ const pageTitles: Record<string, string> = {
   '/dashboard/team': 'Team',
   '/dashboard/settings': 'Settings',
   '/dashboard/settings/delivery': 'Delivery Locations',
+  '/dashboard/settings/payout': 'Payout Account',
+  '/dashboard/settings/subscription': 'Subscription',
+  '/dashboard/settings/invoicing': 'Invoicing & Tax',
+  '/dashboard/settings/domain': 'Custom Domain',
   '/dashboard/register-business': 'Register Business',
+  '/dashboard/products/new': 'Add Product',
+  '/dashboard/inventory': 'Inventory',
+  '/dashboard/finance': 'Finance',
+  '/dashboard/orders/': 'Order Details',
 };
+
+/** The title for a path: an exact match, else the closest section it sits in (so /dashboard/orders/65 reads "Order Details"). */
+function titleFor(pathname: string): string {
+  if (pageTitles[pathname]) return pageTitles[pathname];
+  const section = Object.keys(pageTitles)
+    .filter((path) => path !== '/dashboard' && pathname.startsWith(path.endsWith('/') ? path : `${path}/`))
+    .sort((a, b) => b.length - a.length)[0];
+  return section ? pageTitles[section] : 'Dashboard';
+}
 
 export default function DashboardHeader() {
   const { user, logout } = useAuthStore();
@@ -39,7 +56,7 @@ export default function DashboardHeader() {
     window.location.assign('/');
   };
 
-  const pageTitle = pageTitles[pathname] ?? 'Dashboard';
+  const pageTitle = titleFor(pathname);
   const initials = user
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
     : '?';

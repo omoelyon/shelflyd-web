@@ -1,5 +1,7 @@
 'use client';
 
+import { headlinePrice } from '@/lib/money';
+import { PRODUCT_TILE_SIZES, canOptimizeImage } from '@/lib/image';
 import Image from 'next/image';
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -23,7 +25,6 @@ export default function ProductTileCompact({ product, className, style }: { prod
   // With two or more photos, the second fades in over the cover on hover (never on touch screens) or keyboard focus.
   const second = productImages(product)[1];
   const [secondFailed, setSecondFailed] = useState(false);
-  const lowest = product.prices?.reduce((min, p) => (p.price < min.price ? p : min), product.prices[0]);
   const status = STATUS_DOT[product.status];
   const soldOut = product.status === 'OUT_OF_STOCK';
 
@@ -37,7 +38,8 @@ export default function ProductTileCompact({ product, className, style }: { prod
                 src={product.image}
                 alt={product.name}
                 fill
-                unoptimized
+                sizes={PRODUCT_TILE_SIZES}
+                unoptimized={!canOptimizeImage(product.image)}
                 onError={() => setImageFailed(true)}
                 className="sf-img-in object-cover transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
               />
@@ -47,7 +49,8 @@ export default function ProductTileCompact({ product, className, style }: { prod
                   alt=""
                   aria-hidden="true"
                   fill
-                  unoptimized
+                  sizes={PRODUCT_TILE_SIZES}
+                  unoptimized={!canOptimizeImage(second)}
                   loading="lazy"
                   onError={() => setSecondFailed(true)}
                   className="object-cover opacity-0 transition-[opacity,scale] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] [@media(hover:hover)]:group-hover:opacity-100 group-focus-visible:opacity-100 group-hover:scale-105"
@@ -64,7 +67,7 @@ export default function ProductTileCompact({ product, className, style }: { prod
           <h3 className="line-clamp-2 text-xs font-medium leading-snug transition-colors duration-200 group-hover:text-primary">{product.name}</h3>
           <div className="mt-auto pt-1.5">
             <p className="text-xs font-semibold text-primary">
-              {lowest ? `${lowest.currency} ${lowest.price.toLocaleString()}` : 'No price set'}
+              {headlinePrice(product.prices) ?? 'No price set'}
             </p>
             {status && (
               <p className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">

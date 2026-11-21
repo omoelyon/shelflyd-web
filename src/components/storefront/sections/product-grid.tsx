@@ -14,7 +14,8 @@ export type ProductLook = 'grid' | 'portrait' | 'compact';
 export function productGridClass(look: ProductLook, columns: 3 | 4): string {
   if (look === 'portrait') return cn('grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-8', columns === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4');
   if (look === 'compact') return cn('grid grid-cols-2 md:grid-cols-3 gap-3', columns === 3 ? 'lg:grid-cols-4' : 'lg:grid-cols-5');
-  return cn('grid grid-cols-1 sm:grid-cols-2 gap-4', columns === 3 ? 'lg:grid-cols-3' : 'md:grid-cols-3 lg:grid-cols-4');
+  // Two columns even on phones, so a shopper sees several products per screen instead of half of one.
+  return cn('grid grid-cols-2 gap-3 sm:gap-4', columns === 3 ? 'lg:grid-cols-3' : 'md:grid-cols-3 lg:grid-cols-4');
 }
 
 export const productSkeletonHeight = (look: ProductLook) => (look === 'portrait' ? 'h-80' : look === 'compact' ? 'h-48' : 'h-64');

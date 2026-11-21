@@ -28,7 +28,7 @@ export default function Footer() {
             <span style={{ fontFamily: 'var(--font-manrope)' }}>Shelflyd</span>
           </Link>
           <p className="text-sm text-slate-400 max-w-xs leading-relaxed">
-            The multi-tenant marketplace for African businesses. Launch your storefront, manage inventory, and grow your brand.
+            The online marketplace for African businesses. Launch your storefront, manage inventory, and grow your brand.
           </p>
         </div>
 

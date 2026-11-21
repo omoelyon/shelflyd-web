@@ -11,6 +11,7 @@ import { StorefrontProvider, readPreviewToken } from '@/components/storefront/st
 import StorefrontShell from '@/components/storefront/shell';
 import { useHydrated } from '@/components/storefront/use-hydrated';
 import { rememberStore } from '@/lib/auth-redirect';
+import StoreUnavailable from '@/components/storefront/store-unavailable';
 
 interface Props {
   slug: string;
@@ -36,9 +37,12 @@ export default function StorefrontLayoutClient({ slug, children }: Props) {
   // A private draft-preview link carries ?preview=<token>; it is read once and remembered for the session.
   const [previewToken] = useState(() => readPreviewToken(slug));
 
-  const { data: info, isLoading } = useQuery({
+  const { data: info, isLoading, isError } = useQuery({
     queryKey: ['storefront', slug, previewToken],
     queryFn: () => storefrontApi.getInfo(slug, previewToken),
+    // A store that doesn't exist (or is closed) gets its own page below, not an error toast and an empty shell.
+    retry: false,
+    meta: { silentError: true },
   });
 
   useQuery({
@@ -50,6 +54,10 @@ export default function StorefrontLayoutClient({ slug, children }: Props) {
     },
     enabled: isAuthenticated,
   });
+
+  if (isError && !info) {
+    return <StoreUnavailable />;
+  }
 
   return (
     <StorefrontProvider slug={slug} info={info} isLoading={isLoading}>

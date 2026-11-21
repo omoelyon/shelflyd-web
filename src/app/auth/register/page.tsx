@@ -41,7 +41,7 @@ const COPY = {
     features: [
       { icon: Zap, text: 'Add your first product in one step' },
       { icon: Landmark, text: 'Payments go straight to your bank account' },
-      { icon: Gift, text: 'Free for your first 30 days' },
+      { icon: Gift, text: 'Free to use, no monthly fee for now' },
     ],
     title: 'Create your seller account',
     subtitle: 'Step 1 of 2 \u2014 your details. Next, you\u2019ll set up your store.',

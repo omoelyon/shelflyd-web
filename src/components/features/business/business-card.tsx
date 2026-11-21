@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import BusinessAvatar from '@/components/layout/business-avatar';
 import type { Business } from '@/types';
-import { formatStatus } from '@/lib/utils';
 
 interface BusinessCardProps {
   business: Business;
@@ -17,24 +16,12 @@ export default function BusinessCard({ business }: BusinessCardProps) {
           className="rounded-xl shrink-0 ring-2 ring-border group-hover:ring-primary/20 transition-all"
         />
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-1.5">
-            <h3 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
-              {business.name}
-            </h3>
-            <span
-              className={`shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                business.status === 'ACTIVE'
-                  ? 'bg-green-50 text-green-700'
-                  : business.status === 'PENDING'
-                  ? 'bg-yellow-50 text-yellow-700'
-                  : 'bg-red-50 text-red-700'
-              }`}
-            >
-              {formatStatus(business.status)}
-            </span>
-          </div>
+          {/* Shoppers only ever see open stores, so no status badge here. */}
+          <h3 className="mb-1.5 font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+            {business.name}
+          </h3>
           <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-            {business.description || 'No description provided.'}
+            {business.description || 'Visit the store to see what they sell.'}
           </p>
         </div>
       </div>

@@ -13,7 +13,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Store, MapPin, ArrowRight, Landmark, CalendarClock, Paintbrush, Globe } from 'lucide-react';
+import { Store, MapPin, ArrowRight, Landmark, CalendarClock, Paintbrush, Globe, FileText } from 'lucide-react';
 import { useDomainState } from '@/components/features/domains/use-store-domain';
 import Link from 'next/link';
 
@@ -211,12 +211,34 @@ export default function SettingsPage() {
 
       <Separator />
 
+      {/* Invoicing & tax */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Invoicing &amp; tax</CardTitle>
+          <CardDescription>
+            Your registered name, TIN, address and VAT details, printed on receipts, invoices and delivery notes.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            href="/dashboard/settings/invoicing"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#091426] text-white text-sm font-medium hover:bg-[#091426]/90 transition-colors"
+          >
+            <FileText className="h-4 w-4" />
+            Set up invoicing
+            <ArrowRight className="h-4 w-4 ml-1" />
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Separator />
+
       {/* Subscription */}
       <Card>
         <CardHeader>
           <CardTitle>Subscription</CardTitle>
           <CardDescription>
-            Your Shelflyd plan: free trial status, renewal and payment method.
+            Your Shelflyd plan and any payments for it.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { canOptimizeImage } from '@/lib/image';
 
 /**
  * A seller-supplied photo that fills its (relatively positioned) box. If the URL doesn't load, a soft muted block
@@ -15,11 +16,14 @@ export default function SafeImage({
   alt,
   className,
   priority,
+  sizes = '100vw',
 }: {
   src: string;
   alt: string;
   className?: string;
   priority?: boolean;
+  /** How wide it is drawn, so phones download a small copy (see next/image `sizes`). */
+  sizes?: string;
 }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   if (failedSrc === src) {
@@ -34,7 +38,8 @@ export default function SafeImage({
       src={src}
       alt={alt}
       fill
-      unoptimized
+      sizes={sizes}
+      unoptimized={!canOptimizeImage(src)}
       priority={priority}
       onError={() => setFailedSrc(src)}
       className={cn('sf-img-in object-cover', className)}

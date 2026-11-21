@@ -1,3 +1,4 @@
+import { headlinePrice } from '@/lib/money';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -5,6 +6,7 @@ import { Package } from 'lucide-react';
 import type { Product } from '@/types';
 import { cn, formatStatus } from '@/lib/utils';
 import { productImages } from '@/lib/product-images';
+import { PRODUCT_TILE_SIZES, canOptimizeImage } from '@/lib/image';
 
 interface ProductCardProps {
   product: Product;
@@ -43,7 +45,7 @@ export default function ProductCard({ product, href, onLinkClick, className, sty
     <Link href={href ?? `/products/${product.uuid}`} onClick={onLinkClick} className={cn('block group', className)} style={style}>
       <div className="sf-lift bg-card rounded-2xl border border-border h-full flex flex-col overflow-hidden">
         {/* Image */}
-        <div className="relative h-48 bg-muted overflow-hidden">
+        <div className="relative h-36 sm:h-48 bg-muted overflow-hidden">
           {product.image && !imageFailed ? (
             // Sold-out photos are dimmed together, so the hover photo is dimmed the same way as the cover.
             <div className={cn('absolute inset-0', soldOut && 'opacity-50 grayscale')}>
@@ -51,8 +53,9 @@ export default function ProductCard({ product, href, onLinkClick, className, sty
                 src={product.image}
                 alt={product.name}
                 fill
+                sizes={PRODUCT_TILE_SIZES}
                 className="sf-img-in object-cover transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
-                unoptimized
+                unoptimized={!canOptimizeImage(product.image)}
                 onError={() => setImageFailed(true)}
               />
               {second && !secondFailed && (
@@ -61,7 +64,8 @@ export default function ProductCard({ product, href, onLinkClick, className, sty
                   alt=""
                   aria-hidden="true"
                   fill
-                  unoptimized
+                  sizes={PRODUCT_TILE_SIZES}
+                  unoptimized={!canOptimizeImage(second)}
                   loading="lazy"
                   onError={() => setSecondFailed(true)}
                   className="object-cover opacity-0 transition-[opacity,scale] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] [@media(hover:hover)]:group-hover:opacity-100 group-focus-visible:opacity-100 group-hover:scale-105"
@@ -74,13 +78,16 @@ export default function ProductCard({ product, href, onLinkClick, className, sty
               <span className="text-xs">No image</span>
             </div>
           )}
-          <span className={`absolute top-2.5 right-2.5 text-[10px] font-medium px-2 py-0.5 rounded-full ${status.className}`}>
-            {status.label}
-          </span>
+          {/* Only worth a badge when it changes what the shopper can do: low, sold out, or not yet available. */}
+          {product.status !== 'IN_STOCK' && (
+            <span className={`absolute top-2.5 right-2.5 text-[10px] font-medium px-2 py-0.5 rounded-full ${status.className}`}>
+              {status.label}
+            </span>
+          )}
         </div>
 
         {/* Content */}
-        <div className="p-4 flex-1 flex flex-col">
+        <div className="p-3 sm:p-4 flex-1 flex flex-col">
           <h3 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors duration-200">
             {product.name}
           </h3>
@@ -95,7 +102,7 @@ export default function ProductCard({ product, href, onLinkClick, className, sty
           <div className="mt-3 pt-3 border-t border-border/60">
             {lowestPrice ? (
               <p className="font-semibold text-sm text-primary">
-                From {lowestPrice.currency} {lowestPrice.price.toLocaleString()}
+                {headlinePrice(product.prices)}
               </p>
             ) : (
               <p className="text-muted-foreground text-xs">No price set</p>

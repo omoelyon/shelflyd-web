@@ -15,6 +15,8 @@ import {
   BarChart3,
   Wallet,
   Paintbrush,
+  Boxes,
+  Landmark,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -24,11 +26,13 @@ import { useAuthStore } from '@/stores/auth.store';
 const navItems = [
   { href: '/dashboard',           label: 'Overview',  icon: LayoutDashboard, exact: true },
   { href: '/dashboard/products',  label: 'Products',  icon: Package },
+  { href: '/dashboard/inventory', label: 'Inventory', icon: Boxes },
   { href: '/dashboard/storefront', label: 'Storefront', icon: Paintbrush },
   { href: '/dashboard/orders',    label: 'Orders',    icon: ShoppingBag },
   { href: '/dashboard/payments',  label: 'Payments',  icon: CreditCard },
   { href: '/dashboard/earnings',  label: 'Earnings',  icon: Wallet },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/dashboard/finance',   label: 'Finance',   icon: Landmark },
   { href: '/dashboard/team',      label: 'Team',      icon: Users },
   { href: '/dashboard/settings',  label: 'Settings',  icon: Settings },
 ];

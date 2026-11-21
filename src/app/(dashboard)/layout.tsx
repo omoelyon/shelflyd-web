@@ -9,6 +9,8 @@ import { useMyBusiness } from '@/hooks/use-my-business';
 import { Loader2 } from 'lucide-react';
 
 const BARE_PATHS = ['/dashboard/login', '/dashboard/register-business'];
+/** Long forms with their own sticky Cancel / Save bar: on phones the tab bar is hidden there so the two never stack. */
+const FOCUS_PATHS = ['/dashboard/products/new'];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,6 +18,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { hasBusiness, isChecking } = useMyBusiness();
 
   const isBarePath = BARE_PATHS.includes(pathname);
+  const isFocusPath = FOCUS_PATHS.includes(pathname);
 
   useEffect(() => {
     if (!isBarePath && !isChecking && !hasBusiness) {
@@ -42,11 +45,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <DashboardSidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <DashboardHeader />
-        <main className="flex-1 overflow-y-auto bg-surface-low pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-0">
+        <main className={`flex-1 overflow-y-auto bg-surface-low md:pb-0 ${isFocusPath ? 'pb-0' : 'pb-[calc(6.5rem+env(safe-area-inset-bottom))]'}`}>
           <div className="dash-page max-w-7xl mx-auto p-4 md:p-6">{children}</div>
         </main>
       </div>
-      <DashboardMobileNav />
+      {!isFocusPath && <DashboardMobileNav />}
     </div>
   );
 }

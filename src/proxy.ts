@@ -97,11 +97,12 @@ async function resolveCustomDomain(host: string): Promise<ResolvedDomain | null>
 
 /**
  * Sends a request for a store's own address (a {slug}.shelflyd.shop subdomain or a custom domain) to that store's
- * pages. Returns null for /auth and /api, which stay with the main app.
+ * pages. Returns null for /auth, /api and the shopper's /account pages, which stay with the main app (on the same
+ * address, so the shopper stays signed in).
  */
 function storefrontResponse(request: NextRequest, slug: string): NextResponse | null {
   const { pathname } = request.nextUrl;
-  if (pathname.startsWith('/auth') || pathname.startsWith('/api')) return null;
+  if (pathname.startsWith('/auth') || pathname.startsWith('/api') || pathname.startsWith('/account')) return null;
   const url = request.nextUrl.clone();
   // Storefront pages link to each other as /storefront/<slug>/... . On the storefront's own domain that prefix is
   // already implied, so send those to the clean URL (acme.shelflyd.shop/cart) instead of doubling it up.

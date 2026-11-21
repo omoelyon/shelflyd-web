@@ -13,8 +13,10 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 import PageHeader from '@/components/ui/page-header';
 import ProductVisits from '@/components/features/analytics/product-visits';
+import InsightsSection from '@/components/features/analytics/insights-section';
 import StatCard from '@/components/ui/stat-card';
 import {
   TrendingUp,
@@ -23,6 +25,7 @@ import {
   CheckCircle,
   Truck,
   XCircle,
+  ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -69,7 +72,19 @@ export default function AnalyticsPage() {
       <PageHeader
         title="Analytics"
         subtitle="Revenue, orders and which products shoppers visit"
+        action={
+          <Link
+            href="/dashboard/finance"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#eff4ff] px-3 py-2 text-xs font-semibold text-[#0058be] transition-colors hover:bg-[#dbe7ff]"
+          >
+            Profit &amp; reports
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        }
       />
+
+      {/* ── Day / week / month comparisons, what changed, and the products behind it ── */}
+      <InsightsSection />
 
       {/* ── Revenue chart ── */}
       <div className="bg-white rounded-2xl shadow-card-md p-5">

@@ -22,7 +22,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
-import type { Product } from '@/types';
+import type { Product, QuickProductRequest } from '@/types';
+import { formatNaira, marginOf } from '@/components/features/inventory/format';
+import type { WithCostPrice } from '@/types/inventory';
 
 const UNIT_SUGGESTIONS = ['Piece', 'Kg', 'Bag', 'Carton', 'Litre', 'Pack', 'Dozen', 'Bunch'];
 
@@ -53,6 +55,8 @@ export default function NewProductPage() {
   const [imageUploading, setImageUploading] = useState(false);
 
   const [priceText, setPriceText] = useState('');
+  // What the product costs the seller per unit: seller-only, optional, used for margin and profit figures.
+  const [costText, setCostText] = useState('');
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
@@ -86,6 +90,7 @@ export default function NewProductPage() {
     mutationFn: productsApi.createQuick,
     onSuccess: (product, variables) => {
       qc.invalidateQueries({ queryKey: ['business-products'] });
+      qc.invalidateQueries({ queryKey: ['inventory-cover'] });
       qc.invalidateQueries({ queryKey: ['setup-status'] });
       toast.success('Product published');
       setPublishedHadStock(variables.stock !== undefined);
@@ -109,11 +114,16 @@ export default function NewProductPage() {
   const startAnother = () => {
     reset(defaultValues);
     setPriceText('');
+    setCostText('');
     setPublished(null);
   };
 
+  const parsedCost = parseFloat(costText.replace(/,/g, ''));
+  const cost = Number.isNaN(parsedCost) ? undefined : parsedCost;
+  const margin = marginOf(typeof price === 'number' ? price : undefined, cost);
+
   const onSubmit = (values: QuickProductFormValues) => {
-    publishMutation.mutate({
+    const request: WithCostPrice<QuickProductRequest> = {
       name: values.name.trim(),
       description: values.description?.trim() || undefined,
       category: values.category,
@@ -121,7 +131,9 @@ export default function NewProductPage() {
       unitName: values.unitName.trim(),
       price: values.price,
       stock: values.stock,
-    });
+      ...(cost !== undefined && { costPrice: cost }),
+    };
+    publishMutation.mutate(request);
   };
 
   // ── Success state ───────────────────────────────────────────────────────────
@@ -347,6 +359,38 @@ export default function NewProductPage() {
                 </div>
               </div>
 
+              {/* Cost price: only the seller sees it */}
+              <div className="space-y-1.5">
+                <Label htmlFor="product-cost" className="text-sm font-medium text-[#091426]">
+                  What it costs you <span className="font-normal text-[#64748b]">(optional)</span>
+                </Label>
+                <div className="relative sm:max-w-xs">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#64748b] pointer-events-none" aria-hidden="true">
+                    ₦
+                  </span>
+                  <Input
+                    id="product-cost"
+                    inputMode="decimal"
+                    placeholder="0"
+                    className="pl-7"
+                    autoComplete="off"
+                    value={costText}
+                    onChange={(e) => setCostText(formatPriceText(e.target.value))}
+                  />
+                </div>
+                {margin ? (
+                  <p className={`text-xs ${margin.amount < 0 ? 'text-red-600' : 'text-emerald-700'}`} aria-live="polite">
+                    {margin.amount < 0
+                      ? `You would lose ${formatNaira(Math.abs(margin.amount))} on each ${unitName?.trim() || 'unit'} sold.`
+                      : `You make ${formatNaira(margin.amount)} on each ${unitName?.trim() || 'unit'} (${margin.pct}% margin).`}
+                  </p>
+                ) : (
+                  <p className="text-xs text-[#64748b]">
+                    What one {unitName?.trim() || 'unit'} costs you to buy or make. Only you see this. It is used to work out your profit.
+                  </p>
+                )}
+              </div>
+
               {/* Unit */}
               <div className="space-y-2">
                 <Label htmlFor="product-unit" className="text-sm font-medium text-[#091426]">
@@ -390,7 +434,7 @@ export default function NewProductPage() {
             </section>
 
             {/* Action bar: the dashboard layout already pads the bottom for the mobile tab bar, so bottom-0 sits just above it */}
-            <div className="sticky bottom-0 md:bottom-4 z-20 flex items-center justify-between gap-3 rounded-2xl bg-white/95 backdrop-blur border border-[rgba(9,20,38,0.08)] shadow-card-md px-4 py-3">
+            <div className="sticky bottom-[max(0.5rem,env(safe-area-inset-bottom))] md:bottom-4 z-20 flex items-center justify-between gap-3 rounded-2xl bg-white/95 backdrop-blur border border-[rgba(9,20,38,0.08)] shadow-card-md px-4 py-3">
               <Button type="button" variant="ghost" onClick={() => router.push('/dashboard/products')}>
                 Cancel
               </Button>

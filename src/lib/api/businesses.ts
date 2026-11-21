@@ -40,8 +40,9 @@ export const businessesApi = {
     return res.data;
   },
 
-  getOrders: async (page = 0, size = 15): Promise<PagedOrders> => {
-    const res = await apiClient.get('/business/orders', { params: { page, size } });
+  /** `status`: OPEN (still to act on), one status, or leave out for all orders. */
+  getOrders: async (page = 0, size = 15, status?: string): Promise<PagedOrders> => {
+    const res = await apiClient.get('/business/orders', { params: { page, size, ...(status && status !== 'ALL' && { status }) } });
     return res.data;
   },
 

@@ -36,7 +36,7 @@ export default function ImageText({ section }: { section: ImageTextSection }) {
       <div className={cn('grid items-center gap-6 md:gap-10', hasImage && hasText && 'md:grid-cols-2')}>
         {hasImage && (
           <div className={cn('relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted', section.variant === 'right' && 'md:order-2')}>
-            <SafeImage src={image} alt={heading.trim()} />
+            <SafeImage src={image} alt={heading.trim()} sizes="(min-width: 768px) 50vw, 100vw" />
           </div>
         )}
         {text}

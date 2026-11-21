@@ -46,6 +46,8 @@ import Image from 'next/image';
 import ProductImagesField from '@/components/features/products/product-images-field';
 import { productImages } from '@/lib/product-images';
 import type { Product, PriceDetail, UpdateProductRequest } from '@/types';
+import { cleanAmountText, formatNaira, marginOf, parseAmount } from '@/components/features/inventory/format';
+import { costPriceOf, type WithCostPrice } from '@/types/inventory';
 
 export default function DashboardProductsPage() {
   const router = useRouter();
@@ -60,6 +62,9 @@ export default function DashboardProductsPage() {
   const [editImageUploading, setEditImageUploading] = useState(false);
   // Whether the product is hidden from shoppers; sent only when the seller changed it.
   const [editHidden, setEditHidden] = useState(false);
+  // What the product costs the seller per base unit (seller-only); sent only when the seller touched it. Blank clears it.
+  const [editCostText, setEditCostText] = useState('');
+  const [editCostTouched, setEditCostTouched] = useState(false);
 
   // Delete dialog
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
@@ -139,6 +144,7 @@ export default function DashboardProductsPage() {
     onSuccess: () => {
       toast.success('Product updated!');
       qc.invalidateQueries({ queryKey: ['business-products'] });
+      qc.invalidateQueries({ queryKey: ['inventory-cover'] });   // a new cost price changes the stock value
       setEditProduct(null);
       setEditImages([]);
       setEditPhotosTouched(false);
@@ -230,6 +236,9 @@ export default function DashboardProductsPage() {
     setEditImages(productImages(product));
     setEditPhotosTouched(false);
     setEditHidden(product.hidden ?? false);
+    const cost = costPriceOf(product);
+    setEditCostText(cost != null ? String(cost) : '');
+    setEditCostTouched(false);
     resetEdit({
       name: product.name,
       type: product.type ?? '',
@@ -346,6 +355,43 @@ export default function DashboardProductsPage() {
           )}
         />
       </div>
+
+      {(() => {
+        const base = editProduct?.prices?.find((p) => p.isBaseUnit) ?? editProduct?.prices?.[0];
+        const unit = base?.unitName ?? 'unit';
+        const margin = base?.currency === 'NGN' ? marginOf(base.price, parseAmount(editCostText)) : null;
+        return (
+          <div className="space-y-1.5">
+            <Label htmlFor="product-cost" className="text-sm font-medium text-[#091426]">
+              What it costs you per {unit} <span className="font-normal text-[#64748b]">(optional)</span>
+            </Label>
+            <div className="relative sm:max-w-xs">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#64748b]" aria-hidden="true">₦</span>
+              <Input
+                id="product-cost"
+                inputMode="decimal"
+                autoComplete="off"
+                placeholder="0"
+                className="pl-7"
+                value={editCostText}
+                onChange={(e) => {
+                  setEditCostText(cleanAmountText(e.target.value));
+                  setEditCostTouched(true);
+                }}
+              />
+            </div>
+            {margin ? (
+              <p className={`text-xs ${margin.amount < 0 ? 'text-red-600' : 'text-emerald-700'}`} aria-live="polite">
+                {margin.amount < 0
+                  ? `You would lose ${formatNaira(Math.abs(margin.amount))} on each ${unit} sold.`
+                  : `You make ${formatNaira(margin.amount)} on each ${unit} (${margin.pct}% margin).`}
+              </p>
+            ) : (
+              <p className="text-xs text-[#64748b]">Only you see this. It is used to work out your profit and the value of your stock.</p>
+            )}
+          </div>
+        );
+      })()}
 
       <div className="flex items-center justify-between gap-4 rounded-xl border border-[rgba(9,20,38,0.1)] bg-[#f8f9ff] px-3.5 py-3">
         <div className="min-w-0">
@@ -479,7 +525,9 @@ export default function DashboardProductsPage() {
                     (() => {
                       const base = product.prices.find((p) => p.isBaseUnit) ?? product.prices[0];
                       const others = product.prices.length - 1;
+                      const margin = base.currency === 'NGN' ? marginOf(base.price, costPriceOf(product)) : null;
                       return (
+                        <div className="space-y-1">
                         <div className="flex items-end justify-between gap-2">
                           <p className="text-sm text-[#64748b]">
                             <span className="font-bold text-[#091426] font-heading">
@@ -496,6 +544,12 @@ export default function DashboardProductsPage() {
                               {product.stock <= 0 ? 'None left' : `${product.stock.toLocaleString()} in stock`}
                             </p>
                           )}
+                        </div>
+                        {margin && (
+                          <p className={`text-xs ${margin.amount < 0 ? 'font-medium text-red-600' : 'text-[#64748b]'}`}>
+                            {margin.amount < 0 ? `Selling below cost: ${formatNaira(margin.amount)} each` : `Margin ${margin.pct}% · ${formatNaira(margin.amount)} each`}
+                          </p>
+                        )}
                         </div>
                       );
                     })()
@@ -577,14 +631,14 @@ export default function DashboardProductsPage() {
               // Photos travel separately from the form fields, and only when the seller changed them (an empty list removes them all).
               const { images: _ignored, ...fields } = d;
               void _ignored;
-              updateMutation.mutate({
-                id: editProduct.id,
-                data: {
-                  ...fields,
-                  ...(editPhotosTouched ? { images: editImages } : {}),
-                  ...(editHidden !== (editProduct.hidden ?? false) ? { hidden: editHidden } : {}),
-                },
-              });
+              const data: WithCostPrice<UpdateProductRequest> = {
+                ...fields,
+                ...(editPhotosTouched ? { images: editImages } : {}),
+                ...(editHidden !== (editProduct.hidden ?? false) ? { hidden: editHidden } : {}),
+                // A blank box clears the cost (null); an untouched one leaves it as it is.
+                ...(editCostTouched ? { costPrice: parseAmount(editCostText) } : {}),
+              };
+              updateMutation.mutate({ id: editProduct.id, data });
             })}
             className="space-y-4 mt-2"
           >

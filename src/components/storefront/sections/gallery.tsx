@@ -28,7 +28,7 @@ export default function Gallery({ section }: { section: GallerySection }) {
                 aria-label={img.caption ? `Enlarge photo: ${img.caption}` : `Enlarge photo ${i + 1}`}
                 className="group relative block aspect-square w-full overflow-hidden rounded-xl bg-muted outline-none transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <SafeImage src={img.url} alt={img.caption} className="transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105" />
+                <SafeImage src={img.url} alt={img.caption} sizes="(min-width: 768px) 33vw, 50vw" className="transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105" />
               </button>
               {img.caption && <figcaption className="mt-1.5 text-xs text-muted-foreground">{img.caption}</figcaption>}
             </figure>

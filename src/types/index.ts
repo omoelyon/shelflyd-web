@@ -395,6 +395,10 @@ export interface Order extends BaseEntity {
   cancelReason?: string | null;
   /** Seller-only: stock ran short between checkout and payment, e.g. "Chicken wrap (2 short)". The buyer has paid. */
   stockShortfall?: string | null;
+  /** Seller's order list only: who ordered, how many lines, and what the items cost. */
+  buyerName?: string | null;
+  itemCount?: number | null;
+  itemsTotal?: number | null;
 }
 
 /** The buyer's proof of purchase for an in-person pickup — the code (or its QR image) is what the seller checks. */
@@ -786,6 +790,8 @@ export interface Subscription {
   charges: SubscriptionCharge[];
   /** False while the platform isn't enforcing subscriptions: nothing is hidden, so nothing should warn. */
   enforced: boolean;
+  /** False while Shelflyd is free: no plan, card or payment applies. */
+  billingEnabled?: boolean;
 }
 
 export interface SubscriptionCheckout {

@@ -17,7 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Shelflyd — Multi-tenant Marketplace',
+  title: 'Shelflyd · Shop local businesses online',
   description: 'Buy and sell anything on Shelflyd, the platform for African businesses.',
   manifest: '/manifest.json',
   appleWebApp: {
@@ -44,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} ${manrope.variable}`}>
       <body className="antialiased">
         <PWARegister />
         <Providers>{children}</Providers>
