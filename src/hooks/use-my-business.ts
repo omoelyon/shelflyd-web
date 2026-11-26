@@ -9,7 +9,7 @@ import { useAuthStore } from '@/stores/auth.store';
  * this never retries.
  */
 export function useMyBusiness() {
-  const { isAuthenticated, hasHydrated } = useAuthStore();
+  const { isAuthenticated, hasHydrated, authChecked } = useAuthStore();
 
   const query = useQuery({
     queryKey: ['business-profile'],
@@ -27,6 +27,8 @@ export function useMyBusiness() {
   return {
     business: query.data,
     hasBusiness: !!query.data,
-    isChecking: !hasHydrated || (isAuthenticated && query.isLoading),
+    // Not signed in yet may only mean the sign-in check is still running (e.g. first visit to app.shelflyd.com after
+    // signing in on shelflyd.com), so wait for it before concluding there is no business.
+    isChecking: !hasHydrated || (!isAuthenticated && !authChecked) || (isAuthenticated && query.isLoading),
   };
 }

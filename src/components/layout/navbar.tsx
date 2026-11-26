@@ -18,6 +18,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { loginHref } from '@/lib/auth-redirect';
+import { dashboardUrl } from '@/lib/storefront/url';
 import { useMyBusiness } from '@/hooks/use-my-business';
 
 const navLinks = [
@@ -119,12 +120,12 @@ export default function Navbar() {
                   Profile
                 </DropdownMenuItem>
                 {hasBusiness ? (
-                  <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                  <DropdownMenuItem onClick={() => window.location.assign(dashboardUrl())}>
                     <LayoutDashboard className="h-4 w-4 mr-2 text-muted-foreground" />
                     Dashboard
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuItem onClick={() => router.push('/dashboard/register-business')}>
+                  <DropdownMenuItem onClick={() => window.location.assign(dashboardUrl('/dashboard/register-business'))}>
                     <Sparkles className="h-4 w-4 mr-2 text-muted-foreground" />
                     Start Selling
                   </DropdownMenuItem>

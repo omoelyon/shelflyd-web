@@ -12,6 +12,10 @@ import { usersApi } from '@/lib/api/users';
  * a definitely-anonymous visitor (never logged in on this browser); it's never trusted on
  * its own, so a stale/expired session still gets corrected here the moment it's checked.
  */
+function signedInElsewhere(): boolean {
+  return typeof document !== 'undefined' && document.cookie.split('; ').some((c) => c === 'mm_signed_in=1');
+}
+
 export default function AuthHydrator() {
   const { hasHydrated, isAuthenticated, setUser, logout, setAuthChecked } = useAuthStore();
   const queryClient = useQueryClient();
@@ -30,7 +34,8 @@ export default function AuthHydrator() {
 
   useEffect(() => {
     if (!hasHydrated) return;
-    if (!isAuthenticated) {
+    // The hint can also come from a sign-in on another of our addresses (shelflyd.com → app.shelflyd.com), which shares the cookie.
+    if (!isAuthenticated && !signedInElsewhere()) {
       setAuthChecked(true);
       return;
     }

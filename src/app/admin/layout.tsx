@@ -101,7 +101,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (isBarePath || isChecking) return;
     if (!isAuthenticated || !isAdmin) {
-      router.replace('/');
+      // The staff sign-in, not "/": on admin.shelflyd.com "/" is the admin itself, so that would go round in circles.
+      router.replace('/admin/login');
     }
   }, [isBarePath, isChecking, isAuthenticated, isAdmin, router]);
 

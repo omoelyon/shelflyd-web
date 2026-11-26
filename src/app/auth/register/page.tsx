@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
+import { dashboardUrl } from '@/lib/storefront/url';
 import { Store, Eye, EyeOff, ShoppingBag, ShieldCheck, Truck, Landmark, Zap, Gift } from 'lucide-react';
 
 // One account type underneath: anyone can open a store later. "Seller" only changes the copy and
@@ -104,7 +105,7 @@ function RegisterForm() {
       await mergeGuestCartIntoServer();
       toast.success(`Welcome to Shelflyd, ${firstName}!`);
       // Full page load, as on login: nothing from a previous session can carry over.
-      window.location.assign(seller ? '/dashboard/register-business' : afterAuthPath(from));
+      window.location.assign(seller ? dashboardUrl('/dashboard/register-business') : afterAuthPath(from));
     },
     onError: (error) => toast.error(getApiError(error, 'Registration failed.')),
   });

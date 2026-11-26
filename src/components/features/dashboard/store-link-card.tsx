@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { storefrontUrl } from '@/lib/storefront/url';
 
 export function StoreLinkCardSkeleton() {
   return <Skeleton className="h-28 rounded-2xl" />;
@@ -13,10 +14,12 @@ export function StoreLinkCardSkeleton() {
 
 /** The public link a seller shares with customers, with copy and open actions. */
 export default function StoreLinkCard({ slug }: { slug: string }) {
-  const path = `/storefront/${slug}`;
+  // Rendered only once the business has loaded in the browser, so the address can be worked out here:
+  // https://acme.shelflyd.shop in production, this site's /storefront/acme path locally.
+  const url = storefrontUrl(slug);
+  const shown = url.replace(/^https?:\/\//, '');
 
   const copy = async () => {
-    const url = `${window.location.origin}${path}`;
     try {
       await navigator.clipboard.writeText(url);
       toast.success('Link copied');
@@ -32,7 +35,7 @@ export default function StoreLinkCard({ slug }: { slug: string }) {
       </h2>
       <div className="mt-2 flex items-center gap-2 rounded-xl bg-[#f1f5f9] px-3 py-2.5">
         <p className="flex-1 min-w-0 truncate text-sm font-medium text-[#091426]">
-          shelflyd.com{path}
+          {shown}
         </p>
         <Button
           type="button"
@@ -46,7 +49,7 @@ export default function StoreLinkCard({ slug }: { slug: string }) {
         </Button>
       </div>
       <Link
-        href={path}
+        href={url}
         target="_blank"
         rel="noopener noreferrer"
         className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'mt-3 h-8 gap-1.5 text-xs')}

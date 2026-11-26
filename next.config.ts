@@ -1,6 +1,9 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Development only: lets the dev server be opened as app.shelflyd.localhost / admin.shelflyd.localhost / acme.shelflyd.localhost
+  // to try the separate dashboard, admin and store addresses locally.
+  allowedDevOrigins: ['*.localhost', '*.shelflyd.localhost'],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'ui-avatars.com' },

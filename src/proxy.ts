@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { ADMIN_HOST, APP_DOMAIN, DASHBOARD_HOST, STOREFRONT_DOMAIN } from '@/lib/storefront/url';
 
 const DASHBOARD_PATHS = ['/dashboard'];
 const PROTECTED_PATHS = ['/checkout', '/account', '/invites'];
@@ -9,8 +10,12 @@ const RESERVED_SUBDOMAINS = ['www', 'api'];
 /**
  * Domain architecture
  * ─────────────────────────────────────────────────────────
- * shelflyd.com          → main marketplace app
- *                          (dashboard, admin, browse, auth)
+ * shelflyd.com          → main marketplace app (browse, cart, account, auth)
+ *
+ * app.shelflyd.com      → the business dashboard (/dashboard…), when NEXT_PUBLIC_DASHBOARD_HOST is set
+ * admin.shelflyd.com    → Shelflyd staff admin (/admin…), when NEXT_PUBLIC_ADMIN_HOST is set
+ *                          Each address only serves its own pages; the others are sent to the right address.
+ *                          Unset (local, staging): everything is served from one site.
  *
  * *.shelflyd.shop       → merchant storefronts
  *                          acme.shelflyd.shop → /storefront/acme
@@ -23,12 +28,11 @@ const RESERVED_SUBDOMAINS = ['www', 'api'];
  *
  * Override via env vars:
  *   NEXT_PUBLIC_APP_DOMAIN      (default: shelflyd.com)
+ *   NEXT_PUBLIC_DASHBOARD_HOST  (e.g. app.shelflyd.com; unset = dashboard stays on the main site)
+ *   NEXT_PUBLIC_ADMIN_HOST      (e.g. admin.shelflyd.com; unset = admin stays on the main site)
  *   NEXT_PUBLIC_STOREFRONT_DOMAIN (default: shelflyd.shop)
  *   NEXT_PUBLIC_CUSTOM_DOMAINS_ENABLED (set to "true" in production to serve sellers' own domains)
  */
-const APP_DOMAIN = (process.env.NEXT_PUBLIC_APP_DOMAIN ?? 'shelflyd.com').toLowerCase();
-const STOREFRONT_DOMAIN = (process.env.NEXT_PUBLIC_STOREFRONT_DOMAIN ?? 'shelflyd.shop').toLowerCase();
-
 const CUSTOM_DOMAINS_ENABLED = process.env.NEXT_PUBLIC_CUSTOM_DOMAINS_ENABLED === 'true';
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
@@ -115,6 +119,63 @@ function storefrontResponse(request: NextRequest, slug: string): NextResponse | 
   return NextResponse.rewrite(url);
 }
 
+/** Paths every address serves: Next's API routes (and the /api/v1 proxy to the backend), the offline page, and files such as /manifest.json. */
+function servedEverywhere(pathname: string): boolean {
+  return pathname.startsWith('/api') || pathname === '/offline' || /\.[a-z0-9]+$/i.test(pathname);
+}
+
+const startsWithAny = (pathname: string, prefixes: string[]) =>
+  prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+
+/** The same address on another host, keeping the path, query, protocol and port (the port only matters locally). */
+function onHost(request: NextRequest, host: string, pathname?: string): NextResponse {
+  const url = request.nextUrl.clone();
+  url.hostname = host;
+  if (pathname !== undefined) {
+    url.pathname = pathname;
+    url.search = '';
+  }
+  return NextResponse.redirect(url, 308);
+}
+
+/**
+ * Keeps the dashboard on app.shelflyd.com and the admin on admin.shelflyd.com, and everything else on the marketplace.
+ * Old links (shelflyd.com/dashboard/orders, emails, Paystack returns) are sent on with their path and query intact.
+ * Returns null when the request belongs where it is.
+ */
+function areaRedirect(request: NextRequest, hostname: string): NextResponse | null {
+  if (!DASHBOARD_HOST && !ADMIN_HOST) return null;
+  const { pathname } = request.nextUrl;
+  if (servedEverywhere(pathname)) return null;
+  const isDashboard = startsWithAny(pathname, ['/dashboard']);
+  const isAdmin = startsWithAny(pathname, ['/admin']);
+
+  if (hostname === DASHBOARD_HOST) {
+    if (pathname === '/') return onHost(request, hostname, '/dashboard');
+    if (isAdmin) return ADMIN_HOST ? onHost(request, ADMIN_HOST) : onHost(request, APP_DOMAIN);
+    // Sign-in, team invitations and the store editor's live preview are part of running a business too.
+    if (isDashboard || startsWithAny(pathname, ['/auth', '/invites', '/storefront-preview'])) return null;
+    return onHost(request, APP_DOMAIN);
+  }
+  if (hostname === ADMIN_HOST) {
+    if (pathname === '/') return onHost(request, hostname, '/admin');
+    if (isDashboard) return onHost(request, DASHBOARD_HOST ?? APP_DOMAIN);
+    if (isAdmin || startsWithAny(pathname, ['/auth'])) return null;
+    return onHost(request, APP_DOMAIN);
+  }
+  if (hostname === APP_DOMAIN || hostname === `www.${APP_DOMAIN}`) {
+    if (isDashboard && DASHBOARD_HOST) return onHost(request, DASHBOARD_HOST);
+    if (isAdmin && ADMIN_HOST) return onHost(request, ADMIN_HOST);
+  }
+  return null;
+}
+
+/** The dashboard and admin addresses are private tools: keep them out of search results. */
+function withNoIndex(response: NextResponse, hostname: string): NextResponse {
+  if (hostname === DASHBOARD_HOST || hostname === ADMIN_HOST) response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -156,7 +217,10 @@ export async function proxy(request: NextRequest) {
     if (response) return response;
   }
 
-  // ── Main app domain (shelflyd.com) ───────────────────────────────────────────
+  // ── Main site (shelflyd.com, app.shelflyd.com, admin.shelflyd.com) ──────────
+
+  const moved = areaRedirect(request, hostname);
+  if (moved) return moved;
 
   const token = request.cookies.get('mm_token')?.value;
 
@@ -172,7 +236,7 @@ export async function proxy(request: NextRequest) {
   const isDashboardPath = DASHBOARD_PATHS.some((p) => pathname.startsWith(p));
   if (isDashboardPath && pathname !== '/dashboard/login' && !token) {
     const loginUrl = new URL('/dashboard/login', request.url);
-    loginUrl.searchParams.set('from', pathname);
+    loginUrl.searchParams.set('from', pathname + request.nextUrl.search); // keep ?token= / ?reference=
     return NextResponse.redirect(loginUrl);
   }
 
@@ -180,11 +244,11 @@ export async function proxy(request: NextRequest) {
   const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
   if (isProtected && !token) {
     const loginUrl = new URL('/auth/login', request.url);
-    loginUrl.searchParams.set('from', pathname);
+    loginUrl.searchParams.set('from', pathname + request.nextUrl.search); // keep ?token= / ?reference=
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  return withNoIndex(NextResponse.next(), hostname);
 }
 
 export const config = {
