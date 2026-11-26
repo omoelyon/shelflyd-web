@@ -1,6 +1,6 @@
 import apiClient from './client';
 import type {
-  AdminAiOverview,
+  AdminAiOverview, AiConnectionCheck,
   AiUsageReport,
   TopUpResult,
   AssistantCartLine,
@@ -146,6 +146,12 @@ export const adminAiApi = {
 
   adjust: async (businessId: number, amount: number, note: string): Promise<{ businessId: number; balance: number }> => {
     const res = await apiClient.post('/admin/ai/credits', { businessId, amount, note });
+    return res.data;
+  },
+
+  /** Sends one tiny request to the AI provider with the assistants' settings and reports what happened. */
+  check: async (): Promise<AiConnectionCheck> => {
+    const res = await apiClient.post('/admin/ai/check', null, { timeout: 120_000 });
     return res.data;
   },
 };

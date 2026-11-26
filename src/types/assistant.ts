@@ -103,6 +103,16 @@ export interface TopUpResult {
 }
 
 /** Shelflyd staff: AI usage across all businesses. */
+/** A live test call to the AI provider (admin). `error` is the provider's own message; it never contains the API key. */
+export interface AiConnectionCheck {
+  ok: boolean;
+  provider: string;
+  model: string;
+  millis: number;
+  reply: string | null;
+  error: string | null;
+}
+
 export interface AdminAiOverview {
   available: boolean;
   provider: string;

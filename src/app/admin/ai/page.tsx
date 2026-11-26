@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, PlugZap, XCircle } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { adminAiApi } from '@/lib/api/assistant';
 import { formatMoney } from '@/lib/money';
@@ -25,6 +25,8 @@ export default function AdminAiPage() {
         title="AI assistants"
         subtitle={data ? (data.available ? 'On' : 'Off') + ' · ' + data.provider + ' · ' + data.model : 'Usage and AI credit across businesses'}
       />
+
+      <ConnectionCheck />
 
       <div className="flex gap-1.5" role="radiogroup" aria-label="Period">
         {[7, 30, 90].map((d) => (
@@ -161,6 +163,43 @@ function Table({ head, rows, empty }: { head: string[]; rows: string[][]; empty:
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** Sends one tiny request to the AI provider and shows the result, including the provider's own error (e.g. a key problem). */
+function ConnectionCheck() {
+  const check = useMutation({ mutationFn: adminAiApi.check });
+  const r = check.data;
+  return (
+    <section className={card + ' p-5'}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-[#091426]">Connection to the AI provider</h3>
+          <p className="text-xs text-[#64748b]">Sends one tiny request with the assistants’ settings. Costs a fraction of a naira; no business is charged.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => check.mutate()}
+          disabled={check.isPending}
+          className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#091426] px-3.5 text-xs font-semibold text-white disabled:opacity-50"
+        >
+          {check.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PlugZap className="h-3.5 w-3.5" />}
+          Test connection
+        </button>
+      </div>
+      {check.isError && <p className="mt-3 text-sm text-rose-700">{getApiError(check.error, 'Could not run the test.')}</p>}
+      {r && (
+        <div className={'mt-3 flex items-start gap-2 rounded-xl px-3 py-2.5 text-sm ' + (r.ok ? 'bg-emerald-50 text-emerald-900' : 'bg-rose-50 text-rose-900')} role="status">
+          {r.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0" />}
+          <div className="min-w-0">
+            <p className="font-semibold">
+              {r.ok ? 'Working' : 'Not working'} · {r.provider} · {r.model} · {(r.millis / 1000).toFixed(1)}s
+            </p>
+            {r.ok ? <p className="text-xs">The model replied “{r.reply}”.</p> : <p className="mt-0.5 break-words font-mono text-xs">{r.error}</p>}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
