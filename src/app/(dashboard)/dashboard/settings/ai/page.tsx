@@ -124,7 +124,7 @@ function AiUsage() {
                 {data.credits.map((c, i) => (
                   <li key={i} className="flex items-center justify-between gap-3 py-2.5 text-sm">
                     <span>
-                      <span className="text-[#091426]">{CREDIT_LABEL[c.type] ?? c.type}</span>
+                      <span className="text-[#091426]">{c.type === 'ADJUSTMENT' && c.note ? c.note : (CREDIT_LABEL[c.type] ?? c.type)}</span>
                       {c.createdAt && <span className="ml-2 text-xs text-[#94a3b8]">{new Date(c.createdAt).toLocaleDateString('en-NG', { dateStyle: 'medium' })}</span>}
                     </span>
                     <span className={cn('font-semibold tabular-nums', c.amount < 0 ? 'text-rose-700' : 'text-emerald-700')}>

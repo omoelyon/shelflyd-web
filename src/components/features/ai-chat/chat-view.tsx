@@ -22,6 +22,7 @@ export function ChatView({
   placeholder,
   footnote,
   autoFocus = true,
+  blocked,
 }: {
   chat: AiChat;
   welcome: ReactNode;
@@ -29,6 +30,8 @@ export function ChatView({
   placeholder: string;
   footnote?: string;
   autoFocus?: boolean;
+  /** Shown instead of the message box when nothing can be sent (e.g. out of AI credit). */
+  blocked?: ReactNode;
 }) {
   const list = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
@@ -64,17 +67,19 @@ export function ChatView({
               />
             ))}
       </div>
-      <Composer
-        busy={chat.busy}
-        placeholder={placeholder}
-        footnote={footnote}
-        autoFocus={autoFocus}
-        onSend={(text) => {
-          stick.current = true;
-          chat.send(text);
-        }}
-        onStop={chat.stop}
-      />
+      {blocked ?? (
+        <Composer
+          busy={chat.busy}
+          placeholder={placeholder}
+          footnote={footnote}
+          autoFocus={autoFocus}
+          onSend={(text) => {
+            stick.current = true;
+            chat.send(text);
+          }}
+          onStop={chat.stop}
+        />
+      )}
     </>
   );
 }

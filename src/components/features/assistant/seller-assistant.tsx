@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { History, Sparkles, SquarePen, X } from 'lucide-react';
+import Link from 'next/link';
+import { History, Sparkles, SquarePen, Wallet, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { assistantApi, sellerAssistantApi } from '@/lib/api/assistant';
 import { useAiChat, type ChatTransport } from '@/components/features/ai-chat/use-ai-chat';
@@ -59,6 +60,19 @@ function SellerPanel({ onClose }: { onClose: () => void }) {
   );
   const chat = useAiChat(transport);
   const [historyOpen, setHistoryOpen] = useState(false);
+  // The balance, fresh each time the panel opens and again after any refusal, so running out shows up front.
+  const { data: settings, refetch: refetchSettings } = useQuery({
+    queryKey: ['assistant-settings'],
+    queryFn: assistantApi.settings,
+    refetchOnMount: 'always',
+    retry: false,
+    meta: { silentError: true },
+  });
+  const outOfCredit = !!settings && settings.billingEnforced && settings.balance <= 0;
+  const lastError = chat.turns.at(-1)?.error;
+  useEffect(() => {
+    if (lastError) refetchSettings();
+  }, [lastError, refetchSettings]);
 
   useEffect(() => {
     chat.restore();
@@ -131,7 +145,34 @@ function SellerPanel({ onClose }: { onClose: () => void }) {
           </div>
         }
         renderCard={(card, ctx) => <SellerCard card={card} ctx={ctx} onNavigate={closeOnPhone} />}
+        blocked={outOfCredit && !chat.busy ? <OutOfCredit onNavigate={closeOnPhone} /> : undefined}
       />
+    </div>
+  );
+}
+
+/** Takes the message box's place while the business has no AI credit, with the way to add some. */
+function OutOfCredit({ onNavigate }: { onNavigate: () => void }) {
+  return (
+    <div className="shrink-0 border-t border-[rgba(9,20,38,0.08)] bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700" aria-hidden="true">
+          <Wallet className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-[#091426]">You’re out of AI credit</p>
+          <p className="mt-0.5 text-[13px] leading-relaxed text-[#64748b]">
+            The assistant uses credit as it answers. Add some to keep asking about your sales, stock and profit. Your store’s shopping assistant is paused until then too.
+          </p>
+        </div>
+      </div>
+      <Link
+        href="/dashboard/settings/ai"
+        onClick={onNavigate}
+        className="mt-3 flex h-10 w-full items-center justify-center rounded-lg bg-[#091426] text-sm font-semibold text-white hover:bg-[#091426]/90"
+      >
+        Buy AI credit
+      </Link>
     </div>
   );
 }
