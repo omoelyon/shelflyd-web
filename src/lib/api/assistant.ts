@@ -50,7 +50,9 @@ export class AssistantError extends Error {
 export async function streamTo(url: string, body: object, onEvent: (e: ChatStreamEvent) => void, signal?: AbortSignal, headers: Record<string, string> = {}) {
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream', ...headers },
+    // application/json too: when the server refuses before streaming (no AI credit, AI switched off, a limit), its
+    // explanation comes back as JSON. Asking for the stream alone turned every refusal into an empty 500.
+    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream, application/json', ...headers },
     body: JSON.stringify(body),
     credentials: 'same-origin',
     signal,

@@ -171,7 +171,7 @@ function StorefrontCheckoutContent({ slug }: { slug: string }) {
           type="submit"
           className="w-full bg-primary text-primary-foreground hover:opacity-90"
           size="lg"
-          disabled={checkoutMutation.isPending}
+          disabled={checkoutMutation.isPending || (orderType === 'DELIVERY' && delivery.mode === 'flat' && !delivery.locationId)}
         >
           {checkoutMutation.isPending ? 'Processing...' : 'Pay Now'}
         </Button>

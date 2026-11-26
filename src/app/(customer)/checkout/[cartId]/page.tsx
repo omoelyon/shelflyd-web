@@ -218,7 +218,7 @@ export default function CheckoutPage({ params }: Props) {
           type="submit"
           className="w-full bg-primary text-primary-foreground hover:opacity-90"
           size="lg"
-          disabled={checkoutMutation.isPending || feeLoading}
+          disabled={checkoutMutation.isPending || feeLoading || (orderType === 'DELIVERY' && delivery.mode === 'flat' && !delivery.locationId)}
         >
           {checkoutMutation.isPending ? 'Processing...' : 'Pay Now'}
         </Button>

@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { getApiError } from '@/lib/utils';
 import { Loader2, MapPin, Truck } from 'lucide-react';
 import type { DeliveryAddress, DeliveryLocation, DeliveryRateOption } from '@/types';
+import { COURIER_DELIVERY } from '@/lib/constants/delivery';
 
 export interface DeliveryMethodValue {
   mode: 'flat' | 'courier';
@@ -78,40 +79,51 @@ export default function DeliveryMethodPicker({ cartId, locations, value, onChang
     }
   };
 
+  // Courier delivery is switched off for now: only the seller's own delivery areas are offered.
+  if (!COURIER_DELIVERY && locations && locations.length === 0) {
+    return (
+      <p className="rounded-xl bg-muted px-3 py-2.5 text-sm text-muted-foreground">
+        This store doesn&apos;t deliver yet. Choose Pickup to collect your order.
+      </p>
+    );
+  }
+
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={() => onChange({
-            mode: 'flat',
-            locationId: value.locationId,
-            contactName: address.name,
-            contactPhone: address.phone,
-            addressLine: address.addressLine,
-            city: address.city,
-            state: address.state,
-          })}
-          className={`p-3 rounded-xl border-2 text-left transition-colors ${
-            value.mode === 'flat' ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
-          }`}
-        >
-          <MapPin className={`h-4 w-4 mb-1.5 ${value.mode === 'flat' ? 'text-primary' : 'text-muted-foreground'}`} />
-          <p className="font-medium text-sm">Flat-rate delivery</p>
-          <p className="text-xs text-muted-foreground">Pick a zone the seller set up</p>
-        </button>
-        <button
-          type="button"
-          onClick={() => onChange({ mode: 'courier' })}
-          className={`p-3 rounded-xl border-2 text-left transition-colors ${
-            value.mode === 'courier' ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
-          }`}
-        >
-          <Truck className={`h-4 w-4 mb-1.5 ${value.mode === 'courier' ? 'text-primary' : 'text-muted-foreground'}`} />
-          <p className="font-medium text-sm">Courier delivery</p>
-          <p className="text-xs text-muted-foreground">Real rates, live tracking</p>
-        </button>
-      </div>
+      {COURIER_DELIVERY && (
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => onChange({
+              mode: 'flat',
+              locationId: value.locationId,
+              contactName: address.name,
+              contactPhone: address.phone,
+              addressLine: address.addressLine,
+              city: address.city,
+              state: address.state,
+            })}
+            className={`p-3 rounded-xl border-2 text-left transition-colors ${
+              value.mode === 'flat' ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
+            }`}
+          >
+            <MapPin className={`h-4 w-4 mb-1.5 ${value.mode === 'flat' ? 'text-primary' : 'text-muted-foreground'}`} />
+            <p className="font-medium text-sm">Flat-rate delivery</p>
+            <p className="text-xs text-muted-foreground">Pick a zone the seller set up</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange({ mode: 'courier' })}
+            className={`p-3 rounded-xl border-2 text-left transition-colors ${
+              value.mode === 'courier' ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
+            }`}
+          >
+            <Truck className={`h-4 w-4 mb-1.5 ${value.mode === 'courier' ? 'text-primary' : 'text-muted-foreground'}`} />
+            <p className="font-medium text-sm">Courier delivery</p>
+            <p className="text-xs text-muted-foreground">Real rates, live tracking</p>
+          </button>
+        </div>
+      )}
 
       {value.mode === 'flat' && (
         <Select

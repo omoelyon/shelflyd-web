@@ -21,6 +21,7 @@ import type { DeliveryAddress, DeliveryLocation } from '@/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { COURIER_DELIVERY } from '@/lib/constants/delivery';
 
 const schema = z.object({
   location: z.string().min(2, 'Location name is required'),
@@ -79,7 +80,7 @@ export default function DeliveryLocationsPage() {
   const pickupAddressMutation = useMutation({
     mutationFn: (values: DeliveryAddress) => settingsApi.setPickupAddress(values),
     onSuccess: () => {
-      toast.success('Pickup address saved — courier delivery is ready.');
+      toast.success(COURIER_DELIVERY ? 'Pickup address saved — courier delivery is ready.' : 'Pickup address saved.');
       qc.invalidateQueries({ queryKey: ['business-profile'] });
     },
     onError: (err) => toast.error(getApiError(err, 'Failed to save pickup address.')),
@@ -128,8 +129,8 @@ export default function DeliveryLocationsPage() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Truck className="h-4 w-4" />
-            Courier Pickup Address
-            {business?.pickupAddressCode && (
+            {COURIER_DELIVERY ? 'Courier Pickup Address' : 'Pickup Address'}
+            {COURIER_DELIVERY && business?.pickupAddressCode && (
               <Badge className="bg-green-100 text-green-700 border-0 text-xs font-medium ml-1">
                 <CheckCircle2 className="h-3 w-3 mr-1" />
                 Courier delivery enabled
@@ -139,8 +140,9 @@ export default function DeliveryLocationsPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-[#64748b] mb-4">
-            Set the address couriers will collect orders from. Required once before customers
-            can choose real courier delivery at checkout, alongside your flat-rate zones below.
+            {COURIER_DELIVERY
+              ? 'Set the address couriers will collect orders from. Required once before customers can choose real courier delivery at checkout, alongside your flat-rate zones below.'
+              : 'Where buyers collect pickup orders. It’s shown to them with their pickup code.'}
           </p>
           <form onSubmit={handlePickupSubmit((v) => pickupAddressMutation.mutate(v))} className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5 col-span-2">
