@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { Store, MapPin, ArrowRight, Landmark, CalendarClock, Paintbrush, Globe, FileText } from 'lucide-react';
 import { useDomainState } from '@/components/features/domains/use-store-domain';
 import Link from 'next/link';
+import AssistantSettingsCard from '@/components/features/assistant/assistant-settings-card';
 
 export default function SettingsPage() {
   const loadFromBusiness = useThemeStore((s) => s.loadFromBusiness);
@@ -232,6 +233,8 @@ export default function SettingsPage() {
       </Card>
 
       <Separator />
+
+      <AssistantSettingsCard />
 
       {/* Subscription */}
       <Card>

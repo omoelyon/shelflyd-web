@@ -3,6 +3,7 @@
 import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import { themeCssVars } from '@/lib/storefront/design';
 import CartDrawer from './cart-drawer';
+import StoreAssistant from './assistant/store-assistant';
 import StorefrontFooter from './footer';
 import StorefrontHeader from './header';
 import { exitPreview, useStorefront } from './storefront-context';
@@ -52,6 +53,7 @@ export default function StorefrontShell({ totalItems, isAuthenticated, children 
       <main className="flex-1">{children}</main>
       <StorefrontFooter />
       <CartDrawer />
+      <StoreAssistant />
     </div>
   );
 }

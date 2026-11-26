@@ -144,6 +144,10 @@ function SubscriptionContent() {
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>There’s no monthly fee. You don’t need to add a card or pay anything, and your storefront stays live.</p>
           <p>Your customers still pay through Paystack as usual, and your earnings go to your payout account.</p>
+          <p>
+            The AI shopping and business assistants are separate: they run on AI credit you buy under{' '}
+            <a href="/dashboard/settings/ai" className="font-medium text-[#0058be] underline-offset-2 hover:underline">AI assistant &amp; credit</a>.
+          </p>
         </CardContent>
       </Card>
     );

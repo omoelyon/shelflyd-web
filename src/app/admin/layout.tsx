@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Store, Building2, Package, ShieldCheck, LayoutDashboard, Users, ShoppingBag, Tag, CreditCard, LogOut, Menu, Loader2 } from 'lucide-react';
+import { Store, Building2, Package, ShieldCheck, LayoutDashboard, Users, ShoppingBag, Tag, CreditCard, LogOut, Menu, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { useAuthStore } from '@/stores/auth.store';
@@ -15,6 +15,7 @@ const adminNav = [
   { href: '/admin/products',    label: 'Products',   icon: Package },
   { href: '/admin/orders',      label: 'Orders',     icon: ShoppingBag },
   { href: '/admin/payments',    label: 'Payments',   icon: CreditCard },
+  { href: '/admin/ai',          label: 'AI assistants', icon: Sparkles },
   { href: '/admin/categories',  label: 'Categories', icon: Tag },
   { href: '/admin/users',       label: 'Users',      icon: Users },
 ];

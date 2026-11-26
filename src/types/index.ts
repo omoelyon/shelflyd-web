@@ -129,6 +129,8 @@ export interface StorefrontInfo {
   previewing?: boolean;
   /** The store's own live domain (e.g. "shop.theirbrand.com"), or null/absent when it only has its Shelflyd address. */
   customDomain?: string | null;
+  /** True when the store's AI shopping assistant is available to shoppers. */
+  assistant?: boolean;
 }
 
 // ─── Category ────────────────────────────────────────────────────────────────

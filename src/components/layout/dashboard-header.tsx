@@ -3,6 +3,7 @@
 import { useAuthStore } from '@/stores/auth.store';
 import { Button } from '@/components/ui/button';
 import { LogOut, Bell, Search } from 'lucide-react';
+import SellerAssistant from '@/components/features/assistant/seller-assistant';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { businessesApi } from '@/lib/api/businesses';
@@ -21,6 +22,7 @@ const pageTitles: Record<string, string> = {
   '/dashboard/settings/payout': 'Payout Account',
   '/dashboard/settings/subscription': 'Subscription',
   '/dashboard/settings/invoicing': 'Invoicing & Tax',
+  '/dashboard/settings/ai': 'AI Assistant & Credit',
   '/dashboard/settings/domain': 'Custom Domain',
   '/dashboard/register-business': 'Register Business',
   '/dashboard/products/new': 'Add Product',
@@ -74,6 +76,7 @@ export default function DashboardHeader() {
 
       {/* Right — actions */}
       <div className="flex items-center gap-1.5">
+        <SellerAssistant />
         {/* Search (decorative — real search lives on pages) */}
         <Button
           variant="ghost"
