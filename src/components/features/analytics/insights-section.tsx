@@ -70,7 +70,7 @@ function CostNotice({ overview }: { overview: InsightOverview }) {
             : 'Products without a cost price are left out of the profit and margin figures. Add the rest to see the full picture.'}
         </p>
       </div>
-      <Link href="/dashboard/inventory" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-amber-900 hover:underline">
+      <Link href="/dashboard/inventory?filter=nocost" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-amber-900 hover:underline">
         Add cost prices <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
       </Link>
     </div>

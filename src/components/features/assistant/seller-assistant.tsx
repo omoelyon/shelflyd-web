@@ -9,6 +9,7 @@ import { assistantApi, sellerAssistantApi } from '@/lib/api/assistant';
 import { useAiChat, type ChatTransport } from '@/components/features/ai-chat/use-ai-chat';
 import { ChatView, QuickReplies } from '@/components/features/ai-chat/chat-view';
 import { SellerCard } from './seller-cards';
+import { useMyAccess } from '@/hooks/use-my-access';
 
 const STARTERS = [
   'How were sales this week?',
@@ -24,6 +25,7 @@ const STARTERS = [
  */
 export default function SellerAssistant() {
   const [open, setOpen] = useState(false);
+  const { access, can } = useMyAccess();
   const { data: settings } = useQuery({
     queryKey: ['assistant-settings'],
     queryFn: assistantApi.settings,
@@ -31,7 +33,8 @@ export default function SellerAssistant() {
     staleTime: 5 * 60_000,
     meta: { silentError: true },
   });
-  if (!settings?.available) return null;
+  // Hidden for team members whose role doesn't include the assistant.
+  if (!settings?.available || (access && !can('AI_ASSISTANT'))) return null;
   return (
     <>
       <button

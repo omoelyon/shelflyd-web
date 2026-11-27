@@ -21,20 +21,22 @@ import {
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useMyAccess } from '@/hooks/use-my-access';
+import type { Permission } from '@/types/team';
 import { useAuthStore } from '@/stores/auth.store';
 
-const navItems = [
+const navItems: { href: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; needs?: Permission[] }[] = [
   { href: '/dashboard',           label: 'Overview',  icon: LayoutDashboard, exact: true },
   { href: '/dashboard/products',  label: 'Products',  icon: Package },
   { href: '/dashboard/inventory', label: 'Inventory', icon: Boxes },
-  { href: '/dashboard/storefront', label: 'Storefront', icon: Paintbrush },
-  { href: '/dashboard/orders',    label: 'Orders',    icon: ShoppingBag },
-  { href: '/dashboard/payments',  label: 'Payments',  icon: CreditCard },
-  { href: '/dashboard/earnings',  label: 'Earnings',  icon: Wallet },
-  { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/dashboard/finance',   label: 'Finance',   icon: Landmark },
+  { href: '/dashboard/storefront', label: 'Storefront', icon: Paintbrush, needs: ['STOREFRONT_MANAGE'] as Permission[] },
+  { href: '/dashboard/orders',    label: 'Orders',    icon: ShoppingBag, needs: ['ORDERS_VIEW'] as Permission[] },
+  { href: '/dashboard/payments',  label: 'Payments',  icon: CreditCard, needs: ['FINANCE_VIEW'] as Permission[] },
+  { href: '/dashboard/earnings',  label: 'Earnings',  icon: Wallet, needs: ['FINANCE_VIEW'] as Permission[] },
+  { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3, needs: ['FINANCE_VIEW'] as Permission[] },
+  { href: '/dashboard/finance',   label: 'Finance',   icon: Landmark, needs: ['FINANCE_VIEW', 'EXPENSES_MANAGE'] as Permission[] },
   { href: '/dashboard/team',      label: 'Team',      icon: Users },
-  { href: '/dashboard/settings',  label: 'Settings',  icon: Settings },
+  { href: '/dashboard/settings',  label: 'Settings',  icon: Settings, needs: ['SETTINGS_MANAGE', 'STOREFRONT_MANAGE', 'INVOICING_MANAGE', 'DOMAIN_MANAGE'] as Permission[] },
 ];
 
 export default function DashboardSidebar() {
@@ -42,10 +44,14 @@ export default function DashboardSidebar() {
   const { user }  = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
 
+  // Only what the person's role allows (all of it for the owner; everything while their access is loading).
+  const { access, can } = useMyAccess();
+  const items = navItems.filter((item) => !item.needs || !access || can(...item.needs));
+
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
 
-  const activeIndex = navItems.findIndex((item) => isActive(item.href, item.exact));
+  const activeIndex = items.findIndex((item) => isActive(item.href, item.exact));
 
   const initials = user
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
@@ -110,7 +116,7 @@ export default function DashboardSidebar() {
               />
             </span>
           )}
-          {navItems.map(({ href, label, icon: Icon, exact }) => {
+          {items.map(({ href, label, icon: Icon, exact }) => {
             const active = isActive(href, exact);
             return (
               <Link

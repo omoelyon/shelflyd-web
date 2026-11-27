@@ -12,40 +12,45 @@ import {
   Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useMyAccess } from '@/hooks/use-my-access';
+import type { Permission } from '@/types/team';
 
-const navItems = [
+const navItems: { href: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; needs?: Permission[] }[] = [
   { href: '/dashboard',           label: 'Home',     icon: LayoutDashboard, exact: true },
   { href: '/dashboard/products',  label: 'Products', icon: Package },
   { href: '/dashboard/inventory', label: 'Stock',    icon: Boxes },
-  { href: '/dashboard/orders',    label: 'Orders',   icon: ShoppingBag },
-  { href: '/dashboard/analytics', label: 'Insights', icon: BarChart3 },
+  { href: '/dashboard/orders',    label: 'Orders',   icon: ShoppingBag, needs: ['ORDERS_VIEW'] as Permission[] },
+  { href: '/dashboard/analytics', label: 'Insights', icon: BarChart3, needs: ['FINANCE_VIEW'] as Permission[] },
   // Finance has no tab here (it is linked from Insights); short labels so seven items still fit on a 360px screen; the page itself is titled "Storefront".
-  { href: '/dashboard/storefront', label: 'Store',    icon: Paintbrush },
-  { href: '/dashboard/settings',  label: 'Settings', icon: Settings },
+  { href: '/dashboard/storefront', label: 'Store',    icon: Paintbrush, needs: ['STOREFRONT_MANAGE'] as Permission[] },
+  { href: '/dashboard/settings',  label: 'Settings', icon: Settings, needs: ['SETTINGS_MANAGE', 'STOREFRONT_MANAGE', 'INVOICING_MANAGE', 'DOMAIN_MANAGE'] as Permission[] },
 ];
 
 export default function DashboardMobileNav() {
   const pathname = usePathname();
 
+  const { access, can } = useMyAccess();
+  const items = navItems.filter((item) => !item.needs || !access || can(...item.needs));
+
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
-  const activeIndex = navItems.findIndex((item) => isActive(item.href, item.exact));
+  const activeIndex = items.findIndex((item) => isActive(item.href, item.exact));
 
   return (
     <nav aria-label="Dashboard" className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-0">
       <div
         className="glass rounded-2xl shadow-[0_-4px_24px_rgba(9,20,38,0.10)] border border-[rgba(9,20,38,0.06)] relative grid px-1 py-2"
-        style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
+        style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
       >
         {/* The dark pill glides to the active tab (it is exactly one column wide). */}
         {activeIndex >= 0 && (
           <span
             aria-hidden="true"
             className="pointer-events-none absolute inset-y-2 left-1 rounded-xl bg-[#091426] shadow-sm transition-transform duration-300 ease-(--ease-out)"
-            style={{ width: `calc((100% - 0.5rem) / ${navItems.length})`, transform: `translateX(${activeIndex * 100}%)` }}
+            style={{ width: `calc((100% - 0.5rem) / ${items.length})`, transform: `translateX(${activeIndex * 100}%)` }}
           />
         )}
-        {navItems.map(({ href, label, icon: Icon, exact }) => {
+        {items.map(({ href, label, icon: Icon, exact }) => {
           const active = isActive(href, exact);
           return (
             <Link

@@ -47,10 +47,15 @@ import ProductImagesField from '@/components/features/products/product-images-fi
 import { productImages } from '@/lib/product-images';
 import type { Product, PriceDetail, UpdateProductRequest } from '@/types';
 import { cleanAmountText, formatNaira, marginOf, parseAmount } from '@/components/features/inventory/format';
+import { useMyAccess } from '@/hooks/use-my-access';
 import { costPriceOf, type WithCostPrice } from '@/types/inventory';
 
 export default function DashboardProductsPage() {
   const router = useRouter();
+  // Buttons follow the person's role: editing products needs "Add and edit products", stock needs "Change stock".
+  const { access, can } = useMyAccess();
+  const canEdit = !access || can('PRODUCTS_MANAGE');
+  const canStock = !access || can('INVENTORY_MANAGE');
   const [page, setPage] = useState(0);
 
   // Edit dialog
@@ -415,13 +420,15 @@ export default function DashboardProductsPage() {
         title="Products"
         subtitle={`${data?.totalElements ?? 0} total products`}
         action={
-          <Button
-            onClick={() => router.push('/dashboard/products/new')}
-            className="bg-[#091426] text-white hover:bg-[#091426]/90"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add product
-          </Button>
+          canEdit ? (
+            <Button
+              onClick={() => router.push('/dashboard/products/new')}
+              className="bg-[#091426] text-white hover:bg-[#091426]/90"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add product
+            </Button>
+          ) : undefined
         }
       />
 
@@ -436,9 +443,9 @@ export default function DashboardProductsPage() {
         <div className="bg-white rounded-2xl shadow-card-md">
           <EmptyState
             icon={Package}
-            title="Add your first product"
-            subtitle="Add a photo, a price, and how much you have. It takes about a minute."
-            action={{ label: 'Add a product', onClick: () => router.push('/dashboard/products/new') }}
+            title={canEdit ? 'Add your first product' : 'No products yet'}
+            subtitle={canEdit ? 'Add a photo, a price, and how much you have. It takes about a minute.' : 'Products the business adds will show here.'}
+            action={canEdit ? { label: 'Add a product', onClick: () => router.push('/dashboard/products/new') } : undefined}
           />
         </div>
       ) : (
@@ -479,6 +486,7 @@ export default function DashboardProductsPage() {
                     </span>
                   )}
                   {/* Edit / Delete overlay buttons */}
+                  {canEdit && (
                   <div className="absolute top-2 right-2 flex gap-1.5">
                     <button
                       type="button"
@@ -505,6 +513,7 @@ export default function DashboardProductsPage() {
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
+                  )}
                 </div>
 
                 {/* Product info */}
@@ -559,20 +568,24 @@ export default function DashboardProductsPage() {
                         <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                         Customers can&apos;t buy this yet
                       </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPricingProduct(product);
-                          resetPrice();
-                        }}
-                        className="text-xs font-semibold text-[#0058be] hover:underline shrink-0"
-                      >
-                        Set price
-                      </button>
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPricingProduct(product);
+                            resetPrice();
+                          }}
+                          className="text-xs font-semibold text-[#0058be] hover:underline shrink-0"
+                        >
+                          Set price
+                        </button>
+                      )}
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-2">
+                  {(canStock || canEdit) && (
+                  <div className={canStock && canEdit ? 'grid grid-cols-2 gap-2' : 'grid grid-cols-1 gap-2'}>
+                    {canStock && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -585,6 +598,8 @@ export default function DashboardProductsPage() {
                       <Boxes className="h-3 w-3 mr-1.5" />
                       Stock
                     </Button>
+                    )}
+                    {canEdit && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -597,7 +612,9 @@ export default function DashboardProductsPage() {
                       <Tag className="h-3 w-3 mr-1.5" />
                       Prices
                     </Button>
+                    )}
                   </div>
+                  )}
                 </div>
               </div>
             ))}

@@ -18,7 +18,7 @@ export default function SummaryCards({ summary }: { summary: CoverSummary }) {
       {summary.unvaluedProducts > 0 && (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900" role="note">
           {summary.unvaluedProducts} {summary.unvaluedProducts === 1 ? 'product has' : 'products have'} no cost price, so {summary.unvaluedProducts === 1 ? 'its' : 'their'} value is missing from the total.{' '}
-          <Link href="/dashboard/products" className="font-semibold underline underline-offset-2">
+          <Link href="/dashboard/inventory?filter=nocost" className="font-semibold underline underline-offset-2">
             Add cost prices
           </Link>{' '}
           to see your real stock value and profit.

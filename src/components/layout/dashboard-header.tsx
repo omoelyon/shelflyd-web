@@ -6,6 +6,7 @@ import { LogOut, Bell, Search } from 'lucide-react';
 import SellerAssistant from '@/components/features/assistant/seller-assistant';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { useMyAccess } from '@/hooks/use-my-access';
 import { businessesApi } from '@/lib/api/businesses';
 
 const pageTitles: Record<string, string> = {
@@ -62,7 +63,9 @@ export default function DashboardHeader() {
   const initials = user
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
     : '?';
-  const roleLabel = business?.ownerId === user?.id ? 'Owner' : 'Team Member';
+  const { access } = useMyAccess();
+  // The person's role on this business: Owner, or the role the business gave them (e.g. Cashier).
+  const roleLabel = access ? access.roleName : business?.ownerId === user?.id ? 'Owner' : 'Team member';
 
   return (
     <header className="sticky top-0 z-40 h-14 glass shadow-[0_1px_0_rgba(9,20,38,0.06)] flex items-center justify-between px-4 md:px-6 shrink-0">

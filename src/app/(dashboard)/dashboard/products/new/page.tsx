@@ -24,6 +24,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import type { Product, QuickProductRequest } from '@/types';
 import { formatNaira, marginOf } from '@/components/features/inventory/format';
+import { useMyAccess } from '@/hooks/use-my-access';
 import type { WithCostPrice } from '@/types/inventory';
 
 const UNIT_SUGGESTIONS = ['Piece', 'Kg', 'Bag', 'Carton', 'Litre', 'Pack', 'Dozen', 'Bunch'];
@@ -48,6 +49,7 @@ export default function NewProductPage() {
   const router = useRouter();
   const qc = useQueryClient();
   const { business } = useMyBusiness();
+  const { access, can } = useMyAccess();
 
   const [published, setPublished] = useState<Product | null>(null);
   const [publishedHadStock, setPublishedHadStock] = useState(false);
@@ -135,6 +137,23 @@ export default function NewProductPage() {
     };
     publishMutation.mutate(request);
   };
+
+  // Opened directly by someone whose role can't add products: say so instead of a form that would be refused.
+  if (access && !can('PRODUCTS_MANAGE')) {
+    return (
+      <div className="max-w-xl mx-auto pt-6">
+        <div className="bg-white rounded-2xl shadow-card-md p-8 text-center space-y-3">
+          <h1 className="text-xl font-bold text-[#091426] font-heading">You can&apos;t add products</h1>
+          <p className="text-sm text-[#64748b]">
+            Your role ({access.roleName}) doesn&apos;t include &ldquo;Add and edit products&rdquo;. Ask the business owner if you need it.
+          </p>
+          <Link href="/dashboard/products" className="inline-flex h-9 items-center rounded-lg border border-[rgba(9,20,38,0.15)] px-4 text-sm font-medium text-[#091426] hover:bg-[#f8f9ff]">
+            Back to products
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // ── Success state ───────────────────────────────────────────────────────────
 

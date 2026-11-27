@@ -45,6 +45,8 @@ function LoginForm() {
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    // ?email= from an invite link: sign in with the address the invite was sent to.
+    defaultValues: { email: searchParams.get('email') ?? '' },
   });
 
   const { mutate, isPending } = useMutation({

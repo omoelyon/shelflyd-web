@@ -74,6 +74,8 @@ function RegisterForm() {
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    // ?email= from an invite link: the account must use the address the invite was sent to.
+    defaultValues: { email: searchParams.get('email') ?? '' },
   });
 
   const suffix = from ? `?from=${encodeURIComponent(from)}` : '';
@@ -243,23 +245,6 @@ function RegisterForm() {
             <Link href={`/auth/login${suffix}`} className="text-primary font-medium hover:underline">
               Sign in
             </Link>
-          </p>
-          <p className="text-center text-xs text-muted-foreground mt-3">
-            {seller ? (
-              <>
-                Just want to shop?{' '}
-                <Link href={`/auth/register${suffix}`} className="text-primary font-medium hover:underline">
-                  Create a shopper account
-                </Link>
-              </>
-            ) : (
-              <>
-                Selling something?{' '}
-                <Link href="/auth/register?as=seller" className="text-primary font-medium hover:underline">
-                  Open a store
-                </Link>
-              </>
-            )}
           </p>
         </div>
       </div>

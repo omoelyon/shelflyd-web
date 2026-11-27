@@ -78,6 +78,12 @@ export interface SetupStatus {
   total: number;
 }
 
+/** One store's setup progress, for the admin list. readyToSell = every required step is done. */
+export interface BusinessSetup extends SetupStatus {
+  businessId: number;
+  readyToSell: boolean;
+}
+
 export interface RegisterBusinessRequest {
   name: string;
   slug: string;
@@ -131,6 +137,8 @@ export interface StorefrontInfo {
   customDomain?: string | null;
   /** True when the store's AI shopping assistant is available to shoppers. */
   assistant?: boolean;
+  /** False when the store can't take payments yet (no payout account). */
+  acceptsPayments?: boolean;
 }
 
 // ─── Category ────────────────────────────────────────────────────────────────
@@ -259,6 +267,8 @@ export interface CartResponse {
   products: CartProduct[];
   totalCost: number;
   groups?: CartGroup[];
+  /** False when the store can't take payments yet (no payout account); checkout says so before Pay. */
+  acceptsPayments?: boolean;
 }
 
 export interface CartGroupItemRequest {

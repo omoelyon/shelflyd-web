@@ -19,9 +19,15 @@ import AttentionCard from '@/components/features/dashboard/attention-card';
 import OrdersAtAGlance from '@/components/features/dashboard/orders-at-a-glance';
 import { SubscriptionBanner, PayoutReminder } from '@/components/features/dashboard/dashboard-banners';
 import BriefCard from '@/components/features/analytics/brief-card';
+import { useMyAccess } from '@/hooks/use-my-access';
 
 export default function DashboardPage() {
   const loadFromBusiness = useThemeStore((s) => s.loadFromBusiness);
+  // Team members only see what their role allows. Until their access is known, keep the owner's layout (skeletons).
+  const { access, can } = useMyAccess();
+  const money = can('FINANCE_VIEW');
+  const seeOrders = can('ORDERS_VIEW');
+  const showMoney = !access || money;
 
   const { data: business, isLoading: bizLoading } = useQuery({
     queryKey: ['business-profile'],
@@ -33,6 +39,7 @@ export default function DashboardPage() {
     queryKey: ['payout-account'],
     queryFn: payoutApi.getAccount,
     retry: false,
+    enabled: !!access?.owner,
   });
 
   // Owner-only; an error (team member, no business yet) simply hides the banner.
@@ -40,6 +47,7 @@ export default function DashboardPage() {
     queryKey: ['subscription'],
     queryFn: subscriptionApi.get,
     retry: false,
+    enabled: !!access?.owner,
   });
 
   // Which setup steps are done. An error (team member, older backend) just hides the checklist.
@@ -52,11 +60,13 @@ export default function DashboardPage() {
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['business-stats'],
     queryFn: businessesApi.getStats,
+    enabled: money,
   });
 
   const { data: ordersPage, isLoading: ordersLoading } = useQuery({
     queryKey: ['business-orders', 0],
     queryFn: () => businessesApi.getOrders(0, 5),
+    enabled: seeOrders,
   });
 
   useEffect(() => {
@@ -69,7 +79,7 @@ export default function DashboardPage() {
       <SubscriptionBanner subscription={subscription} />
 
       {/* ── Yesterday at a glance: numbers vs the same weekday last week, what needs doing, what is running out ── */}
-      <BriefCard />
+      {money && <BriefCard />}
 
       {/* ── Business profile banner ── */}
       {/* The dashboard layout only renders this page once it's confirmed the
@@ -117,19 +127,22 @@ export default function DashboardPage() {
               <Store className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">View store</span>
             </Link>
-            <Link
-              href="/dashboard/settings"
-              className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'shrink-0 text-xs h-8')}
-            >
-              <Settings className="h-3.5 w-3.5 mr-1.5" />
-              Settings
-            </Link>
+            {(!access || can('SETTINGS_MANAGE', 'STOREFRONT_MANAGE', 'INVOICING_MANAGE', 'DOMAIN_MANAGE')) && (
+              <Link
+                href="/dashboard/settings"
+                className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'shrink-0 text-xs h-8')}
+              >
+                <Settings className="h-3.5 w-3.5 mr-1.5" />
+                Settings
+              </Link>
+            )}
           </div>
         </div>
       )}
 
       {/* ── Setup checklist (hides itself when everything is done) ── */}
-      {setupLoading ? <SetupChecklistSkeleton /> : setupStatus && <SetupChecklist status={setupStatus} />}
+      {/* The checklist is the owner's to-do list (payouts, for one, only they can add). */}
+      {access?.owner && (setupLoading ? <SetupChecklistSkeleton /> : setupStatus && <SetupChecklist status={setupStatus} />)}
 
       {/* Edge case only: checklist hidden (or unavailable) but payouts still aren't set up */}
       {(!setupStatus || setupStatus.completed >= setupStatus.total) && <PayoutReminder payoutAccount={payoutAccount} />}
@@ -139,6 +152,7 @@ export default function DashboardPage() {
 
       {/* ── Revenue + store link ── */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-5">
+        {showMoney && (
         <div className="min-w-0 md:col-span-3">
           {statsLoading || !stats ? (
             <Skeleton className="h-full min-h-32 rounded-2xl" />
@@ -166,7 +180,8 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-        <div className="min-w-0 md:col-span-2">
+        )}
+        <div className={cn('min-w-0', showMoney ? 'md:col-span-2' : 'md:col-span-5')}>
           {bizLoading || !business ? <StoreLinkCardSkeleton /> : <StoreLinkCard slug={business.slug} />}
         </div>
       </div>

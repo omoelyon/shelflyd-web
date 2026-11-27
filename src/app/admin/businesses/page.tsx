@@ -9,12 +9,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import BusinessAvatar from '@/components/layout/business-avatar';
 import { toast } from 'sonner';
 import { getApiError, formatStatus } from '@/lib/utils';
-import type { BusinessStatus } from '@/types';
+import type { BusinessSetup, BusinessStatus, SetupStepKey } from '@/types';
 
 const statusColors: Record<BusinessStatus, string> = {
   ACTIVE: 'bg-green-100 text-green-700',
   PENDING: 'bg-yellow-100 text-yellow-700',
   SUSPENDED: 'bg-red-100 text-red-700',
+};
+
+/** What a missing step means, worded for staff. Required steps stop a store from selling. */
+const MISSING: Record<SetupStepKey, string> = {
+  store: 'No store',
+  product: 'No products',
+  payout: 'No payout account',
+  pickup: 'No pickup address',
+  logo: 'No logo',
 };
 
 export default function AdminBusinessesPage() {
@@ -24,6 +33,12 @@ export default function AdminBusinessesPage() {
     queryKey: ['admin-businesses'],
     queryFn: businessesApi.adminListAll,
   });
+  const { data: setup } = useQuery({
+    queryKey: ['admin-businesses', 'setup'],
+    queryFn: businessesApi.adminSetup,
+  });
+  const setupById = new Map((setup ?? []).map((s) => [s.businessId, s]));
+  const notReady = setup?.filter((s) => !s.readyToSell).length ?? 0;
 
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: number; status: BusinessStatus }) =>
@@ -39,7 +54,12 @@ export default function AdminBusinessesPage() {
     <div className="space-y-6 max-w-5xl">
       <div>
         <h1 className="text-2xl font-bold">Businesses</h1>
-        <p className="text-muted-foreground text-sm">{businesses?.length ?? 0} total businesses</p>
+        <p className="text-muted-foreground text-sm">
+          {businesses?.length ?? 0} total businesses
+          {setup && notReady > 0 && (
+            <span className="text-amber-700"> · {notReady} can&apos;t sell yet (missing a payout account or products)</span>
+          )}
+        </p>
       </div>
 
       <Card>
@@ -64,6 +84,7 @@ export default function AdminBusinessesPage() {
                     <p className="text-xs text-muted-foreground truncate">
                       {business.description || 'No description'}
                     </p>
+                    <SetupProgress setup={setupById.get(business.id)} />
                   </div>
                   <Badge variant="secondary" className={statusColors[business.status]}>
                     {formatStatus(business.status)}
@@ -113,3 +134,42 @@ export default function AdminBusinessesPage() {
   );
 }
 
+/** A store's setup: steps done, and what is missing (required ones in amber, since the store can't sell without them). */
+function SetupProgress({ setup }: { setup: BusinessSetup | undefined }) {
+  if (!setup) return null;
+  const missing = setup.steps.filter((s) => !s.done);
+  const percent = Math.round((setup.completed / Math.max(setup.total, 1)) * 100);
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+      <div
+        className="h-1.5 w-20 overflow-hidden rounded-full bg-[#eef2f7]"
+        role="progressbar"
+        aria-valuenow={setup.completed}
+        aria-valuemin={0}
+        aria-valuemax={setup.total}
+        aria-label="Setup progress"
+      >
+        <div className={setup.readyToSell ? 'h-full bg-emerald-500' : 'h-full bg-amber-500'} style={{ width: `${percent}%` }} />
+      </div>
+      <span className="text-[11px] font-medium tabular-nums text-[#64748b]">
+        Setup {setup.completed}/{setup.total}
+      </span>
+      {missing.length === 0 ? (
+        <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">Fully set up</span>
+      ) : (
+        missing.map((s) => (
+          <span
+            key={s.key}
+            className={
+              s.required
+                ? 'rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800'
+                : 'rounded bg-[#f1f5f9] px-1.5 py-0.5 text-[10px] font-medium text-[#64748b]'
+            }
+          >
+            {MISSING[s.key]}
+          </span>
+        ))
+      )}
+    </div>
+  );
+}

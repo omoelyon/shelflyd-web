@@ -9,6 +9,7 @@ import { ordersApi } from '@/lib/api/orders';
 import { getApiError } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import CancelOrderDialog from './cancel-order-dialog';
+import { useMyAccess } from '@/hooks/use-my-access';
 import type { Order, OrderStatus, Shipment } from '@/types';
 
 const parseDate = (value: string) => new Date(value.includes('T') ? value : value.replace(' ', 'T'));
@@ -30,6 +31,7 @@ export default function SellerOrderActions({
   const qc = useQueryClient();
   const [confirmingReady, setConfirmingReady] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const { access, can } = useMyAccess();
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ['order-detail', order.id] });
@@ -73,6 +75,8 @@ export default function SellerOrderActions({
   const pickup = order.orderType === 'PICKUP';
   const courier = !!shipment || !!(order as Order & { courierRequestToken?: string | null }).courierRequestToken;
   const processing = order.status === 'PROCESSING';
+  // Cancelling refunds the buyer, so it needs its own permission (owner, or a role with "Cancel and refund orders").
+  const canCancel = !access || can('ORDERS_CANCEL');
   const busy = readyMutation.isPending || statusMutation.isPending;
 
   return (
@@ -142,7 +146,7 @@ export default function SellerOrderActions({
         </>
       )}
 
-      {processing && (
+      {processing && canCancel && (
         <>
           <div>
             <Button

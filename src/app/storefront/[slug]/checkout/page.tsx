@@ -167,11 +167,17 @@ function StorefrontCheckoutContent({ slug }: { slug: string }) {
           </Card>
         )}
 
+        {cart?.acceptsPayments === false && (
+          <p role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900">
+            This store isn&apos;t taking payments yet. You can still look around and check back soon.
+          </p>
+        )}
+
         <Button
           type="submit"
           className="w-full bg-primary text-primary-foreground hover:opacity-90"
           size="lg"
-          disabled={checkoutMutation.isPending || (orderType === 'DELIVERY' && delivery.mode === 'flat' && !delivery.locationId)}
+          disabled={cart?.acceptsPayments === false || checkoutMutation.isPending || (orderType === 'DELIVERY' && delivery.mode === 'flat' && !delivery.locationId)}
         >
           {checkoutMutation.isPending ? 'Processing...' : 'Pay Now'}
         </Button>

@@ -1,5 +1,6 @@
 import apiClient from './client';
 import type {
+  BusinessSetup,
   Business,
   BusinessStats,
   RegisterBusinessRequest,
@@ -82,6 +83,12 @@ export const businessesApi = {
   // Admin
   adminListAll: async (): Promise<Business[]> => {
     const res = await apiClient.get('/admin/businesses');
+    return res.data;
+  },
+
+  /** Every store's setup progress (payout account, products, pickup address, logo). */
+  adminSetup: async (): Promise<BusinessSetup[]> => {
+    const res = await apiClient.get('/admin/businesses/setup');
     return res.data;
   },
 

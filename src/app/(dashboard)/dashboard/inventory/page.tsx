@@ -15,12 +15,14 @@ import AdjustStockDialog, { type AdjustTarget } from '@/components/features/inve
 import HistoryTab from '@/components/features/inventory/history-tab';
 import StockTab from '@/components/features/inventory/stock-tab';
 import SummaryCards from '@/components/features/inventory/summary-cards';
+import { useMyAccess } from '@/hooks/use-my-access';
 import type { CoverItem } from '@/types/inventory';
 
 type Tab = 'stock' | 'history';
 
 function InventoryView() {
   const router = useRouter();
+  const { access, can } = useMyAccess();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -28,6 +30,8 @@ function InventoryView() {
   const tab: Tab = searchParams.get('tab') === 'history' ? 'history' : 'stock';
   const productParam = Number(searchParams.get('product'));
   const productId = Number.isInteger(productParam) && productParam > 0 ? productParam : undefined;
+  // ?filter=nocost: where the "Add cost prices" links land, showing only the products still missing one.
+  const stockFilter = searchParams.get('filter') === 'nocost' ? 'nocost' : 'all';
 
   const go = (next: { tab?: Tab; product?: number | null }) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -59,10 +63,12 @@ function InventoryView() {
         title="Inventory"
         subtitle="What is in stock, how long it will last, and every change to it."
         action={
-          <Link href="/dashboard/products/new" className={cn(buttonVariants(), 'bg-[#091426] text-white hover:bg-[#091426]/90')}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            Add product
-          </Link>
+          !access || can('PRODUCTS_MANAGE') ? (
+            <Link href="/dashboard/products/new" className={cn(buttonVariants(), 'bg-[#091426] text-white hover:bg-[#091426]/90')}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Add product
+            </Link>
+          ) : undefined
         }
       />
 
@@ -92,7 +98,13 @@ function InventoryView() {
               <TabsTrigger value="history">History</TabsTrigger>
             </TabsList>
             <TabsContent value="stock" className="pt-3">
-              <StockTab cover={cover} onAdjust={openAdjust} onHistory={(id) => go({ tab: 'history', product: id })} />
+              <StockTab
+                key={stockFilter}
+                cover={cover}
+                initialFilter={stockFilter}
+                onAdjust={openAdjust}
+                onHistory={(id) => go({ tab: 'history', product: id })}
+              />
             </TabsContent>
             <TabsContent value="history" className="pt-3">
               <HistoryTab

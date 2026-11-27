@@ -3,7 +3,8 @@ import type { NextRequest } from 'next/server';
 import { ADMIN_HOST, APP_DOMAIN, DASHBOARD_HOST, STOREFRONT_DOMAIN } from '@/lib/storefront/url';
 
 const DASHBOARD_PATHS = ['/dashboard'];
-const PROTECTED_PATHS = ['/checkout', '/account', '/invites'];
+// /invites is not here: its page shows the invite to signed-out visitors and offers sign-in or sign-up itself.
+const PROTECTED_PATHS = ['/checkout', '/account'];
 const ADMIN_PATHS = ['/admin'];
 const RESERVED_SUBDOMAINS = ['www', 'api'];
 

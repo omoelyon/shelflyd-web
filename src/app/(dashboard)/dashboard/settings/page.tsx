@@ -17,12 +17,16 @@ import { Store, MapPin, ArrowRight, Landmark, CalendarClock, Paintbrush, Globe, 
 import { useDomainState } from '@/components/features/domains/use-store-domain';
 import Link from 'next/link';
 import AssistantSettingsCard from '@/components/features/assistant/assistant-settings-card';
+import { useMyAccess } from '@/hooks/use-my-access';
 
 export default function SettingsPage() {
   const loadFromBusiness = useThemeStore((s) => s.loadFromBusiness);
   const qc = useQueryClient();
   // The custom-domain card only appears where custom domains are switched on (production).
   const { data: domainState } = useDomainState();
+  // Team members only see the settings their role covers; payouts, billing and AI credit stay with the owner.
+  const { access, can, isOwner } = useMyAccess();
+  const canSettings = can('SETTINGS_MANAGE');
 
   const { data: business, isLoading, isError } = useQuery({
     queryKey: ['business-settings'],
@@ -43,11 +47,12 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    if (business && business.logo === null && !generateLogo.isPending && !generateLogo.isSuccess) {
+    // Only for someone allowed to change the store's details (the logo is one of them).
+    if (business && business.logo === null && canSettings && !generateLogo.isPending && !generateLogo.isSuccess) {
       generateLogo.mutate();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [business?.id, business?.logo]);
+  }, [business?.id, business?.logo, canSettings]);
 
   if (isLoading) {
     return (
@@ -77,9 +82,18 @@ export default function SettingsPage() {
         <p className="text-muted-foreground text-sm mt-1">
           Manage your brand identity, logo, and theme color.
         </p>
+        {access && !isOwner && (
+          <p className="mt-2 text-xs text-[#64748b]">
+            {can('SETTINGS_MANAGE', 'STOREFRONT_MANAGE', 'INVOICING_MANAGE', 'DOMAIN_MANAGE')
+              ? `You see the settings your role (${access.roleName}) covers. Payouts, billing and AI credit stay with the owner.`
+              : `Your role (${access.roleName}) doesn't include any settings. Ask the business owner if you need to change something.`}
+          </p>
+        )}
       </div>
 
-      {/* Brand Identity */}
+      {canSettings && (
+        <>
+{/* Brand Identity */}
       <Card>
         <CardHeader>
           <CardTitle>Brand Identity</CardTitle>
@@ -118,9 +132,13 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Separator />
 
-      {/* Storefront design */}
+        </>
+      )}
+
+      {can('STOREFRONT_MANAGE') && (
+        <>
+{/* Storefront design */}
       <Card>
         <CardHeader>
           <CardTitle>Storefront design</CardTitle>
@@ -139,8 +157,10 @@ export default function SettingsPage() {
           </Link>
         </CardContent>
       </Card>
+        </>
+      )}
 
-      {domainState?.enabled && (
+      {domainState?.enabled && can('DOMAIN_MANAGE') && (
         <>
           <Separator />
 
@@ -166,7 +186,9 @@ export default function SettingsPage() {
         </>
       )}
 
-      <Separator />
+      {canSettings && (
+        <>
+          <Separator />
 
       {/* Delivery Zones */}
       <Card>
@@ -187,8 +209,12 @@ export default function SettingsPage() {
           </Link>
         </CardContent>
       </Card>
+        </>
+      )}
 
-      <Separator />
+      {isOwner && (
+        <>
+          <Separator />
 
       {/* Payout Account */}
       <Card>
@@ -209,8 +235,12 @@ export default function SettingsPage() {
           </Link>
         </CardContent>
       </Card>
+        </>
+      )}
 
-      <Separator />
+      {can('INVOICING_MANAGE') && (
+        <>
+          <Separator />
 
       {/* Invoicing & tax */}
       <Card>
@@ -231,8 +261,12 @@ export default function SettingsPage() {
           </Link>
         </CardContent>
       </Card>
+        </>
+      )}
 
-      <Separator />
+      {isOwner && (
+        <>
+          <Separator />
 
       <AssistantSettingsCard />
 
@@ -255,6 +289,8 @@ export default function SettingsPage() {
           </Link>
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   );
 }

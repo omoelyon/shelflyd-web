@@ -173,7 +173,7 @@ function CostCoverage({ pl }: { pl: ProfitLoss }) {
           )}
 
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link href="/dashboard/inventory" className="inline-flex h-8 items-center rounded-lg bg-[#091426] px-3 text-xs font-semibold text-white hover:bg-[#091426]/90">
+            <Link href="/dashboard/inventory?filter=nocost" className="inline-flex h-8 items-center rounded-lg bg-[#091426] px-3 text-xs font-semibold text-white hover:bg-[#091426]/90">
               Add cost prices
             </Link>
             <Link href="/dashboard/products" className="inline-flex h-8 items-center rounded-lg border border-[#fcd34d] bg-white px-3 text-xs font-semibold text-[#92400e] hover:bg-[#fffbeb]">

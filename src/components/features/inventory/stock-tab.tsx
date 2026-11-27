@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Boxes, History, PackagePlus, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -13,15 +12,19 @@ import type { CoverItem, StockCover } from '@/types/inventory';
 import { CoverStatusChip, Tag } from './chips';
 import { formatDay, formatNaira, formatQty } from './format';
 import ProductThumb from './product-thumb';
+import { useMyAccess } from '@/hooks/use-my-access';
+import SetCostDialog, { type CostTarget } from './set-cost-dialog';
 
-type Filter = 'all' | 'attention' | 'out' | 'slow' | 'nocost';
+export type StockFilter = 'all' | 'attention' | 'out' | 'slow' | 'nocost';
+type Filter = StockFilter;
 
 const FILTERS: { key: Filter; label: string; test: (i: CoverItem) => boolean }[] = [
   { key: 'all', label: 'All', test: () => true },
   { key: 'attention', label: 'Needs attention', test: (i) => i.status === 'OUT' || i.status === 'CRITICAL' || i.status === 'LOW' },
   { key: 'out', label: 'Out of stock', test: (i) => i.status === 'OUT' },
   { key: 'slow', label: 'Slow movers', test: (i) => i.slowMover },
-  { key: 'nocost', label: 'No cost price', test: (i) => i.costPrice == null && i.onHand > 0 },
+  // Every product still missing a cost price, sold out or not: profit figures need it for past sales too.
+  { key: 'nocost', label: 'No cost price', test: (i) => i.costPrice == null },
 ];
 
 /** "About 4 days" / "Under a day" for the stock cover figure. */
@@ -36,12 +39,19 @@ interface StockTabProps {
   cover: StockCover;
   onAdjust: (item: CoverItem) => void;
   onHistory: (productId: number) => void;
+  /** The filter to start on (from the address, e.g. ?filter=nocost from an "Add cost prices" link). */
+  initialFilter?: Filter;
 }
 
 /** Every product with what is left, how fast it sells and how long it will last; filter to what needs attention. */
-export default function StockTab({ cover, onAdjust, onHistory }: StockTabProps) {
+export default function StockTab({ cover, onAdjust, onHistory, initialFilter = 'all' }: StockTabProps) {
   const router = useRouter();
-  const [filter, setFilter] = useState<Filter>('all');
+  const [filter, setFilter] = useState<Filter>(initialFilter);
+  const [costTarget, setCostTarget] = useState<CostTarget | null>(null);
+  // Changing stock needs "Change stock"; a cost price is part of the product, so it needs "Add and edit products".
+  const { access, can } = useMyAccess();
+  const canStock = !access || can('INVENTORY_MANAGE');
+  const canEdit = !access || can('PRODUCTS_MANAGE');
   const [search, setSearch] = useState('');
 
   const counts = useMemo(() => Object.fromEntries(FILTERS.map((f) => [f.key, cover.items.filter(f.test).length])) as Record<Filter, number>, [cover.items]);
@@ -59,7 +69,7 @@ export default function StockTab({ cover, onAdjust, onHistory }: StockTabProps) 
           icon={Boxes}
           title="No products to track yet"
           subtitle="Add a product with its stock, and you'll see here how long it will last."
-          action={{ label: 'Add a product', onClick: () => router.push('/dashboard/products/new') }}
+          action={canEdit ? { label: 'Add a product', onClick: () => router.push('/dashboard/products/new') } : undefined}
         />
       </div>
     );
@@ -143,22 +153,28 @@ export default function StockTab({ cover, onAdjust, onHistory }: StockTabProps) 
                       )}
                     </TableCell>
                     <TableCell className="text-right text-sm tabular-nums">
-                      {item.stockValue != null ? (
-                        formatNaira(item.stockValue)
-                      ) : item.onHand > 0 ? (
-                        <Link href="/dashboard/products" className="text-xs font-medium text-[#0058be] hover:underline">
+                      {item.costPrice == null && canEdit ? (
+                        <button
+                          type="button"
+                          onClick={() => setCostTarget({ productId: item.productId, name: item.name, baseUnit: item.baseUnit, costPrice: null })}
+                          className="text-xs font-medium text-[#0058be] hover:underline"
+                        >
                           Add cost price
-                        </Link>
+                        </button>
+                      ) : item.stockValue != null ? (
+                        formatNaira(item.stockValue)
                       ) : (
                         '—'
                       )}
                     </TableCell>
                     <TableCell className="pr-4">
                       <div className="flex justify-end gap-1">
+                        {canStock && (
                         <Button type="button" size="sm" variant="outline" onClick={() => onAdjust(item)}>
                           <PackagePlus className="mr-1.5 h-3.5 w-3.5" />
                           Change stock
                         </Button>
+                        )}
                         <Button type="button" size="sm" variant="ghost" onClick={() => onHistory(item.productId)} aria-label={`History of ${item.name}`}>
                           <History className="h-4 w-4" />
                         </Button>
@@ -199,15 +215,31 @@ export default function StockTab({ cover, onAdjust, onHistory }: StockTabProps) 
                   </div>
                   <div>
                     <dt className="text-[#64748b]">Value</dt>
-                    <dd className="mt-0.5 font-medium tabular-nums text-[#091426]">{item.stockValue != null ? formatNaira(item.stockValue) : '—'}</dd>
+                    <dd className="mt-0.5 font-medium tabular-nums text-[#091426]">
+                      {item.costPrice == null && canEdit ? (
+                        <button
+                          type="button"
+                          onClick={() => setCostTarget({ productId: item.productId, name: item.name, baseUnit: item.baseUnit, costPrice: null })}
+                          className="text-xs font-medium text-[#0058be] hover:underline"
+                        >
+                          Add cost price
+                        </button>
+                      ) : item.stockValue != null ? (
+                        formatNaira(item.stockValue)
+                      ) : (
+                        '—'
+                      )}
+                    </dd>
                   </div>
                 </dl>
                 {item.runOutDate && <p className="mt-2 text-xs text-[#64748b]">Runs out about {formatDay(item.runOutDate)}</p>}
                 <div className="mt-3 flex gap-2">
+                  {canStock && (
                   <Button type="button" size="sm" variant="outline" className="flex-1" onClick={() => onAdjust(item)}>
                     <PackagePlus className="mr-1.5 h-3.5 w-3.5" />
                     Change stock
                   </Button>
+                  )}
                   <Button type="button" size="sm" variant="ghost" onClick={() => onHistory(item.productId)}>
                     <History className="mr-1.5 h-4 w-4" />
                     History
@@ -218,6 +250,7 @@ export default function StockTab({ cover, onAdjust, onHistory }: StockTabProps) 
           </ul>
         </>
       )}
+      {costTarget && <SetCostDialog target={costTarget} onClose={() => setCostTarget(null)} />}
     </div>
   );
 }
