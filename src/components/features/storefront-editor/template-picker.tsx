@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { TEMPLATES, type StorefrontTemplate } from '@/lib/storefront/templates';
+import { BLANK_TEMPLATE, TEMPLATES, type StorefrontTemplate } from '@/lib/storefront/templates';
 import { designsEqual } from '@/lib/storefront/editor-model';
 import type { StorefrontDesign } from '@/lib/storefront/design';
 import { cn } from '@/lib/utils';
@@ -17,13 +17,17 @@ interface Props {
 }
 
 /**
- * Templates only define the look and the home page. The seller's extra pages, product page and cart settings are
- * theirs, so applying a template carries them over (and comparing designs below therefore ignores them too).
+ * Templates only define the look and the home page. The seller's extra pages, product page and cart settings, search
+ * and sharing details and promo popup are theirs, so applying a template carries them over (and comparing designs
+ * below therefore ignores them too).
  */
 function withSellerPages(current: StorefrontDesign, built: StorefrontDesign): StorefrontDesign {
   const { product, cart, custom } = current.pages;
-  return { ...built, pages: { ...built.pages, product, cart, custom } };
+  return { ...built, seo: current.seo, promo: current.promo, pages: { ...built.pages, product, cart, custom } };
 }
+
+/** The ready-made templates, then a plain start for sellers who want to build their own. */
+const CHOICES: StorefrontTemplate[] = [...TEMPLATES, BLANK_TEMPLATE];
 
 /**
  * Cards for each ready-made template. Applying one rebuilds the layout with the seller's own brand colour; if that
@@ -37,15 +41,15 @@ export default function TemplatePicker({ design, onApply }: Props) {
     const built = withSellerPages(design, t.build(primary));
     if (designsEqual(design, built)) return;
     // Switching from a layout that is still untouched (exactly some template) needs no warning.
-    const untouched = TEMPLATES.some((other) => designsEqual(design, withSellerPages(design, other.build(primary))));
+    const untouched = CHOICES.some((other) => designsEqual(design, withSellerPages(design, other.build(primary))));
     if (untouched) onApply(built);
     else setPending(t);
   };
 
   return (
-    <Panel title="Template" description="Start from a ready-made layout. You can change everything afterwards.">
+    <Panel title="Template" description="Start from a ready-made layout, or from scratch. You can change everything afterwards.">
       <div className="grid grid-cols-2 gap-3">
-        {TEMPLATES.map((t) => {
+        {CHOICES.map((t) => {
           const built = t.build(primary);
           const current = designsEqual(design, withSellerPages(design, built));
           const based = !current && design.template === t.id;
@@ -58,6 +62,7 @@ export default function TemplatePicker({ design, onApply }: Props) {
               className={cn(
                 'sf-press sf-lift group rounded-xl border bg-card p-2 text-left outline-none transition-[border-color,box-shadow,transform] duration-300 ease-(--ease-out) focus-visible:ring-3 focus-visible:ring-ring/50',
                 current ? 'border-primary ring-1 ring-primary' : 'hover:border-foreground/30',
+                t.id === BLANK_TEMPLATE.id && !current && 'border-dashed',
               )}
             >
               <DesignThumbnail design={built} />
@@ -79,9 +84,9 @@ export default function TemplatePicker({ design, onApply }: Props) {
             <DialogTitle>Replace your current layout?</DialogTitle>
             <DialogDescription>
               {pending
-                ? `Switching to ${pending.name} resets the layout and the text and photos in your home page sections. Your brand colour${
+                ? `${pending.id === BLANK_TEMPLATE.id ? 'Starting from scratch' : `Switching to ${pending.name}`} resets the layout and the text and photos in your home page sections. Your brand colour${
                     design.pages.custom.length > 0 ? ', extra pages' : ''
-                  } and cart and product page settings stay.`
+                  }, search and sharing details, promo popup, and cart and product page settings stay.`
                 : ''}
             </DialogDescription>
           </DialogHeader>
@@ -96,7 +101,7 @@ export default function TemplatePicker({ design, onApply }: Props) {
                 setPending(null);
               }}
             >
-              Use {pending?.name}
+              {pending?.id === BLANK_TEMPLATE.id ? 'Start from scratch' : `Use ${pending?.name}`}
             </Button>
           </DialogFooter>
         </DialogContent>

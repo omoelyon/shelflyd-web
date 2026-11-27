@@ -21,6 +21,7 @@ import LivePreview from './live-preview';
 import { CartControls, ProductPageControls } from './pages-controls';
 import { CustomPageSettings, PagesPanel, isEditorPage, type EditorPage } from './pages-panel';
 import PreviewLinkDialog from './preview-link';
+import PromoControls from './promo-controls';
 import SectionListEditor from './section-list-editor';
 import SeoControls from './seo-controls';
 import TemplatePicker from './template-picker';
@@ -65,6 +66,9 @@ export default function StorefrontEditor() {
     doneTimer.current = setTimeout(() => setDone(null), 1600);
   };
   const [currentPage, setCurrentPage] = useState<EditorPage>('home');
+  // "Show it in the preview" for the promo popup: a new number each press; on a phone it also switches to the preview tab.
+  const [promoPreview, setPromoPreview] = useState(0);
+  const [mobileTab, setMobileTab] = useState<'design' | 'preview'>('design');
   const isLarge = useIsLarge();
 
   const themeColor = business.data?.themeColor;
@@ -223,6 +227,14 @@ export default function StorefrontEditor() {
             fallback={{ name: business.data.name, description: business.data.description ?? '', logo: business.data.logo }}
           />
           <SectionListEditor key="home" design={working} onChange={edit} page="home" />
+          <PromoControls
+            design={working}
+            onChange={edit}
+            onPreview={() => {
+              setPromoPreview((n) => n + 1);
+              setMobileTab('preview');
+            }}
+          />
         </>
       )}
       {isCustomPage && (
@@ -325,12 +337,12 @@ export default function StorefrontEditor() {
         <div className="grid gap-5 grid-cols-[400px_minmax(0,1fr)]">
           <div>{controls}</div>
           <div className="sticky top-[88px] h-[calc(100dvh-8rem)] self-start">
-            <LivePreview slug={slug} design={working} page={page} className="h-full" />
+            <LivePreview slug={slug} design={working} page={page} className="h-full" promoPreview={promoPreview} />
           </div>
         </div>
       ) : (
         // Phones and tablets: one at a time.
-        <Tabs defaultValue="design">
+        <Tabs value={mobileTab} onValueChange={(v) => setMobileTab(v === 'preview' ? 'preview' : 'design')}>
           <TabsList className="w-full">
             <TabsTrigger value="design">Design</TabsTrigger>
             <TabsTrigger value="preview">Preview</TabsTrigger>
@@ -339,7 +351,7 @@ export default function StorefrontEditor() {
             {controls}
           </TabsContent>
           <TabsContent value="preview" className="pt-2">
-            <LivePreview slug={slug} design={working} page={page} className="h-[70dvh]" />
+            <LivePreview slug={slug} design={working} page={page} className="h-[70dvh]" promoPreview={promoPreview} />
           </TabsContent>
         </Tabs>
       )}

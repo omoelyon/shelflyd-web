@@ -12,13 +12,15 @@ interface Props {
   /** The page to show; the preview opens on the home page. */
   page?: PreviewPage;
   className?: string;
+  /** Ask the preview to show the promo popup: a new number each time (0 = not asked). */
+  promoPreview?: number;
 }
 
 /**
  * The storefront as shoppers will see it, rendered in an iframe so the layout reacts to the real width (phone or
  * desktop). The working design is pushed in with postMessage on every change; nothing is saved by previewing.
  */
-export default function LivePreview({ slug, design, page = 'home', className }: Props) {
+export default function LivePreview({ slug, design, page = 'home', className, promoPreview = 0 }: Props) {
   const frame = useRef<HTMLIFrameElement>(null);
   const latest = useRef(design);
   const latestPage = useRef<PreviewPage>(page);
@@ -36,6 +38,14 @@ export default function LivePreview({ slug, design, page = 'home', className }: 
     },
     [post],
   );
+
+  // The editor asked to see the promo popup. Kept so a frame that loads afterwards (a phone switching to the
+  // Preview tab) still opens it once it says it is ready.
+  const latestPromo = useRef(promoPreview);
+  useEffect(() => {
+    latestPromo.current = promoPreview;
+    if (promoPreview > 0) post({ type: 'sf-promo', open: promoPreview });
+  }, [promoPreview, post]);
 
   // Push every change to the page.
   useEffect(() => {
@@ -62,11 +72,14 @@ export default function LivePreview({ slug, design, page = 'home', className }: 
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
       if (e.origin !== window.location.origin || e.source !== frame.current?.contentWindow) return;
-      if (isPreviewMessage(e.data) && e.data.type === 'sf-ready') send(latest.current);
+      if (isPreviewMessage(e.data) && e.data.type === 'sf-ready') {
+        send(latest.current);
+        if (latestPromo.current > 0) post({ type: 'sf-promo', open: latestPromo.current });
+      }
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [send]);
+  }, [send, post]);
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>

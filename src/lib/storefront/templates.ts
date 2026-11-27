@@ -1,4 +1,4 @@
-import { DESIGN_VERSION, classicDesign, type StorefrontDesign, type StorefrontSection } from './design';
+import { DESIGN_VERSION, classicDesign, defaultPromo, type StorefrontDesign, type StorefrontSection } from './design';
 
 /**
  * A ready-made starting point. Applying a template replaces the working design with `build(primary)`, using the
@@ -56,6 +56,7 @@ export const TEMPLATES: StorefrontTemplate[] = [
       header: { variant: 'classic', sticky: true },
       footer: { variant: 'light' },
       seo: classicDesign().seo,
+      promo: defaultPromo(),
       pages: {
         ...classicDesign().pages,
         home: {
@@ -86,6 +87,7 @@ export const TEMPLATES: StorefrontTemplate[] = [
       header: { variant: 'centered', sticky: true },
       footer: { variant: 'light' },
       seo: classicDesign().seo,
+      promo: defaultPromo(),
       pages: {
         ...classicDesign().pages,
         home: {
@@ -115,6 +117,7 @@ export const TEMPLATES: StorefrontTemplate[] = [
       header: { variant: 'classic', sticky: true },
       footer: { variant: 'dark' },
       seo: classicDesign().seo,
+      promo: defaultPromo(),
       pages: {
         ...classicDesign().pages,
         home: {
@@ -140,6 +143,7 @@ export const TEMPLATES: StorefrontTemplate[] = [
       header: { variant: 'centered', sticky: true },
       footer: { variant: 'dark' },
       seo: classicDesign().seo,
+      promo: defaultPromo(),
       pages: {
         ...classicDesign().pages,
         home: {
@@ -189,6 +193,7 @@ export const TEMPLATES: StorefrontTemplate[] = [
       header: { variant: 'centered', sticky: false },
       footer: { variant: 'light' },
       seo: classicDesign().seo,
+      promo: defaultPromo(),
       pages: {
         ...classicDesign().pages,
         home: {
@@ -218,6 +223,7 @@ export const TEMPLATES: StorefrontTemplate[] = [
       header: { variant: 'classic', sticky: true },
       footer: { variant: 'dark' },
       seo: classicDesign().seo,
+      promo: defaultPromo(),
       pages: {
         ...classicDesign().pages,
         home: {
@@ -246,6 +252,33 @@ export const TEMPLATES: StorefrontTemplate[] = [
   },
 ];
 
+/**
+ * A plain starting point for sellers who would rather build their own layout: their header, their products (every
+ * store needs those) and a footer, in their brand colour. Everything else is added from "Add a section".
+ */
+export const BLANK_TEMPLATE: StorefrontTemplate = {
+  id: 'blank',
+  name: 'Start from scratch',
+  tagline: 'Just your header, products and footer. Add the sections you want.',
+  bestFor: 'Building your own layout',
+  build: (primary): StorefrontDesign => ({
+    version: DESIGN_VERSION,
+    template: 'blank',
+    theme: { primary, radius: 'soft', headingFont: 'manrope', bodyFont: 'inter' },
+    header: { variant: 'classic', sticky: true },
+    footer: { variant: 'light' },
+    seo: classicDesign().seo,
+    promo: defaultPromo(),
+    pages: {
+      ...classicDesign().pages,
+      home: {
+        sections: [{ id: 'products', type: 'products', variant: 'grid', props: { title: 'Products', columns: 4, showSearch: true, showSets: true } }],
+      },
+    },
+  }),
+};
+
 export function getTemplate(id: string): StorefrontTemplate | undefined {
+  if (id === BLANK_TEMPLATE.id) return BLANK_TEMPLATE;
   return TEMPLATES.find((t) => t.id === id);
 }

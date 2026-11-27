@@ -175,6 +175,65 @@ export interface StorefrontDesign {
   /** How the store appears in search results and when its link is shared (all optional; falls back to the business's own details). */
   seo: StorefrontSeo;
   pages: StorefrontPages;
+  /** A popup shown over the store as shoppers arrive (a sale, a new collection), until they close it. Off by default. */
+  promo: StorefrontPromo;
+}
+
+export type PromoFrequency = 'once' | 'day' | 'week';
+
+export interface StorefrontPromo {
+  enabled: boolean;
+  /** https picture across the top of the popup; empty = no picture. */
+  image: string;
+  heading: string;
+  body: string;
+  /** A discount code shoppers can copy; empty = none. Letters, numbers, dashes, underscores. */
+  code: string;
+  buttonText: string;
+  /** Where the button goes: a store path (/products, /p/<page>) or an https link; empty = the button just closes it. */
+  link: string;
+  /** The home page only, or every store page (never the cart or checkout). */
+  showOn: 'home' | 'all';
+  /** After a shopper closes it: show again only when the promo changes, the next day, or the next week. */
+  frequency: PromoFrequency;
+  /** YYYY-MM-DD (Lagos), inclusive; empty = no limit. */
+  startsAt: string;
+  endsAt: string;
+}
+
+export const PROMO_LIMITS = { heading: 80, body: 240, code: 30, buttonText: 30 } as const;
+
+export function defaultPromo(): StorefrontPromo {
+  return { enabled: false, image: '', heading: '', body: '', code: '', buttonText: 'Shop now', link: '', showOn: 'home', frequency: 'day', startsAt: '', endsAt: '' };
+}
+
+/** Today's date in Lagos as YYYY-MM-DD (promo dates are Lagos dates). */
+export function lagosToday(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+}
+
+/** Whether the promo should be shown at all today: switched on, has something to show, and within its dates. */
+export function promoIsLive(promo: StorefrontPromo, today: string = lagosToday()): boolean {
+  if (!promo.enabled || (!promo.heading.trim() && !promo.image.trim())) return false;
+  if (promo.startsAt && today < promo.startsAt) return false;
+  if (promo.endsAt && today > promo.endsAt) return false;
+  return true;
+}
+
+/** A short fingerprint of what the promo says, so a changed promo shows again even to shoppers who closed the old one. */
+export function promoSignature(promo: StorefrontPromo): string {
+  const text = [promo.image, promo.heading, promo.body, promo.code, promo.buttonText, promo.link].join('|');
+  let h = 0;
+  for (let i = 0; i < text.length; i++) h = (Math.imul(31, h) + text.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+const PROMO_WAIT_MS: Record<PromoFrequency, number> = { once: Infinity, day: 24 * 3600_000, week: 7 * 24 * 3600_000 };
+
+/** Whether a shopper who closed this promo (`dismissed`, from their browser) should see it again now. */
+export function promoDue(promo: StorefrontPromo, dismissed: { sig: string; at: number } | null, now: number = Date.now()): boolean {
+  if (!dismissed || dismissed.sig !== promoSignature(promo)) return true;
+  return now - dismissed.at >= PROMO_WAIT_MS[promo.frequency];
 }
 
 export interface StorefrontSeo {
@@ -250,6 +309,7 @@ export function classicDesign(primary: string = DEFAULT_PRIMARY): StorefrontDesi
       cart: { style: 'page', message: '' },
       custom: [],
     },
+    promo: defaultPromo(),
   };
 }
 
@@ -428,6 +488,8 @@ export function normalizeDesign(raw: unknown, fallbackPrimary?: string | null): 
   const header = obj(d.header);
   const footer = obj(d.footer);
   const seo = obj(d.seo);
+  const promo = obj(d.promo);
+  const dateOrEmpty = (v: unknown): string => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : '');
   const rawPages = obj(d.pages);
   const normalizeList = (raw: unknown): StorefrontSection[] =>
     Array.isArray(raw) ? raw.map(normalizeSection).filter((x): x is StorefrontSection => x !== null) : [];
@@ -466,6 +528,19 @@ export function normalizeDesign(raw: unknown, fallbackPrimary?: string | null): 
       },
       cart: { style: oneOf(cart.style, ['page', 'drawer'] as const, 'page'), message: str(cart.message) },
       custom,
+    },
+    promo: {
+      enabled: bool(promo.enabled, false),
+      image: /^https:\/\//.test(str(promo.image)) || str(promo.image).startsWith('/') ? str(promo.image) : '',
+      heading: str(promo.heading),
+      body: str(promo.body),
+      code: str(promo.code),
+      buttonText: str(promo.buttonText, 'Shop now'),
+      link: str(promo.link),
+      showOn: oneOf(promo.showOn, ['home', 'all'] as const, 'home'),
+      frequency: oneOf(promo.frequency, ['once', 'day', 'week'] as const, 'day'),
+      startsAt: dateOrEmpty(promo.startsAt),
+      endsAt: dateOrEmpty(promo.endsAt),
     },
   };
 }

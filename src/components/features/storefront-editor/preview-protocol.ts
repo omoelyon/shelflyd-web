@@ -8,14 +8,16 @@ export type PreviewPage = PageKey | 'product' | 'cart';
  *   iframe → parent  { type: 'sf-ready' }               the page has loaded and wants the current design and page
  *   parent → iframe  { type: 'sf-design', design }      the working (unsaved) design to render
  *   parent → iframe  { type: 'sf-page', page }          which page to show (home until told otherwise)
+ *   parent → iframe  { type: 'sf-promo', open }         show the promo popup (a new number each time it is asked for)
  */
 export type PreviewMessage =
   | { type: 'sf-ready' }
   | { type: 'sf-design'; design: StorefrontDesign }
-  | { type: 'sf-page'; page: PreviewPage };
+  | { type: 'sf-page'; page: PreviewPage }
+  | { type: 'sf-promo'; open: number };
 
 export const isPreviewMessage = (data: unknown): data is PreviewMessage => {
   if (!data || typeof data !== 'object') return false;
   const t = (data as { type?: unknown }).type;
-  return t === 'sf-ready' || t === 'sf-design' || t === 'sf-page';
+  return t === 'sf-ready' || t === 'sf-design' || t === 'sf-page' || t === 'sf-promo';
 };

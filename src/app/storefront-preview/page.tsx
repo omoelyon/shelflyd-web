@@ -49,6 +49,7 @@ function PreviewPage() {
   // The working design arrives from the editor that embeds this page; until then there is nothing to show.
   const [design, setDesign] = useState<unknown>(null);
   const [page, setPage] = useState<PreviewPage>('home');
+  const [promoPreview, setPromoPreview] = useState(0);
 
   const { data: info, isLoading } = useQuery({
     queryKey: ['storefront', slug],
@@ -62,6 +63,7 @@ function PreviewPage() {
       if (!isPreviewMessage(e.data)) return;
       if (e.data.type === 'sf-design') setDesign(e.data.design);
       if (e.data.type === 'sf-page') setPage(e.data.page);
+      if (e.data.type === 'sf-promo') setPromoPreview(e.data.open);
     };
     window.addEventListener('message', onMessage);
     // Ask the editor for the current design (it also pushes on its own whenever something changes).
@@ -82,7 +84,7 @@ function PreviewPage() {
     );
   }
   return (
-    <StorefrontProvider slug={slug} info={info} isLoading={isLoading} designOverride={design} preview activePage={page}>
+    <StorefrontProvider slug={slug} info={info} isLoading={isLoading} designOverride={design} preview activePage={page} promoPreview={promoPreview}>
       <PreviewBody page={page} />
     </StorefrontProvider>
   );

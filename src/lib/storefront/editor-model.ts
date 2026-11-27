@@ -22,8 +22,7 @@ import {
   type StorefrontDesign,
   type StorefrontSection,
   type StorefrontSeo,
-  type TestimonialsSection,
-} from './design';
+  type TestimonialsSection, PROMO_LIMITS, type StorefrontPromo } from './design';
 
 /**
  * Pure editing logic for the storefront editor: building sections and pages, changing their order, checking a
@@ -486,6 +485,19 @@ export function clientValidate(d: StorefrontDesign): string | null {
   if (d.seo.description.trim().length > LIMITS.seoDescription) return `The search description is too long (at most ${LIMITS.seoDescription} characters).`;
   if (!isSafeLink(d.seo.image)) return 'The sharing picture must be an https link.';
   if (d.pages.cart.message.trim().length > LIMITS.cartMessage) return `The cart message is too long (at most ${LIMITS.cartMessage} characters).`;
+  return promoProblem(d.promo);
+}
+
+/** The first problem with the promo popup the server would refuse, or null. Mirrors StorefrontDesignValidator. */
+export function promoProblem(p: StorefrontPromo): string | null {
+  if (p.heading.trim().length > PROMO_LIMITS.heading) return `The promo heading is too long (at most ${PROMO_LIMITS.heading} characters).`;
+  if (p.body.trim().length > PROMO_LIMITS.body) return `The promo text is too long (at most ${PROMO_LIMITS.body} characters).`;
+  if (p.buttonText.trim().length > PROMO_LIMITS.buttonText) return `The promo button text is too long (at most ${PROMO_LIMITS.buttonText} characters).`;
+  if (p.code.trim() && !/^[A-Za-z0-9_-]{1,30}$/.test(p.code.trim())) return 'The promo code can only use letters, numbers, dashes and underscores (up to 30).';
+  if (!isSafeLink(p.image)) return 'The promo picture must be an https link.';
+  if (!isSafeLink(p.link)) return 'The promo button link must start with https:// or /.';
+  if (p.startsAt && p.endsAt && p.endsAt < p.startsAt) return 'The promo ends before it starts.';
+  if (p.enabled && !p.heading.trim() && !p.image.trim()) return 'Give the promo popup a heading or a picture before switching it on.';
   return null;
 }
 

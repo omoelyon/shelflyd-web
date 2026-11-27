@@ -49,6 +49,8 @@ interface StorefrontContextValue {
   previewing: boolean;
   /** Preview only: the page being shown, so the header menu can highlight it (live pages work it out from the URL). */
   activePage: string | undefined;
+  /** Preview only: the editor asked to show the promo popup (a new number each time; 0 = not asked). */
+  promoPreview: number;
 }
 
 const StorefrontContext = createContext<StorefrontContextValue | null>(null);
@@ -62,17 +64,19 @@ interface ProviderProps {
   preview?: boolean;
   /** Preview only: 'home', 'custom:<id>', 'product' or 'cart'. */
   activePage?: string;
+  /** Preview only: see StorefrontContextValue.promoPreview. */
+  promoPreview?: number;
   children: React.ReactNode;
 }
 
-export function StorefrontProvider({ slug, info, isLoading, designOverride, preview = false, activePage, children }: ProviderProps) {
+export function StorefrontProvider({ slug, info, isLoading, designOverride, preview = false, activePage, promoPreview = 0, children }: ProviderProps) {
   const raw = designOverride ?? info?.design;
   const themeColor = info?.themeColor;
   const design = useMemo(() => normalizeDesign(raw, themeColor), [raw, themeColor]);
   const previewing = !preview && info?.previewing === true;
   const value = useMemo(
-    () => ({ slug, info, isLoading, design, preview, previewing, activePage }),
-    [slug, info, isLoading, design, preview, previewing, activePage],
+    () => ({ slug, info, isLoading, design, preview, previewing, activePage, promoPreview }),
+    [slug, info, isLoading, design, preview, previewing, activePage, promoPreview],
   );
   return <StorefrontContext.Provider value={value}>{children}</StorefrontContext.Provider>;
 }
